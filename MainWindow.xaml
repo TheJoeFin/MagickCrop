@@ -1,0 +1,64 @@
+﻿<Window
+    x:Class="MagickCrop.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:MagickCrop"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="MainWindow"
+    Width="800"
+    Height="650"
+    MouseMove="TopLeft_MouseMove"
+    mc:Ignorable="d">
+    <Window.Resources>
+        <Style TargetType="Ellipse">
+            <Setter Property="Height" Value="12" />
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Cursor" Value="SizeAll" />
+            <Setter Property="Fill" Value="Blue" />
+            <Setter Property="Stroke" Value="Black" />
+            <Setter Property="StrokeThickness" Value="1" />
+        </Style>
+    </Window.Resources>
+    <ScrollViewer>
+        <Grid>
+            <Image Source="/LetterPaperTest.jpg" />
+
+            <Canvas x:Name="ShapeCanvas">
+                <Ellipse
+                    x:Name="TopLeft"
+                    Canvas.Left="100"
+                    Canvas.Top="100"
+                    MouseDown="TopLeft_MouseDown"
+                    Tag="0" />
+                <Ellipse
+                    x:Name="TopRight"
+                    Canvas.Left="700"
+                    Canvas.Top="100"
+                    MouseDown="TopLeft_MouseDown"
+                    Tag="1" />
+                <Ellipse
+                    x:Name="BottomRight"
+                    Canvas.Left="700"
+                    Canvas.Top="525"
+                    MouseDown="TopLeft_MouseDown"
+                    Tag="2" />
+                <Ellipse
+                    x:Name="BottomLeft"
+                    Canvas.Left="100"
+                    Canvas.Top="525"
+                    MouseDown="TopLeft_MouseDown"
+                    Tag="3" />
+            </Canvas>
+
+            <Button
+                x:Name="Save"
+                Margin="20"
+                Padding="20,2"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Click="Save_Click"
+                Content="Save" />
+        </Grid>
+    </ScrollViewer>
+</Window>
