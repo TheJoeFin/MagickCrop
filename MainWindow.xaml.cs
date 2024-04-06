@@ -21,6 +21,8 @@ public partial class MainWindow : Window
     private Polygon? lines;
     private string? imagePath;
 
+    private bool isPanning = false;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -63,6 +65,12 @@ public partial class MainWindow : Window
 
     private void TopLeft_MouseMove(object sender, MouseEventArgs e)
     {
+        if (isPanning)
+        {
+            PanCanvas(e);
+            return;
+        }
+
         if (Mouse.LeftButton != MouseButtonState.Pressed && Mouse.RightButton != MouseButtonState.Pressed)
         {
             isDragging = false;
@@ -78,6 +86,30 @@ public partial class MainWindow : Window
         Canvas.SetLeft(clickedElement, movingPoint.X - (clickedElement.Width / 2));
 
         MovePolyline(movingPoint);
+    }
+
+    private void PanCanvas(MouseEventArgs e)
+    {
+        if (Mouse.MiddleButton == MouseButtonState.Released)
+        {
+            isPanning = false;
+            return;
+        }
+
+        Point currentPoint = e.GetPosition(ShapeCanvas);
+        double deltaX = currentPoint.X - clickedPoint.X;
+        double deltaY = currentPoint.Y - clickedPoint.Y;
+
+        TranslateTransform translateTransform = new(deltaX, deltaY);
+
+        if (ShapeCanvas.RenderTransform is TranslateTransform transform)
+        {
+            translateTransform = transform;
+            translateTransform.X += deltaX;
+            translateTransform.Y += deltaY;
+        }
+
+        ShapeCanvas.RenderTransform = translateTransform;
     }
 
     private void MovePolyline(Point newPoint)
@@ -220,6 +252,39 @@ public partial class MainWindow : Window
             throw new ArgumentOutOfRangeException("propName", string.Format("Field {0} was not found in Type {1}", propName, obj.GetType().FullName));
 
         return pi.GetValue(obj, null);
+    }
+
+    private void ShapeCanvas_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        ScaleTransform scaleTransform = new()
+        {
+            CenterX = ShapeCanvas.ActualWidth / 2,
+            CenterY = ShapeCanvas.ActualHeight / 2,
+        };
+
+        double startingScaleAmount = 1;
+
+        if (ShapeCanvas.LayoutTransform is ScaleTransform transform)
+        {
+            scaleTransform = transform;
+            startingScaleAmount = transform.ScaleY;
+        }
+
+        if (e.Delta > 0)
+            scaleTransform.ScaleX = scaleTransform.ScaleY = (startingScaleAmount += 0.1);
+        else
+            scaleTransform.ScaleX = scaleTransform.ScaleY = (startingScaleAmount -= 0.1);
+
+        ShapeCanvas.LayoutTransform = scaleTransform;
+    }
+
+    private void ShapeCanvas_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (Mouse.MiddleButton == MouseButtonState.Pressed)
+        {
+            clickedPoint = e.GetPosition(ShapeCanvas);
+            isPanning = true;
+        }
     }
 }
 

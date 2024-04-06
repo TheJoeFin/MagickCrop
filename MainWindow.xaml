@@ -8,6 +8,7 @@
     Title="MainWindow"
     Width="800"
     Height="650"
+    Background="Gray"
     MouseMove="TopLeft_MouseMove"
     mc:Ignorable="d">
     <Window.Resources>
@@ -16,7 +17,7 @@
             <Setter Property="Width" Value="12" />
             <Setter Property="Cursor" Value="SizeAll" />
             <Setter Property="Fill" Value="Blue" />
-            <Setter Property="Stroke" Value="Black" />
+            <Setter Property="Stroke" Value="White" />
             <Setter Property="StrokeThickness" Value="1" />
         </Style>
 
@@ -27,7 +28,10 @@
     </Window.Resources>
     <ScrollViewer>
         <Grid>
-            <Canvas x:Name="ShapeCanvas">
+            <Canvas
+                x:Name="ShapeCanvas"
+                MouseDown="ShapeCanvas_MouseDown"
+                PreviewMouseWheel="ShapeCanvas_PreviewMouseWheel">
                 <Image
                     x:Name="MainImage"
                     Height="600"
@@ -57,50 +61,63 @@
                     MouseDown="TopLeft_MouseDown"
                     Tag="3" />
             </Canvas>
-            <StackPanel
-                HorizontalAlignment="Right"
+            <Border
+                Padding="20,0,0,0"
+                HorizontalAlignment="Center"
                 VerticalAlignment="Bottom"
-                Orientation="Horizontal">
-                <Button
-                    x:Name="OpenFileButton"
-                    Click="OpenFileButton_Click"
-                    Content="Open File" />
-                <ComboBox
-                    x:Name="AspectRatioComboBox"
-                    Padding="20,2"
-                    VerticalAlignment="Center">
-                    <!--
-                        Enum AspectRatio:
-                        Square = 0,
-                        LetterPortrait = 1,
-                        LetterLandscape = 2,
-                        A4Portrait = 3,
-                        A4Landscape = 4,
-                        UsDollarBillPortrait = 5,
-                        UsDollarBillLandscape = 6,
-                    -->
-                    <ComboBoxItem
-                        Content="11in wide x 8.5in tall"
-                        IsSelected="True"
-                        Tag="LetterLandscape" />
-                    <ComboBoxItem Content="8.5in wide x 11in tall" Tag="LetterPortriat" />
-                    <ComboBoxItem Content="Square" Tag="Square" />
-                    <ComboBoxItem Content="A4 Portrait" Tag="A4Portrait" />
-                    <ComboBoxItem Content="A4 Landscape" Tag="A4Landscape" />
-                    <ComboBoxItem Content="US Dollar Bill Portrait" Tag="UsDollarBillPortrait" />
-                    <ComboBoxItem Content="US Dollar Bill Landscape" Tag="UsDollarBillLandscape" />
-                </ComboBox>
-                <Button
-                    x:Name="Save"
-                    Click="Save_Click"
-                    Content="Save" />
-                <Button
-                    x:Name="OpenFolderButton"
-                    Margin="0,20,20,20"
-                    Click="OpenFolderButton_Click"
-                    Content="Open Folder"
-                    IsEnabled="False" />
-            </StackPanel>
+                Background="WhiteSmoke"
+                CornerRadius="8,8,0,0">
+                <Border.Effect>
+                    <DropShadowEffect
+                        BlurRadius="8"
+                        Direction="270"
+                        ShadowDepth="4" />
+                </Border.Effect>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock VerticalAlignment="Center" FontWeight="Medium">
+                        Scroll to Zoom, Middle mouse to pan
+                    </TextBlock>
+                    <Button
+                        x:Name="OpenFileButton"
+                        Click="OpenFileButton_Click"
+                        Content="Open File" />
+                    <ComboBox
+                        x:Name="AspectRatioComboBox"
+                        Padding="20,2"
+                        VerticalAlignment="Center">
+                        <!--
+                            Enum AspectRatio:
+                            Square = 0,
+                            LetterPortrait = 1,
+                            LetterLandscape = 2,
+                            A4Portrait = 3,
+                            A4Landscape = 4,
+                            UsDollarBillPortrait = 5,
+                            UsDollarBillLandscape = 6,
+                        -->
+                        <ComboBoxItem
+                            Content="11in wide x 8.5in tall"
+                            IsSelected="True"
+                            Tag="LetterLandscape" />
+                        <ComboBoxItem Content="8.5in wide x 11in tall" Tag="LetterPortriat" />
+                        <ComboBoxItem Content="Square" Tag="Square" />
+                        <ComboBoxItem Content="A4 Portrait" Tag="A4Portrait" />
+                        <ComboBoxItem Content="A4 Landscape" Tag="A4Landscape" />
+                        <ComboBoxItem Content="US Dollar Bill Portrait" Tag="UsDollarBillPortrait" />
+                        <ComboBoxItem Content="US Dollar Bill Landscape" Tag="UsDollarBillLandscape" />
+                    </ComboBox>
+                    <Button
+                        x:Name="Save"
+                        Click="Save_Click"
+                        Content="Save" />
+                    <Button
+                        x:Name="OpenFolderButton"
+                        Margin="0,20,20,20"
+                        Click="OpenFolderButton_Click"
+                        Content="Open Folder"
+                        IsEnabled="False" />
+                </StackPanel>
+            </Border>
         </Grid>
     </ScrollViewer>
 </Window>
