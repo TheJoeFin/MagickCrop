@@ -1,4 +1,5 @@
 ﻿using ImageMagick;
+using Microsoft.Win32;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -17,6 +18,7 @@ public partial class MainWindow : Window
     private FrameworkElement? clickedElement;
     private int pointDraggingIndex = -1;
     private Polygon? lines;
+    private string? imagePath;
 
     public MainWindow()
     {
@@ -85,18 +87,20 @@ public partial class MainWindow : Window
         lines.Points[pointDraggingIndex] = newPoint;
     }
 
-    private void Save_Click(object sender, RoutedEventArgs e)
+    private async void Save_Click(object sender, RoutedEventArgs e)
     {
         string? folder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
 
         if (folder is null || lines is null)
             return;
 
-
-        string imageFileName = $"{folder}\\LetterPaperTest.jpg";
         string correctedImageFileName = $"{folder}\\LetterPaperTest-corrected.jpg";
+        if (string.IsNullOrEmpty(imagePath))
+        {
+            imagePath = $"{folder}\\LetterPaperTest.jpg";
+        }
 
-        MagickImage image = new(imageFileName);
+        MagickImage image = new(imagePath);
         double scaleFactor = image.Width / MainImage.ActualWidth;
 
         //  #   X     Y
@@ -129,6 +133,36 @@ public partial class MainWindow : Window
             Bestfit = true,
         };
         image.Distort(DistortMethod.Perspective, distortSettings, arguments);
-        image.Write(correctedImageFileName);
+        await image.WriteAsync(correctedImageFileName);
+        OpenFolderButton.IsEnabled = true;
+    }
+
+    private void OpenFileButton_Click(object sender, RoutedEventArgs e)
+    {
+        OpenFileDialog openFileDialog = new()
+        {
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+            Filter = "PNG Files(*.png)|*.png|JPEG Files(*.jpg;*.jpeg)|*.jpg;*.jpeg|All files (*.*)|*.*"
+        };
+
+        if (openFileDialog.ShowDialog() != true)
+            return;
+
+        BitmapImage bitmap = new();
+        bitmap.BeginInit();
+        bitmap.UriSource = new(openFileDialog.FileName);
+        imagePath = openFileDialog.FileName;
+        bitmap.EndInit();
+        MainImage.Source = bitmap;
+    }
+
+    private void OpenFolderButton_Click(object sender, RoutedEventArgs e)
+    {
+        string? folder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+
+        if (folder is null || lines is null)
+            return;
+
+        System.Diagnostics.Process.Start("explorer.exe", folder);
     }
 }

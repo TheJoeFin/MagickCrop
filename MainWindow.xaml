@@ -19,10 +19,14 @@
             <Setter Property="Stroke" Value="Black" />
             <Setter Property="StrokeThickness" Value="1" />
         </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="20" />
+            <Setter Property="Padding" Value="20,2" />
+        </Style>
     </Window.Resources>
     <ScrollViewer>
         <Grid>
-
             <Canvas x:Name="ShapeCanvas">
                 <Image
                     x:Name="MainImage"
@@ -53,15 +57,33 @@
                     MouseDown="TopLeft_MouseDown"
                     Tag="3" />
             </Canvas>
-
-            <Button
-                x:Name="Save"
-                Margin="20"
-                Padding="20,2"
+            <StackPanel
                 HorizontalAlignment="Right"
                 VerticalAlignment="Bottom"
-                Click="Save_Click"
-                Content="Save" />
+                Orientation="Horizontal">
+                <Button
+                    x:Name="OpenFileButton"
+                    Click="OpenFileButton_Click"
+                    Content="Open File" />
+                <ComboBox Padding="20,2" VerticalAlignment="Center">
+                    <ComboBoxItem
+                        Content="11in wide x 8.5in tall"
+                        IsSelected="True"
+                        Tag="LetterLandscape" />
+                    <ComboBoxItem Content="8.5in wide x 11in tall" Tag="LetterPortriat" />
+                    <ComboBoxItem Content="Square" Tag="Square" />
+                </ComboBox>
+                <Button
+                    x:Name="Save"
+                    Click="Save_Click"
+                    Content="Save" />
+                <Button
+                    x:Name="OpenFolderButton"
+                    Margin="0,20,20,20"
+                    Click="OpenFolderButton_Click"
+                    Content="Open Folder"
+                    IsEnabled="False" />
+            </StackPanel>
         </Grid>
     </ScrollViewer>
 </Window>
