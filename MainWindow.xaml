@@ -22,9 +22,12 @@
     </Window.Resources>
     <ScrollViewer>
         <Grid>
-            <Image Source="/LetterPaperTest.jpg" />
 
             <Canvas x:Name="ShapeCanvas">
+                <Image
+                    x:Name="MainImage"
+                    Height="600"
+                    Source="/LetterPaperTest.jpg" />
                 <Ellipse
                     x:Name="TopLeft"
                     Canvas.Left="100"

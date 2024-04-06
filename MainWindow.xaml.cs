@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 namespace MagickCrop;
@@ -27,8 +28,9 @@ public partial class MainWindow : Window
     {
         lines = new()
         {
-            Stroke = Brushes.LightSteelBlue,
-            StrokeThickness = 2
+            Stroke = Brushes.Blue,
+            StrokeThickness = 2,
+            IsHitTestVisible = false,
         };
 
         List<Ellipse> ellipseList = ShapeCanvas.Children.OfType<Ellipse>().ToList();
@@ -41,7 +43,7 @@ public partial class MainWindow : Window
         }
 
         ShapeCanvas.Children.Add(lines);
-        Canvas.SetZIndex(lines, -1);
+        //Canvas.SetZIndex(lines, -1);
     }
 
     private void TopLeft_MouseDown(object sender, MouseButtonEventArgs e)
@@ -83,32 +85,48 @@ public partial class MainWindow : Window
         lines.Points[pointDraggingIndex] = newPoint;
     }
 
-    private async void Save_Click(object sender, RoutedEventArgs e)
+    private void Save_Click(object sender, RoutedEventArgs e)
     {
         string? folder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
 
         if (folder is null || lines is null)
             return;
 
+
         string imageFileName = $"{folder}\\LetterPaperTest.jpg";
         string correctedImageFileName = $"{folder}\\LetterPaperTest-corrected.jpg";
 
         MagickImage image = new(imageFileName);
+        double scaleFactor = image.Width / MainImage.ActualWidth;
+
+        //  #   X     Y
+        //  1   798   304
+        //  2   2410  236
+        //  3   2753  1405
+        //  4   704   1556
+        //  3264 x 1836
 
         double[] arguments =
         [
-            lines.Points[0].X, lines.Points[0].Y,
+            // top left
+            lines.Points[0].X * scaleFactor, lines.Points[0].Y * scaleFactor,
             0,0,
-            lines.Points[3].X, lines.Points[3].Y,
-            0, 425,
-            lines.Points[2].X, lines.Points[2].Y,
-            550, 425,
-            lines.Points[1].X, lines.Points[1].Y,
-            550, 0,
+
+            // bottom left
+            lines.Points[3].X * scaleFactor, lines.Points[3].Y * scaleFactor,
+            0, 850,
+
+            // bottom right
+            lines.Points[2].X * scaleFactor, lines.Points[2].Y * scaleFactor,
+            1100, 850,
+
+            // top right
+            lines.Points[1].X * scaleFactor, lines.Points[1].Y * scaleFactor,
+            1100, 0,
         ];
         DistortSettings distortSettings = new()
         {
-            Bestfit = true
+            Bestfit = true,
         };
         image.Distort(DistortMethod.Perspective, distortSettings, arguments);
         image.Write(correctedImageFileName);
