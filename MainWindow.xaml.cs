@@ -1,5 +1,6 @@
 ﻿using ImageMagick;
 using Microsoft.Win32;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -96,9 +97,11 @@ public partial class MainWindow : Window
 
         string correctedImageFileName = $"{folder}\\LetterPaperTest-corrected.jpg";
         if (string.IsNullOrEmpty(imagePath))
-        {
             imagePath = $"{folder}\\LetterPaperTest.jpg";
-        }
+
+        AspectRatio aspectRatioEnum = AspectRatio.LetterLandscape;
+        if (AspectRatioComboBox.SelectedItem is ComboBoxItem boxItem && boxItem.Tag is string tag)
+            _ = Enum.TryParse(tag, out aspectRatioEnum);
 
         MagickImage image = new(imagePath);
         double scaleFactor = image.Width / MainImage.ActualWidth;
@@ -110,6 +113,46 @@ public partial class MainWindow : Window
         //  4   704   1556
         //  3264 x 1836
 
+        // Ratio defined by Height / Width
+        double aspectRatio = 1;
+
+        switch (aspectRatioEnum)
+        {
+            case AspectRatio.Square:
+                // already 1
+                break;
+            case AspectRatio.LetterPortrait:
+                aspectRatio = 11 / 8.5;
+                break;
+            case AspectRatio.LetterLandscape:
+                aspectRatio = 8.5 / 11;
+                break;
+            case AspectRatio.A4Portrait:
+                aspectRatio = 297 / 210;
+                break;
+            case AspectRatio.A4Landscape:
+                aspectRatio = 210 / 297;
+                break;
+            case AspectRatio.UsDollarBillLandscape:
+                aspectRatio = 2.61 / 6.14;
+                break;
+            case AspectRatio.UsDollarBillPortrait:
+                aspectRatio = 6.14 / 2.61;
+                break;
+            default:
+                break;
+        }
+
+        Rect? visualContentBounds = (Rect)GetPrivatePropertyValue(lines, "VisualContentBounds");
+        Rect finalSize = new(0, 0, 1100, 850);
+
+        if (visualContentBounds is not null)
+        {
+            int width = (int)(visualContentBounds.Value.Width * scaleFactor);
+            int height = (int)(width * aspectRatio);
+            finalSize = new(0, 0, width, height);
+        }
+
         double[] arguments =
         [
             // top left
@@ -118,15 +161,15 @@ public partial class MainWindow : Window
 
             // bottom left
             lines.Points[3].X * scaleFactor, lines.Points[3].Y * scaleFactor,
-            0, 850,
+            0, finalSize.Height,
 
             // bottom right
             lines.Points[2].X * scaleFactor, lines.Points[2].Y * scaleFactor,
-            1100, 850,
+            finalSize.Width, finalSize.Height,
 
             // top right
             lines.Points[1].X * scaleFactor, lines.Points[1].Y * scaleFactor,
-            1100, 0,
+            finalSize.Width, 0,
         ];
         DistortSettings distortSettings = new()
         {
@@ -142,7 +185,7 @@ public partial class MainWindow : Window
         OpenFileDialog openFileDialog = new()
         {
             InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
-            Filter = "PNG Files(*.png)|*.png|JPEG Files(*.jpg;*.jpeg)|*.jpg;*.jpeg|All files (*.*)|*.*"
+            Filter = "Image Files|*.png;*.jpg;*.jpeg;*.heic;*.bmp|All files (*.*)|*.*"
         };
 
         if (openFileDialog.ShowDialog() != true)
@@ -165,4 +208,28 @@ public partial class MainWindow : Window
 
         System.Diagnostics.Process.Start("explorer.exe", folder);
     }
+
+    private static object? GetPrivatePropertyValue(object obj, string propName)
+    {
+        ArgumentNullException.ThrowIfNull(obj);
+
+        Type t = obj.GetType();
+        PropertyInfo? pi = t.GetProperty(propName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+        if (pi == null)
+            throw new ArgumentOutOfRangeException("propName", string.Format("Field {0} was not found in Type {1}", propName, obj.GetType().FullName));
+
+        return pi.GetValue(obj, null);
+    }
+}
+
+public enum AspectRatio
+{
+    Square = 0,
+    LetterPortrait = 1,
+    LetterLandscape = 2,
+    A4Portrait = 3,
+    A4Landscape = 4,
+    UsDollarBillPortrait = 5,
+    UsDollarBillLandscape = 6,
 }

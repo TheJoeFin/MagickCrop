@@ -65,13 +65,30 @@
                     x:Name="OpenFileButton"
                     Click="OpenFileButton_Click"
                     Content="Open File" />
-                <ComboBox Padding="20,2" VerticalAlignment="Center">
+                <ComboBox
+                    x:Name="AspectRatioComboBox"
+                    Padding="20,2"
+                    VerticalAlignment="Center">
+                    <!--
+                        Enum AspectRatio:
+                        Square = 0,
+                        LetterPortrait = 1,
+                        LetterLandscape = 2,
+                        A4Portrait = 3,
+                        A4Landscape = 4,
+                        UsDollarBillPortrait = 5,
+                        UsDollarBillLandscape = 6,
+                    -->
                     <ComboBoxItem
                         Content="11in wide x 8.5in tall"
                         IsSelected="True"
                         Tag="LetterLandscape" />
                     <ComboBoxItem Content="8.5in wide x 11in tall" Tag="LetterPortriat" />
                     <ComboBoxItem Content="Square" Tag="Square" />
+                    <ComboBoxItem Content="A4 Portrait" Tag="A4Portrait" />
+                    <ComboBoxItem Content="A4 Landscape" Tag="A4Landscape" />
+                    <ComboBoxItem Content="US Dollar Bill Portrait" Tag="UsDollarBillPortrait" />
+                    <ComboBoxItem Content="US Dollar Bill Landscape" Tag="UsDollarBillLandscape" />
                 </ComboBox>
                 <Button
                     x:Name="Save"
