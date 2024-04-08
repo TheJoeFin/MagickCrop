@@ -1,6 +1,6 @@
 # MagickCrop
 
-![A piece of paper on a table in need of correction](LetterPaperTest.jpg)
+![A piece of paper on a table in need of correction](Magick-Crop.png)
 Using ImageMagick to via to correct perspective distortion in images.
 
 - GitHub: https://github.com/dlemstra/Magick.NET
