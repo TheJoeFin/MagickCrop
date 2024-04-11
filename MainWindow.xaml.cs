@@ -1,12 +1,15 @@
 ﻿using ImageMagick;
 using Microsoft.Win32;
+using System.Diagnostics;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using static System.Net.WebRequestMethods;
 
 namespace MagickCrop;
 /// <summary>
@@ -291,6 +294,15 @@ public partial class MainWindow : Window
             clickedPoint = e.GetPosition(ShapeCanvas);
             isPanning = true;
         }
+    }
+
+    private void Hyperlink_Click(object sender, RoutedEventArgs e)
+    {
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "https://www.JoeFinApps.com",
+            UseShellExecute = true
+        });
     }
 }
 

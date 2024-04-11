@@ -5,7 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:MagickCrop"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="MainWindow"
+    Title="Magick Crop by TheJoeFin v1.1"
     Width="800"
     Height="650"
     Background="Gray"
@@ -76,6 +76,7 @@
                         VerticalAlignment="Center"
                         FontWeight="Medium"
                         TextWrapping="Wrap">
+                        <Hyperlink Click="Hyperlink_Click" NavigateUri="https://www.JoeFinApps.com">Hello There!</Hyperlink>
                         Scroll to Zoom,<LineBreak />
                         Click and drag to pan and move points.</TextBlock>
                     <Button
