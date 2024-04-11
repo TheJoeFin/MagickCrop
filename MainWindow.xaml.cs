@@ -126,7 +126,8 @@ public partial class MainWindow : Window
         SaveFileDialog saveFileDialog = new()
         {
             InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
-            Filter = "Image Files|*.png;*.jpg;*.jpeg;*.heic;*.bmp|All files (*.*)|*.*"
+            Filter = "Image Files|*.jpg;",
+            RestoreDirectory = true,
         };
 
         if (saveFileDialog.ShowDialog() is not true || lines is null)
@@ -224,7 +225,8 @@ public partial class MainWindow : Window
         OpenFileDialog openFileDialog = new()
         {
             InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
-            Filter = "Image Files|*.png;*.jpg;*.jpeg;*.heic;*.bmp|All files (*.*)|*.*"
+            Filter = "Image Files|*.png;*.jpg;*.jpeg;*.heic;*.bmp|All files (*.*)|*.*",
+            RestoreDirectory = true,
         };
 
         if (openFileDialog.ShowDialog() != true)
