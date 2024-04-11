@@ -72,9 +72,12 @@
                         ShadowDepth="4" />
                 </Border.Effect>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock VerticalAlignment="Center" FontWeight="Medium">
-                        Scroll to Zoom, Middle mouse to pan
-                    </TextBlock>
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontWeight="Medium"
+                        TextWrapping="Wrap">
+                        Scroll to Zoom,<LineBreak />
+                        Click and drag to pan and move points.</TextBlock>
                     <Button
                         x:Name="OpenFileButton"
                         Click="OpenFileButton_Click"
