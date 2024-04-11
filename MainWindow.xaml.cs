@@ -20,6 +20,7 @@ public partial class MainWindow : Window
     private int pointDraggingIndex = -1;
     private Polygon? lines;
     private string? imagePath;
+    private string? savedPath;
 
     private bool isPanning = false;
 
@@ -90,7 +91,7 @@ public partial class MainWindow : Window
 
     private void PanCanvas(MouseEventArgs e)
     {
-        if (Mouse.MiddleButton == MouseButtonState.Released)
+        if (Mouse.MiddleButton == MouseButtonState.Released && Mouse.LeftButton == MouseButtonState.Released)
         {
             isPanning = false;
             return;
@@ -122,14 +123,19 @@ public partial class MainWindow : Window
 
     private async void Save_Click(object sender, RoutedEventArgs e)
     {
-        string? folder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+        SaveFileDialog saveFileDialog = new()
+        {
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+            Filter = "Image Files|*.png;*.jpg;*.jpeg;*.heic;*.bmp|All files (*.*)|*.*"
+        };
 
-        if (folder is null || lines is null)
+        if (saveFileDialog.ShowDialog() is not true || lines is null)
             return;
 
-        string correctedImageFileName = $"{folder}\\LetterPaperTest-corrected.jpg";
-        if (string.IsNullOrEmpty(imagePath))
-            imagePath = $"{folder}\\LetterPaperTest.jpg";
+        string correctedImageFileName = saveFileDialog.FileName;
+
+        if (string.IsNullOrWhiteSpace(imagePath) || string.IsNullOrWhiteSpace(correctedImageFileName))
+            return;
 
         AspectRatio aspectRatioEnum = AspectRatio.LetterLandscape;
         if (AspectRatioComboBox.SelectedItem is ComboBoxItem boxItem && boxItem.Tag is string tag)
@@ -210,6 +216,7 @@ public partial class MainWindow : Window
         image.Distort(DistortMethod.Perspective, distortSettings, arguments);
         await image.WriteAsync(correctedImageFileName);
         OpenFolderButton.IsEnabled = true;
+        savedPath = correctedImageFileName;
     }
 
     private void OpenFileButton_Click(object sender, RoutedEventArgs e)
@@ -223,6 +230,7 @@ public partial class MainWindow : Window
         if (openFileDialog.ShowDialog() != true)
             return;
 
+        Save.IsEnabled = true;
         BitmapImage bitmap = new();
         bitmap.BeginInit();
         bitmap.UriSource = new(openFileDialog.FileName);
@@ -233,12 +241,12 @@ public partial class MainWindow : Window
 
     private void OpenFolderButton_Click(object sender, RoutedEventArgs e)
     {
-        string? folder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-
-        if (folder is null || lines is null)
+        string? folderPath = System.IO.Path.GetDirectoryName(savedPath);
+        
+        if (folderPath is null || lines is null)
             return;
 
-        System.Diagnostics.Process.Start("explorer.exe", folder);
+        System.Diagnostics.Process.Start("explorer.exe", folderPath);
     }
 
     private static object? GetPrivatePropertyValue(object obj, string propName)
@@ -280,7 +288,7 @@ public partial class MainWindow : Window
 
     private void ShapeCanvas_MouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (Mouse.MiddleButton == MouseButtonState.Pressed)
+        if (Mouse.MiddleButton == MouseButtonState.Pressed || Mouse.LeftButton == MouseButtonState.Pressed)
         {
             clickedPoint = e.GetPosition(ShapeCanvas);
             isPanning = true;

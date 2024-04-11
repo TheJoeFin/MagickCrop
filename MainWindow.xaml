@@ -28,14 +28,12 @@
     </Window.Resources>
     <ScrollViewer>
         <Grid>
-            <Canvas
-                x:Name="ShapeCanvas"
-                MouseDown="ShapeCanvas_MouseDown"
-                PreviewMouseWheel="ShapeCanvas_PreviewMouseWheel">
+            <Canvas x:Name="ShapeCanvas" PreviewMouseWheel="ShapeCanvas_PreviewMouseWheel">
                 <Image
                     x:Name="MainImage"
                     Height="600"
-                    Source="/LetterPaperTest.jpg" />
+                    Cursor="Hand"
+                    MouseDown="ShapeCanvas_MouseDown" />
                 <Ellipse
                     x:Name="TopLeft"
                     Canvas.Left="100"
@@ -109,7 +107,8 @@
                     <Button
                         x:Name="Save"
                         Click="Save_Click"
-                        Content="Save" />
+                        Content="Save"
+                        IsEnabled="False" />
                     <Button
                         x:Name="OpenFolderButton"
                         Margin="0,20,20,20"
