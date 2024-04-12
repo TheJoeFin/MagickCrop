@@ -7,7 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:wpfui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="Magick Crop by TheJoeFin v1.1"
-    Width="900"
+    Width="1000"
     Height="700"
     Background="Gray"
     MouseMove="TopLeft_MouseMove"
@@ -120,7 +120,7 @@
                                 Content="11in wide x 8.5in tall"
                                 IsSelected="True"
                                 Tag="LetterLandscape" />
-                            <ComboBoxItem Content="8.5in wide x 11in tall" Tag="LetterPortriat" />
+                            <ComboBoxItem Content="8.5in wide x 11in tall" Tag="LetterPortrait" />
                             <ComboBoxItem Content="Square" Tag="Square" />
                             <ComboBoxItem Content="A4 Portrait" Tag="A4Portrait" />
                             <ComboBoxItem Content="A4 Landscape" Tag="A4Landscape" />

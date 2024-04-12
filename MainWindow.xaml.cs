@@ -131,7 +131,6 @@ public partial class MainWindow : FluentWindow
         BottomPane.Cursor = Cursors.Wait;
         SaveFileDialog saveFileDialog = new()
         {
-            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
             Filter = "Image Files|*.jpg;",
             RestoreDirectory = true,
         };
@@ -235,21 +234,38 @@ public partial class MainWindow : FluentWindow
             Bestfit = true,
         };
 
-        await Task.Run(() => image.Distort(DistortMethod.Perspective, distortSettings, arguments));
-        await image.WriteAsync(correctedImageFileName);
-        OpenFolderButton.IsEnabled = true;
-        savedPath = correctedImageFileName;
+        try
+        {
+            await Task.Run(() => image.Distort(DistortMethod.Perspective, distortSettings, arguments));
+            await image.WriteAsync(correctedImageFileName);
 
-        IsWorkingBar.Visibility = Visibility.Collapsed;
-        BottomPane.Cursor = null;
-        BottomPane.IsEnabled = true;
+            SaveWindow saveWindow = new(correctedImageFileName);
+            saveWindow.Show();
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show(
+                ex.Message,
+                "Error",
+                System.Windows.MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            OpenFolderButton.IsEnabled = true;
+            savedPath = correctedImageFileName;
+
+            IsWorkingBar.Visibility = Visibility.Collapsed;
+            BottomPane.Cursor = null;
+            BottomPane.IsEnabled = true;
+            image.Dispose();
+        }
     }
 
     private void OpenFileButton_Click(object sender, RoutedEventArgs e)
     {
         OpenFileDialog openFileDialog = new()
         {
-            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
             Filter = "Image Files|*.png;*.jpg;*.jpeg;*.heic;*.bmp|All files (*.*)|*.*",
             RestoreDirectory = true,
         };
