@@ -4,18 +4,17 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using static System.Net.WebRequestMethods;
+using Wpf.Ui.Controls;
 
 namespace MagickCrop;
 /// <summary>
 /// Interaction logic for MainWindow.xaml
 /// </summary>
-public partial class MainWindow : Window
+public partial class MainWindow : FluentWindow
 {
     private bool isDragging = false;
     private Point clickedPoint = new();
@@ -35,9 +34,10 @@ public partial class MainWindow : Window
 
     private void DrawPolyLine()
     {
+        Color color = (Color)ColorConverter.ConvertFromString("#0066FF");
         lines = new()
         {
-            Stroke = Brushes.Blue,
+            Stroke = new SolidColorBrush(color),
             StrokeThickness = 2,
             IsHitTestVisible = false,
         };
@@ -126,6 +126,8 @@ public partial class MainWindow : Window
 
     private async void Save_Click(object sender, RoutedEventArgs e)
     {
+        BottomPane.IsEnabled = false;
+        BottomPane.Cursor = Cursors.Wait;
         SaveFileDialog saveFileDialog = new()
         {
             InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
@@ -134,12 +136,22 @@ public partial class MainWindow : Window
         };
 
         if (saveFileDialog.ShowDialog() is not true || lines is null)
+        {
+            BottomPane.IsEnabled = true;
+            BottomPane.Cursor = null;
             return;
+        }
 
         string correctedImageFileName = saveFileDialog.FileName;
 
         if (string.IsNullOrWhiteSpace(imagePath) || string.IsNullOrWhiteSpace(correctedImageFileName))
+        {
+            BottomPane.IsEnabled = true;
+            BottomPane.Cursor = null;
             return;
+        }
+
+        IsWorkingBar.Visibility = Visibility.Visible;
 
         AspectRatio aspectRatioEnum = AspectRatio.LetterLandscape;
         if (AspectRatioComboBox.SelectedItem is ComboBoxItem boxItem && boxItem.Tag is string tag)
@@ -181,6 +193,10 @@ public partial class MainWindow : Window
             case AspectRatio.UsDollarBillPortrait:
                 aspectRatio = 6.14 / 2.61;
                 break;
+            case AspectRatio.Custom:
+                if (CustomHeight.Value is double height && CustomWidth.Value is double width && height != 0 && width != 0)
+                    aspectRatio = height / width;
+                break;
             default:
                 break;
         }
@@ -217,10 +233,15 @@ public partial class MainWindow : Window
         {
             Bestfit = true,
         };
-        image.Distort(DistortMethod.Perspective, distortSettings, arguments);
+
+        await Task.Run(() => image.Distort(DistortMethod.Perspective, distortSettings, arguments));
         await image.WriteAsync(correctedImageFileName);
         OpenFolderButton.IsEnabled = true;
         savedPath = correctedImageFileName;
+
+        IsWorkingBar.Visibility = Visibility.Collapsed;
+        BottomPane.Cursor = null;
+        BottomPane.IsEnabled = true;
     }
 
     private void OpenFileButton_Click(object sender, RoutedEventArgs e)
@@ -247,7 +268,7 @@ public partial class MainWindow : Window
     private void OpenFolderButton_Click(object sender, RoutedEventArgs e)
     {
         string? folderPath = System.IO.Path.GetDirectoryName(savedPath);
-        
+
         if (folderPath is null || lines is null)
             return;
 
@@ -304,6 +325,34 @@ public partial class MainWindow : Window
             UseShellExecute = true
         });
     }
+
+    private void AspectRatioComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not ComboBox comboBox || comboBox.SelectedItem is not ComboBoxItem item || !IsLoaded)
+            return;
+
+        if (item.Tag is "Custom")
+        {
+            CustomButtonGrid.Visibility = Visibility.Visible;
+            return;
+        }
+
+        CustomButtonGrid.Visibility = Visibility.Hidden;
+    }
+
+    private void CustomWidth_ValueChanged(object sender, RoutedEventArgs e)
+    {
+        if (!IsLoaded)
+            return;
+
+        double aspectRatio = double.NaN;
+
+        if (CustomHeight.Value is double height && CustomWidth.Value is double width && height != 0 && width != 0)
+            aspectRatio = height / width;
+
+        double trimmedValue = Math.Round(aspectRatio, 2);
+        CustomComboBoxItem.Content = $"Custom aspect ratio: {trimmedValue}";
+    }
 }
 
 public enum AspectRatio
@@ -315,4 +364,5 @@ public enum AspectRatio
     A4Landscape = 4,
     UsDollarBillPortrait = 5,
     UsDollarBillLandscape = 6,
+    Custom = 7,
 }
