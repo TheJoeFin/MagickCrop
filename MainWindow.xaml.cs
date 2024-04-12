@@ -40,6 +40,7 @@ public partial class MainWindow : FluentWindow
             Stroke = new SolidColorBrush(color),
             StrokeThickness = 2,
             IsHitTestVisible = false,
+            Opacity = 0.8,
         };
 
         List<Ellipse> ellipseList = ShapeCanvas.Children.OfType<Ellipse>().ToList();
@@ -288,8 +289,8 @@ public partial class MainWindow : FluentWindow
     {
         ScaleTransform scaleTransform = new()
         {
-            CenterX = ShapeCanvas.ActualWidth / 2,
-            CenterY = ShapeCanvas.ActualHeight / 2,
+            CenterX = MainImage.ActualWidth / 2,
+            CenterY = MainImage.ActualHeight / 2,
         };
 
         double startingScaleAmount = 1;
