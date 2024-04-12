@@ -9,8 +9,11 @@
     Title="Magick Crop by TheJoeFin v1.1"
     Width="1000"
     Height="700"
+    AllowDrop="True"
     Background="Gray"
     MouseMove="TopLeft_MouseMove"
+    PreviewDragOver="FluentWindow_PreviewDragOver"
+    PreviewDrop="FluentWindow_PreviewDrop"
     WindowStyle="None"
     mc:Ignorable="d">
     <Window.Resources>

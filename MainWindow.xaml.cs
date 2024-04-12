@@ -1,6 +1,7 @@
 ﻿using ImageMagick;
 using Microsoft.Win32;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
@@ -53,7 +54,6 @@ public partial class MainWindow : FluentWindow
         }
 
         ShapeCanvas.Children.Add(lines);
-        //Canvas.SetZIndex(lines, -1);
     }
 
     private void TopLeft_MouseDown(object sender, MouseButtonEventArgs e)
@@ -273,11 +273,16 @@ public partial class MainWindow : FluentWindow
         if (openFileDialog.ShowDialog() != true)
             return;
 
+        OpenImagePath(openFileDialog.FileName);
+    }
+
+    private void OpenImagePath(string imageFilePath)
+    {
         Save.IsEnabled = true;
         BitmapImage bitmap = new();
         bitmap.BeginInit();
-        bitmap.UriSource = new(openFileDialog.FileName);
-        imagePath = openFileDialog.FileName;
+        bitmap.UriSource = new(imageFilePath);
+        imagePath = imageFilePath;
         bitmap.EndInit();
         MainImage.Source = bitmap;
     }
@@ -369,6 +374,47 @@ public partial class MainWindow : FluentWindow
 
         double trimmedValue = Math.Round(aspectRatio, 2);
         CustomComboBoxItem.Content = $"Custom aspect ratio: {trimmedValue}";
+    }
+
+    private void FluentWindow_PreviewDragOver(object sender, DragEventArgs e)
+    {
+        bool isText = e.Data.GetDataPresent("Text");
+        e.Handled = true;
+
+        if (isText)
+        {
+            string textData = (string)e.Data.GetData("Text");
+            if (!File.Exists(textData))
+            {
+                e.Effects = DragDropEffects.None;
+                return;
+            }
+        }
+
+        // After here we will now allow the dropping of "non-text" content
+        e.Effects = DragDropEffects.Copy;
+        e.Handled = true;
+    }
+
+    private void FluentWindow_PreviewDrop(object sender, DragEventArgs e)
+    {
+        e.Handled = true;
+        if (e.Data.GetDataPresent("Text"))
+        {
+            if (e.Data.GetData("Text") is string filePath && File.Exists(filePath))
+                OpenImagePath(filePath);
+            return;
+        }
+
+
+        if (e.Data.GetDataPresent(DataFormats.FileDrop, true))
+        {
+            if (e.Data.GetData(DataFormats.FileDrop, true) is not string[] fileNames || fileNames.Length == 0)
+                return;
+
+            if (File.Exists(fileNames[0]))
+                OpenImagePath(fileNames[0]);
+        }
     }
 }
 

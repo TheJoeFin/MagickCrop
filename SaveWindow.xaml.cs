@@ -1,10 +1,15 @@
-﻿using System.Windows.Media.Imaging;
+﻿using MagickCrop.Models;
+using System.Windows;
+using System.Windows.Media.Imaging;
 using Wpf.Ui.Controls;
 
 namespace MagickCrop;
 
 public partial class SaveWindow : FluentWindow
 {
+    private IntPtr hBitmap;
+    private string tempPath;
+
     BitmapImage? SavedSource { get; set; }
 
     public SaveWindow(string imagePath)
@@ -13,6 +18,7 @@ public partial class SaveWindow : FluentWindow
 
         uiTitlebar.Title = $"Corrected Image {imagePath}";
 
+        tempPath = imagePath;
         Uri uriSource = new(imagePath);
         SavedSource = new BitmapImage();
         SavedSource.BeginInit();
@@ -30,5 +36,25 @@ public partial class SaveWindow : FluentWindow
         SavedSource = null;
         MainImage.Source = null;
         GC.Collect();
+    }
+
+    private void MainImage_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (SavedSource is null)
+            return;
+
+        try
+        {
+            // DoDragDrop with file thumbnail as drag image
+            var dataObject = DragDataObject.FromFile(tempPath);
+            dataObject.SetDragImage(hBitmap, (int)SavedSource.Width, (int)SavedSource.Height);
+            DragDrop.DoDragDrop(this, dataObject, DragDropEffects.Copy);
+        }
+        catch
+        {
+            // DoDragDrop without drag image
+            IDataObject dataObject = new DataObject(DataFormats.FileDrop, new[] { tempPath });
+            DragDrop.DoDragDrop(this, dataObject, DragDropEffects.Copy);
+        }
     }
 }
