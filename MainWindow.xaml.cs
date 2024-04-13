@@ -9,12 +9,12 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using Wpf.Ui;
+using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
 
 namespace MagickCrop;
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
+
 public partial class MainWindow : FluentWindow
 {
     private bool isDragging = false;
@@ -29,6 +29,12 @@ public partial class MainWindow : FluentWindow
 
     public MainWindow()
     {
+        ThemeService themeService = new();
+        themeService.SetTheme(ApplicationTheme.Dark);
+
+        Color teal = (Color)ColorConverter.ConvertFromString("#0066FF");
+        ApplicationAccentColorManager.Apply(teal);
+
         InitializeComponent();
         DrawPolyLine();
     }
@@ -194,15 +200,18 @@ public partial class MainWindow : FluentWindow
                 aspectRatio = 6.14 / 2.61;
                 break;
             case AspectRatio.Custom:
-                if (CustomHeight.Value is double height && CustomWidth.Value is double width && height != 0 && width != 0)
+                if (CustomHeight.Value is double height 
+                    && CustomWidth.Value is double width 
+                    && height != 0 
+                    && width != 0)
                     aspectRatio = height / width;
                 break;
             default:
                 break;
         }
 
-        Rect? visualContentBounds = (Rect)GetPrivatePropertyValue(lines, "VisualContentBounds");
-        Rect finalSize = new(0, 0, 1100, 850);
+        Rect? visualContentBounds = GetPrivatePropertyValue(lines, "VisualContentBounds") as Rect?;
+        Rect finalSize = new(0, 0, MainImage.ActualWidth, MainImage.ActualHeight);
 
         if (visualContentBounds is not null)
         {
@@ -273,6 +282,7 @@ public partial class MainWindow : FluentWindow
         if (openFileDialog.ShowDialog() != true)
             return;
 
+        wpfuiTitleBar.Title = $"Magick Crop: {openFileDialog.FileName}";
         OpenImagePath(openFileDialog.FileName);
     }
 
@@ -294,7 +304,7 @@ public partial class MainWindow : FluentWindow
         if (folderPath is null || lines is null)
             return;
 
-        System.Diagnostics.Process.Start("explorer.exe", folderPath);
+        Process.Start("explorer.exe", folderPath);
     }
 
     private static object? GetPrivatePropertyValue(object obj, string propName)

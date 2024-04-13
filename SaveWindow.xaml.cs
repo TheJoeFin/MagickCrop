@@ -46,7 +46,7 @@ public partial class SaveWindow : FluentWindow
         try
         {
             // DoDragDrop with file thumbnail as drag image
-            var dataObject = DragDataObject.FromFile(tempPath);
+            System.Runtime.InteropServices.ComTypes.IDataObject dataObject = DragDataObject.FromFile(tempPath);
             dataObject.SetDragImage(hBitmap, (int)SavedSource.Width, (int)SavedSource.Height);
             DragDrop.DoDragDrop(this, dataObject, DragDropEffects.Copy);
         }
