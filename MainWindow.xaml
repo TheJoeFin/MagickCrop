@@ -48,7 +48,10 @@
                 <wpfui:ImageIcon Source="/MagickCropLogo.ico" />
             </wpfui:TitleBar.Icon>
         </wpfui:TitleBar>
-        <Grid Grid.Row="1" ClipToBounds="True">
+        <Grid
+            Grid.Row="1"
+            Background="Gray"
+            ClipToBounds="True">
             <Canvas
                 x:Name="ShapeCanvas"
                 HorizontalAlignment="Stretch"
@@ -79,7 +82,6 @@
                     MouseDown="TopLeft_MouseDown"
                     Tag="2" />
                 <Ellipse
-                    x:Name="BottomLeft"
                     Canvas.Left="100"
                     Canvas.Top="525"
                     MouseDown="TopLeft_MouseDown"
