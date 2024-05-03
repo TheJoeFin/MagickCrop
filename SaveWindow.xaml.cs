@@ -1,5 +1,6 @@
 ﻿using MagickCrop.Models;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using Wpf.Ui.Controls;
 
@@ -38,10 +39,16 @@ public partial class SaveWindow : FluentWindow
         GC.Collect();
     }
 
-    private void MainImage_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    private void MainImage_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (SavedSource is null)
             return;
+
+        if (Keyboard.GetKeyStates(Key.Space) == KeyStates.Down)
+        {
+            e.Handled = true;
+            return;
+        }
 
         try
         {

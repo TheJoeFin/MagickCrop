@@ -33,9 +33,13 @@
                 <wpfui:ImageIcon Source="/MagickCropLogo.ico" />
             </wpfui:TitleBar.Icon>
         </wpfui:TitleBar>
-        <Image
-            x:Name="MainImage"
+        <Grid
             Grid.Row="1"
-            MouseLeftButtonDown="MainImage_MouseLeftButtonDown" />
+            Background="Gray"
+            ClipToBounds="True">
+            <local:ZoomBorder>
+                <Image x:Name="MainImage" MouseLeftButtonDown="MainImage_MouseLeftButtonDown" />
+            </local:ZoomBorder>
+        </Grid>
     </Grid>
 </wpfui:FluentWindow>
