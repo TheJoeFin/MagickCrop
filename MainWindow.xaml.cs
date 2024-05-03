@@ -24,6 +24,7 @@ public partial class MainWindow : FluentWindow
     private Polygon? lines;
     private string? imagePath;
     private string? savedPath;
+    private double scaleFactor = 1;
 
     private bool isPanning = false;
 
@@ -107,20 +108,19 @@ public partial class MainWindow : FluentWindow
             return;
         }
 
+
         Point currentPoint = e.GetPosition(ShapeCanvas);
         double deltaX = currentPoint.X - clickedPoint.X;
         double deltaY = currentPoint.Y - clickedPoint.Y;
 
-        TranslateTransform translateTransform = new(deltaX, deltaY);
+        if (ShapeCanvas.RenderTransform is not MatrixTransform matTrans)
+            return;
 
-        if (ShapeCanvas.RenderTransform is TranslateTransform transform)
-        {
-            translateTransform = transform;
-            translateTransform.X += deltaX;
-            translateTransform.Y += deltaY;
-        }
-
-        ShapeCanvas.RenderTransform = translateTransform;
+        Matrix mat = matTrans.Matrix;
+        mat.Translate(deltaX, deltaY);
+        matTrans.Matrix = mat;
+        e.Handled = true;
+        Debug.WriteLine($"scaleFactor: {scaleFactor}");
     }
 
     private void MovePolyline(Point newPoint)
@@ -200,9 +200,9 @@ public partial class MainWindow : FluentWindow
                 aspectRatio = 6.14 / 2.61;
                 break;
             case AspectRatio.Custom:
-                if (CustomHeight.Value is double height 
-                    && CustomWidth.Value is double width 
-                    && height != 0 
+                if (CustomHeight.Value is double height
+                    && CustomWidth.Value is double width
+                    && height != 0
                     && width != 0)
                     aspectRatio = height / width;
                 break;
@@ -318,26 +318,18 @@ public partial class MainWindow : FluentWindow
 
     private void ShapeCanvas_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        ScaleTransform scaleTransform = new()
-        {
-            CenterX = MainImage.ActualWidth / 2,
-            CenterY = MainImage.ActualHeight / 2,
-        };
+        if (ShapeCanvas.RenderTransform is not MatrixTransform matTrans)
+            return;
 
-        double startingScaleAmount = 1;
+        Point pos1 = e.GetPosition(ShapeCanvas);
 
-        if (ShapeCanvas.LayoutTransform is ScaleTransform transform)
-        {
-            scaleTransform = transform;
-            startingScaleAmount = transform.ScaleY;
-        }
+        scaleFactor = e.Delta > 0 ? 1.1 : 1 / 1.1;
 
-        if (e.Delta > 0)
-            scaleTransform.ScaleX = scaleTransform.ScaleY = (startingScaleAmount += 0.1);
-        else
-            scaleTransform.ScaleX = scaleTransform.ScaleY = (startingScaleAmount -= 0.1);
-
-        ShapeCanvas.LayoutTransform = scaleTransform;
+        Debug.WriteLine($"scaleFactor: {scaleFactor}");
+        Matrix mat = matTrans.Matrix;
+        mat.ScaleAt(scaleFactor, scaleFactor, pos1.X, pos1.Y);
+        matTrans.Matrix = mat;
+        e.Handled = true;
     }
 
     private void ShapeCanvas_MouseDown(object sender, MouseButtonEventArgs e)
@@ -425,6 +417,14 @@ public partial class MainWindow : FluentWindow
             if (File.Exists(fileNames[0]))
                 OpenImagePath(fileNames[0]);
         }
+    }
+
+    private void ResetMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (ShapeCanvas.RenderTransform is not MatrixTransform matTrans)
+            return;
+
+        matTrans.Matrix = new Matrix();
     }
 }
 

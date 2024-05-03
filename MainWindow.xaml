@@ -56,8 +56,10 @@
                 x:Name="ShapeCanvas"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
-                PreviewMouseWheel="ShapeCanvas_PreviewMouseWheel"
-                RenderTransformOrigin="0.5, 0.5">
+                PreviewMouseWheel="ShapeCanvas_PreviewMouseWheel">
+                <Canvas.RenderTransform>
+                    <MatrixTransform />
+                </Canvas.RenderTransform>
                 <Image
                     x:Name="MainImage"
                     Height="600"
@@ -86,6 +88,14 @@
                     Canvas.Top="525"
                     MouseDown="TopLeft_MouseDown"
                     Tag="3" />
+                <Canvas.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem
+                            x:Name="ResetMenuItem"
+                            Click="ResetMenuItem_Click"
+                            Header="Reset" />
+                    </ContextMenu>
+                </Canvas.ContextMenu>
             </Canvas>
 
             <Border
