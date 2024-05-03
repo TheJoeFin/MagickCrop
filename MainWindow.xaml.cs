@@ -24,9 +24,11 @@ public partial class MainWindow : FluentWindow
     private Polygon? lines;
     private string? imagePath;
     private string? savedPath;
-    private double scaleFactor = 1;
 
+    private double scaleFactor = 1;
     private bool isPanning = false;
+
+    private string openedFileName = string.Empty;
 
     public MainWindow()
     {
@@ -139,6 +141,7 @@ public partial class MainWindow : FluentWindow
         {
             Filter = "Image Files|*.jpg;",
             RestoreDirectory = true,
+            FileName = $"{openedFileName}_corrected.jpg",
         };
 
         if (saveFileDialog.ShowDialog() is not true || lines is null)
@@ -293,6 +296,7 @@ public partial class MainWindow : FluentWindow
         bitmap.BeginInit();
         bitmap.UriSource = new(imageFilePath);
         imagePath = imageFilePath;
+        openedFileName = System.IO.Path.GetFileNameWithoutExtension(imageFilePath);
         bitmap.EndInit();
         MainImage.Source = bitmap;
     }
