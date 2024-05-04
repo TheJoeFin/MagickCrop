@@ -134,38 +134,13 @@ public partial class MainWindow : FluentWindow
         lines.Points[pointDraggingIndex] = newPoint;
     }
 
-    private async void Save_Click(object sender, RoutedEventArgs e)
+    private async Task<MagickImage> CorrectDistortion(string pathOfImage)
     {
-        SetUiForLongTask();
-
-        SaveFileDialog saveFileDialog = new()
-        {
-            Filter = "Image Files|*.jpg;",
-            RestoreDirectory = true,
-            FileName = $"{openedFileName}_corrected.jpg",
-        };
-
-        if (saveFileDialog.ShowDialog() is not true || lines is null)
-        {
-            BottomPane.IsEnabled = true;
-            BottomPane.Cursor = null;
-            return;
-        }
-
-        string correctedImageFileName = saveFileDialog.FileName;
-
-        if (string.IsNullOrWhiteSpace(imagePath) || string.IsNullOrWhiteSpace(correctedImageFileName))
-        {
-            BottomPane.IsEnabled = true;
-            BottomPane.Cursor = null;
-            return;
-        }
-
         AspectRatio aspectRatioEnum = AspectRatio.LetterLandscape;
         if (AspectRatioComboBox.SelectedItem is ComboBoxItem boxItem && boxItem.Tag is string tag)
             _ = Enum.TryParse(tag, out aspectRatioEnum);
 
-        MagickImage image = new(imagePath);
+        MagickImage image = new(pathOfImage);
         double scaleFactor = image.Width / MainImage.ActualWidth;
 
         //  #   X     Y
@@ -248,6 +223,70 @@ public partial class MainWindow : FluentWindow
         try
         {
             await Task.Run(() => image.Distort(DistortMethod.Perspective, distortSettings, arguments));
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show(
+                ex.Message,
+                "Error",
+                System.Windows.MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+
+        return image;
+    }
+
+    private async void ApplyButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+            return;
+
+        SetUiForLongTask();
+
+        MagickImage image = await CorrectDistortion(imagePath);
+
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await image.WriteAsync(tempFileName);
+        imagePath = tempFileName;
+
+        MainImage.Source = image.ToBitmapSource();
+
+        if (lines is not null)
+            lines.Visibility = Visibility.Collapsed;
+
+        SetUiForCompletedTask();
+    }
+
+    private async void Save_Click(object sender, RoutedEventArgs e)
+    {
+        SetUiForLongTask();
+
+        SaveFileDialog saveFileDialog = new()
+        {
+            Filter = "Image Files|*.jpg;",
+            RestoreDirectory = true,
+            FileName = $"{openedFileName}_corrected.jpg",
+        };
+
+        if (saveFileDialog.ShowDialog() is not true || lines is null)
+        {
+            BottomPane.IsEnabled = true;
+            BottomPane.Cursor = null;
+            return;
+        }
+
+        string correctedImageFileName = saveFileDialog.FileName;
+
+        if (string.IsNullOrWhiteSpace(imagePath) || string.IsNullOrWhiteSpace(correctedImageFileName))
+        {
+            SetUiForCompletedTask();
+            return;
+        }
+
+        MagickImage image = await CorrectDistortion(imagePath);
+
+        try
+        {
             await image.WriteAsync(correctedImageFileName);
 
             OpenFolderButton.IsEnabled = true;

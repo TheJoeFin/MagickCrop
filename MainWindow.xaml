@@ -253,12 +253,18 @@
                         <wpfui:SymbolIcon Symbol="ImageEdit24" />
                     </wpfui:DropDownButton>
                     <Button
+                        x:Name="ApplyButton"
+                        Margin="8,4"
+                        Click="ApplyButton_Click"
+                        Content="Apply"
+                        ToolTip="Apply Transform" />
+                    <Button
                         x:Name="Save"
                         Margin="8,4"
                         Click="Save_Click"
                         Content="Save"
                         IsEnabled="False"
-                        ToolTip="Apply Transform and Save File" />
+                        ToolTip="Apply Transform, Save, and Preview file" />
                     <Button
                         x:Name="OpenFolderButton"
                         Margin="8,4"
