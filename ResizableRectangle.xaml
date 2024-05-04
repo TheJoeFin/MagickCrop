@@ -7,9 +7,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Width="300"
     Height="300"
-    d:DesignHeight="100"
-    d:DesignWidth="200"
-    Cursor="ScrollAll"
+    Padding="50"
+    Background="Transparent"
     MouseMove="UserControl_MouseMove"
     mc:Ignorable="d">
     <UserControl.Resources>
@@ -26,6 +25,7 @@
     <Grid>
         <Rectangle
             x:Name="rectangle"
+            Cursor="ScrollAll"
             Fill="Transparent"
             MouseDown="element_MouseDown"
             Stroke="Blue"

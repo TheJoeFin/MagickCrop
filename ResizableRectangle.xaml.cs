@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Diagnostics;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -12,6 +13,7 @@ public partial class ResizableRectangle : UserControl
     private MovingKind KindOfMove = MovingKind.None;
     private Point? MouseDownPoint = null;
     private Point? MouseDownCanvasPoint = null;
+    private Size? OldSize = null;
 
     public ResizableRectangle()
     {
@@ -25,23 +27,25 @@ public partial class ResizableRectangle : UserControl
     {
         if (Mouse.LeftButton == MouseButtonState.Released
             || KindOfMove == MovingKind.None
+            || OldSize is null
             || MouseDownPoint is null
             || MouseDownCanvasPoint is null)
         {
             KindOfMove = MovingKind.None;
             MouseDownPoint = null;
             MouseDownCanvasPoint = null;
+            OldSize = null;
             ReleaseMouseCapture();
             return;
         }
 
         Point position = e.GetPosition(Parent as FrameworkElement);
-        double prevLeft = Canvas.GetLeft(this);
-        double prevTop = Canvas.GetTop(this);
 
         // get delta of mouse move
         double canvasDeltaX = position.X - MouseDownCanvasPoint.Value.X;
         double canvasDeltaY = position.Y - MouseDownCanvasPoint.Value.Y;
+
+        Debug.WriteLine($"canvasDeltaX = {canvasDeltaX}, canvasDeltaY = {canvasDeltaY}");
 
         switch (KindOfMove)
         {
@@ -50,38 +54,38 @@ public partial class ResizableRectangle : UserControl
                 Canvas.SetTop(this, position.Y - MouseDownPoint.Value.Y);
                 break;
             case MovingKind.TopLeft:
-                Canvas.SetLeft(this, prevLeft + canvasDeltaX);
-                Canvas.SetTop(this, prevTop + canvasDeltaY);
-                Width -= canvasDeltaX;
-                Height -= canvasDeltaY;
+                Canvas.SetLeft(this, position.X - MouseDownPoint.Value.X);
+                Canvas.SetTop(this, position.Y - MouseDownPoint.Value.Y);
+                Width = OldSize.Value.Width - canvasDeltaX;
+                Height = OldSize.Value.Height - canvasDeltaY;
                 break;
             case MovingKind.TopRight:
-                Canvas.SetTop(this, prevTop + canvasDeltaY);
-                Width += canvasDeltaX;
-                Height -= canvasDeltaY;
+                Canvas.SetTop(this, position.Y - MouseDownPoint.Value.Y);
+                Width = OldSize.Value.Width + canvasDeltaX;
+                Height = OldSize.Value.Height - canvasDeltaY;
                 break;
             case MovingKind.BottomLeft:
-                Canvas.SetLeft(this, prevLeft + canvasDeltaX);
-                Width -= canvasDeltaX;
-                Height += canvasDeltaY;
+                Canvas.SetLeft(this, position.X - MouseDownPoint.Value.X);
+                Width = OldSize.Value.Width - canvasDeltaX;
+                Height = OldSize.Value.Height + canvasDeltaY;
                 break;
             case MovingKind.BottomRight:
-                Width += canvasDeltaX;
-                Height += canvasDeltaY;
+                Width = OldSize.Value.Width + canvasDeltaX;
+                Height = OldSize.Value.Height + canvasDeltaY;
                 break;
             case MovingKind.Top:
-                Canvas.SetTop(this, prevTop + canvasDeltaY);
-                Height -= canvasDeltaY;
+                Canvas.SetTop(this, position.Y - MouseDownPoint.Value.Y);
+                Height = OldSize.Value.Height - canvasDeltaY;
                 break;
             case MovingKind.Bottom:
-                Height += canvasDeltaY;
+                Height = OldSize.Value.Height + canvasDeltaY;
                 break;
             case MovingKind.Left:
-                Canvas.SetLeft(this, prevLeft + canvasDeltaX);
-                Width -= canvasDeltaX;
+                Canvas.SetLeft(this, position.X - MouseDownPoint.Value.X);
+                Width = OldSize.Value.Width - canvasDeltaX;
                 break;
             case MovingKind.Right:
-                Width += canvasDeltaX;
+                Width = OldSize.Value.Width + canvasDeltaX;
                 break;
         }
     }
@@ -100,6 +104,7 @@ public partial class ResizableRectangle : UserControl
         }
 
         // CaptureMouse();
+        OldSize = new(Width, Height);
         MouseDownPoint = e.GetPosition(this);
         MouseDownCanvasPoint = e.GetPosition(Parent as FrameworkElement);
     }
