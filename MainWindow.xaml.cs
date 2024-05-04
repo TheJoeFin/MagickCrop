@@ -1,5 +1,6 @@
 ﻿using ImageMagick;
 using Microsoft.Win32;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -135,8 +136,8 @@ public partial class MainWindow : FluentWindow
 
     private async void Save_Click(object sender, RoutedEventArgs e)
     {
-        BottomPane.IsEnabled = false;
-        BottomPane.Cursor = Cursors.Wait;
+        SetUiForLongTask();
+
         SaveFileDialog saveFileDialog = new()
         {
             Filter = "Image Files|*.jpg;",
@@ -159,8 +160,6 @@ public partial class MainWindow : FluentWindow
             BottomPane.Cursor = null;
             return;
         }
-
-        IsWorkingBar.Visibility = Visibility.Visible;
 
         AspectRatio aspectRatioEnum = AspectRatio.LetterLandscape;
         if (AspectRatioComboBox.SelectedItem is ComboBoxItem boxItem && boxItem.Tag is string tag)
@@ -251,6 +250,7 @@ public partial class MainWindow : FluentWindow
             await Task.Run(() => image.Distort(DistortMethod.Perspective, distortSettings, arguments));
             await image.WriteAsync(correctedImageFileName);
 
+            OpenFolderButton.IsEnabled = true;
             SaveWindow saveWindow = new(correctedImageFileName);
             saveWindow.Show();
         }
@@ -264,14 +264,25 @@ public partial class MainWindow : FluentWindow
         }
         finally
         {
-            OpenFolderButton.IsEnabled = true;
             savedPath = correctedImageFileName;
 
-            IsWorkingBar.Visibility = Visibility.Collapsed;
-            BottomPane.Cursor = null;
-            BottomPane.IsEnabled = true;
+            SetUiForCompletedTask();
             image.Dispose();
         }
+    }
+
+    private void SetUiForLongTask()
+    {
+        BottomPane.IsEnabled = false;
+        BottomPane.Cursor = Cursors.Wait;
+        IsWorkingBar.Visibility = Visibility.Visible;
+    }
+
+    private void SetUiForCompletedTask()
+    {
+        IsWorkingBar.Visibility = Visibility.Collapsed;
+        BottomPane.Cursor = null;
+        BottomPane.IsEnabled = true;
     }
 
     private void OpenFileButton_Click(object sender, RoutedEventArgs e)
@@ -295,9 +306,17 @@ public partial class MainWindow : FluentWindow
         BitmapImage bitmap = new();
         bitmap.BeginInit();
         bitmap.UriSource = new(imageFilePath);
+
+        // TODO find a solution for rotating images
+        // This is a way to open a file and rotate it based on the EXIF data
+        // But this does not work today because the points do not align with the newly rotated image
+        //
+        //System.Drawing.RotateFlipType rotateFlipType = ImageMethods.GetRotateFlipType(imageFilePath);
+        // ImageMethods.RotateImage(bitmap, rotateFlipType);
+        bitmap.EndInit();
+
         imagePath = imageFilePath;
         openedFileName = System.IO.Path.GetFileNameWithoutExtension(imageFilePath);
-        bitmap.EndInit();
         MainImage.Source = bitmap;
     }
 
@@ -429,6 +448,196 @@ public partial class MainWindow : FluentWindow
             return;
 
         matTrans.Matrix = new Matrix();
+    }
+
+    private async void AutoContrastMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+            return;
+
+        SetUiForLongTask();
+
+        MagickImage magickImage = new(imagePath);
+        await Task.Run(() =>  magickImage.SigmoidalContrast(5));
+
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await magickImage.WriteAsync(tempFileName);
+        imagePath = tempFileName;
+
+        MainImage.Source = magickImage.ToBitmapSource();
+
+        SetUiForCompletedTask();
+    }
+
+    private async void WhiteBalanceMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+            return;
+
+        SetUiForLongTask();
+
+        MagickImage magickImage = new(imagePath);
+        await Task.Run(() => magickImage.WhiteBalance());
+
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await magickImage.WriteAsync(tempFileName);
+        imagePath = tempFileName;
+
+        MainImage.Source = magickImage.ToBitmapSource();
+
+        SetUiForCompletedTask();
+    }
+
+    private async void BlackPointMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+            return;
+
+        SetUiForLongTask();
+
+        MagickImage magickImage = new(imagePath);
+        await Task.Run(() => magickImage.BlackThreshold(new Percentage(10)));
+
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await magickImage.WriteAsync(tempFileName);
+        imagePath = tempFileName;
+
+        MainImage.Source = magickImage.ToBitmapSource();
+
+        SetUiForCompletedTask();
+    }
+
+    private async void WhitePointMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+            return;
+
+        SetUiForLongTask();
+
+        MagickImage magickImage = new(imagePath);
+        await Task.Run(() => magickImage.WhiteThreshold(new Percentage(90)));
+
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await magickImage.WriteAsync(tempFileName);
+        imagePath = tempFileName;
+
+        MainImage.Source = magickImage.ToBitmapSource();
+
+        SetUiForCompletedTask();
+    }
+
+    private async void GrayscaleMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+            return;
+
+        SetUiForLongTask();
+
+        MagickImage magickImage = new(imagePath);
+        await Task.Run(() => magickImage.Grayscale());
+
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await magickImage.WriteAsync(tempFileName);
+        imagePath = tempFileName;
+
+        MainImage.Source = magickImage.ToBitmapSource();
+
+        SetUiForCompletedTask();
+    }
+
+    private async void InvertMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+            return;
+
+        SetUiForLongTask();
+
+        MagickImage magickImage = new(imagePath);
+        await Task.Run(() => magickImage.Negate());
+
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await magickImage.WriteAsync(tempFileName);
+        imagePath = tempFileName;
+
+        MainImage.Source = magickImage.ToBitmapSource();
+
+        SetUiForCompletedTask();
+    }
+
+    private async void AutoLevelsMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+            return;
+
+        SetUiForLongTask();
+
+        MagickImage magickImage = new(imagePath);
+        await Task.Run(() => magickImage.AutoLevel());
+
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await magickImage.WriteAsync(tempFileName);
+        imagePath = tempFileName;
+
+        MainImage.Source = magickImage.ToBitmapSource();
+
+        SetUiForCompletedTask();
+    }
+
+    private async void AutoGammaMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+            return;
+
+        SetUiForLongTask();
+
+        MagickImage magickImage = new(imagePath);
+        await Task.Run(() => magickImage.AutoGamma());
+
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await magickImage.WriteAsync(tempFileName);
+        imagePath = tempFileName;
+
+        MainImage.Source = magickImage.ToBitmapSource();
+
+        SetUiForCompletedTask();
+    }
+
+    private async void Rotate90CwMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+            return;
+
+        SetUiForLongTask();
+
+        MagickImage magickImage = new(imagePath);
+        await Task.Run(() => magickImage.Rotate(90));
+
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await magickImage.WriteAsync(tempFileName);
+        imagePath = tempFileName;
+
+        MainImage.Source = magickImage.ToBitmapSource();
+
+        SetUiForCompletedTask();
+    }
+
+    private async void Rotate90CcwMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+            return;
+
+        SetUiForLongTask();
+
+        MagickImage magickImage = new(imagePath);
+        await Task.Run(() => magickImage.Rotate(-90));
+
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await magickImage.WriteAsync(tempFileName);
+        imagePath = tempFileName;
+
+        MainImage.Source = magickImage.ToBitmapSource();
+
+        SetUiForCompletedTask();
     }
 }
 

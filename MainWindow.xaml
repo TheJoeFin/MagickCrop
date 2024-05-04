@@ -116,7 +116,12 @@
                         FontWeight="Medium"
                         Foreground="{wpfui:ThemeResource TextFillColorPrimaryBrush}"
                         TextWrapping="Wrap">
-                        <Hyperlink Click="Hyperlink_Click" NavigateUri="https://www.JoeFinApps.com">Hello There!</Hyperlink>
+                        <Hyperlink
+                            Click="Hyperlink_Click"
+                            NavigateUri="https://www.JoeFinApps.com"
+                            ToolTip="Learn more about the app developer of this app at JoeFinApps.com">
+                            Hello There!
+                        </Hyperlink>
                         Scroll to Zoom,<LineBreak />
                         Click and drag to pan and move points.</TextBlock>
                     <Button
@@ -190,11 +195,63 @@
                                 </Grid>
                             </wpfui:Flyout>
                             <ToggleButton x:Name="EditToggleButton" Margin="8,4">
-                                <wpfui:SymbolIcon Symbol="Edit24" />
+                                <wpfui:SymbolIcon Symbol="RatioOneToOne24" />
                             </ToggleButton>
                         </Grid>
 
                     </StackPanel>
+                    <wpfui:DropDownButton
+                        x:Name="AdjustButton"
+                        Margin="8,4"
+                        ToolTip="Adjust colors and contrast of the image">
+                        <wpfui:DropDownButton.Flyout>
+                            <ContextMenu>
+                                <MenuItem
+                                    Name="AutoContrastMenuItem"
+                                    Click="AutoContrastMenuItem_Click"
+                                    Header="5% Auto Contrast" />
+                                <MenuItem
+                                    Name="BlackPointMenuItem"
+                                    Click="BlackPointMenuItem_Click"
+                                    Header="10% Black Threshold" />
+                                <MenuItem
+                                    Name="WhitePointMenuItem"
+                                    Click="WhitePointMenuItem_Click"
+                                    Header="10% White Threshold" />
+                                <Separator />
+                                <MenuItem
+                                    Name="GrayscaleMenuItem"
+                                    Click="GrayscaleMenuItem_Click"
+                                    Header="Grayscale" />
+                                <MenuItem
+                                    Name="InvertMenuItem"
+                                    Click="InvertMenuItem_Click"
+                                    Header="Invert Colors" />
+                                <MenuItem
+                                    Name="WhiteBalanceMenuItem"
+                                    Click="WhiteBalanceMenuItem_Click"
+                                    Header="Auto White Balance" />
+                                <MenuItem
+                                    Name="AutoLevelsMenuItem"
+                                    Click="AutoLevelsMenuItem_Click"
+                                    Header="Auto Level" />
+                                <MenuItem
+                                    Name="AutoGammaMenuItem"
+                                    Click="AutoGammaMenuItem_Click"
+                                    Header="Auto Gamma" />
+                                <Separator />
+                                <MenuItem
+                                    Name="Rotate90CwMenuItem"
+                                    Click="Rotate90CwMenuItem_Click"
+                                    Header="Rotate 90° Clockwise" />
+                                <MenuItem
+                                    Name="Rotate90CcwMenuItem"
+                                    Click="Rotate90CcwMenuItem_Click"
+                                    Header="Rotate 90° Counter-Clockwise" />
+                            </ContextMenu>
+                        </wpfui:DropDownButton.Flyout>
+                        <wpfui:SymbolIcon Symbol="ImageEdit24" />
+                    </wpfui:DropDownButton>
                     <Button
                         x:Name="Save"
                         Margin="8,4"
