@@ -39,4 +39,19 @@ internal static class ImageExtensions
 
         return rot;
     }
+
+    internal static bool SetExifOrientation(this Image img, RotateFlipType rot)
+    {
+        byte[] propValue = BitConverter.GetBytes((ushort)rot);
+        if (img.GetPropertyItem(exifOrientationID) is not PropertyItem prop)
+            return false;
+
+        prop.Id = exifOrientationID;
+        prop.Type = 3;
+        prop.Len = propValue.Length;
+        prop.Value = propValue;
+
+        img.SetPropertyItem(prop);
+        return true;
+    }
 }

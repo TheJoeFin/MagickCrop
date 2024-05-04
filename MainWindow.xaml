@@ -90,15 +90,7 @@
                     MouseDown="TopLeft_MouseDown"
                     Tag="3" />
 
-                <local:ResizableRectangle />
-                <Canvas.ContextMenu>
-                    <ContextMenu>
-                        <MenuItem
-                            x:Name="ResetMenuItem"
-                            Click="ResetMenuItem_Click"
-                            Header="Reset" />
-                    </ContextMenu>
-                </Canvas.ContextMenu>
+                <local:ResizableRectangle x:Name="CroppingRectangle" Visibility="Collapsed" />
             </Canvas>
 
             <Border
@@ -280,7 +272,7 @@
                                 x:Name="ApplyCropButton"
                                 Margin="0,0,6,0"
                                 Appearance="Primary"
-                                Click="ResetButton_Click"
+                                Click="ApplyCropButton_Click"
                                 Content="Apply Crop" />
                             <wpfui:Button
                                 x:Name="CancelCropButton"
@@ -293,6 +285,8 @@
                             Margin="8,4"
                             Click="ApplyButton_Click"
                             Content="Apply"
+                            IsDefault="True"
+                            IsEnabled="False"
                             ToolTip="Apply Transform" />
                         <Button
                             x:Name="Save"
@@ -318,6 +312,15 @@
                 Foreground="#0066FF"
                 IsIndeterminate="True"
                 Visibility="Collapsed" />
+
+            <Grid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem
+                        x:Name="ResetMenuItem"
+                        Click="ResetMenuItem_Click"
+                        Header="Reset" />
+                </ContextMenu>
+            </Grid.ContextMenu>
         </Grid>
     </Grid>
 </wpfui:FluentWindow>

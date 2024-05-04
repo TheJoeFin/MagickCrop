@@ -1,8 +1,8 @@
-﻿using System.Diagnostics;
+﻿using ImageMagick;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 
 namespace MagickCrop;
 /// <summary>
@@ -21,6 +21,15 @@ public partial class ResizableRectangle : UserControl
 
         Canvas.SetLeft(this, 100);
         Canvas.SetTop(this, 100);
+    }
+
+    public MagickGeometry CropShape
+    {
+        get => new(
+        (int)(Canvas.GetLeft(this) + Padding.Left),
+        (int)(Canvas.GetTop(this) + Padding.Top),
+        (int)rectangle.ActualWidth,
+        (int)rectangle.ActualHeight);
     }
 
     private void UserControl_MouseMove(object sender, MouseEventArgs e)

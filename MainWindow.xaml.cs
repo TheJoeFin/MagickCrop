@@ -31,6 +31,8 @@ public partial class MainWindow : FluentWindow
 
     private string openedFileName = string.Empty;
 
+    private List<UIElement> _polygonElements;
+
     public MainWindow()
     {
         ThemeService themeService = new();
@@ -41,6 +43,7 @@ public partial class MainWindow : FluentWindow
 
         InitializeComponent();
         DrawPolyLine();
+        _polygonElements = [lines, TopLeft, TopRight, BottomRight, BottomLeft];
     }
 
     private void DrawPolyLine()
@@ -140,6 +143,9 @@ public partial class MainWindow : FluentWindow
 
     private async Task<MagickImage> CorrectDistortion(string pathOfImage)
     {
+        if (lines is null)
+            return new();
+
         AspectRatio aspectRatioEnum = AspectRatio.LetterLandscape;
         if (AspectRatioComboBox.SelectedItem is ComboBoxItem boxItem && boxItem.Tag is string tag)
             _ = Enum.TryParse(tag, out aspectRatioEnum);
@@ -255,8 +261,8 @@ public partial class MainWindow : FluentWindow
 
         MainImage.Source = image.ToBitmapSource();
 
-        if (lines is not null)
-            lines.Visibility = Visibility.Collapsed;
+        foreach (UIElement element in _polygonElements)
+            element.Visibility = Visibility.Collapsed;
 
         SetUiForCompletedTask();
     }
@@ -328,7 +334,7 @@ public partial class MainWindow : FluentWindow
         BottomPane.IsEnabled = true;
     }
 
-    private void OpenFileButton_Click(object sender, RoutedEventArgs e)
+    private async void OpenFileButton_Click(object sender, RoutedEventArgs e)
     {
         OpenFileDialog openFileDialog = new()
         {
@@ -340,27 +346,24 @@ public partial class MainWindow : FluentWindow
             return;
 
         wpfuiTitleBar.Title = $"Magick Crop: {openFileDialog.FileName}";
-        OpenImagePath(openFileDialog.FileName);
+        await OpenImagePath(openFileDialog.FileName);
     }
 
-    private void OpenImagePath(string imageFilePath)
+    private async Task OpenImagePath(string imageFilePath)
     {
         Save.IsEnabled = true;
-        BitmapImage bitmap = new();
-        bitmap.BeginInit();
-        bitmap.UriSource = new(imageFilePath);
+        ApplyButton.IsEnabled = true;
+        MagickImage bitmap = new(imageFilePath);
+        bitmap.AutoOrient();
 
-        // TODO find a solution for rotating images
-        // This is a way to open a file and rotate it based on the EXIF data
-        // But this does not work today because the points do not align with the newly rotated image
-        //
-        //System.Drawing.RotateFlipType rotateFlipType = ImageMethods.GetRotateFlipType(imageFilePath);
-        // ImageMethods.RotateImage(bitmap, rotateFlipType);
-        bitmap.EndInit();
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await bitmap.WriteAsync(tempFileName);
 
-        imagePath = imageFilePath;
+        MagickImage bitmapImage = new(tempFileName);
+
+        imagePath = tempFileName;
         openedFileName = System.IO.Path.GetFileNameWithoutExtension(imageFilePath);
-        MainImage.Source = bitmap;
+        MainImage.Source = bitmapImage.ToBitmapSource();
     }
 
     private void OpenFolderButton_Click(object sender, RoutedEventArgs e)
@@ -464,13 +467,13 @@ public partial class MainWindow : FluentWindow
         e.Handled = true;
     }
 
-    private void FluentWindow_PreviewDrop(object sender, DragEventArgs e)
+    private async void FluentWindow_PreviewDrop(object sender, DragEventArgs e)
     {
         e.Handled = true;
         if (e.Data.GetDataPresent("Text"))
         {
             if (e.Data.GetData("Text") is string filePath && File.Exists(filePath))
-                OpenImagePath(filePath);
+                await OpenImagePath(filePath);
             return;
         }
 
@@ -481,7 +484,7 @@ public partial class MainWindow : FluentWindow
                 return;
 
             if (File.Exists(fileNames[0]))
-                OpenImagePath(fileNames[0]);
+                await OpenImagePath(fileNames[0]);
         }
     }
 
@@ -683,15 +686,11 @@ public partial class MainWindow : FluentWindow
         SetUiForCompletedTask();
     }
 
-    private void CropImage_Click(object sender, RoutedEventArgs e)
+    private void SquareThePolygon()
     {
         if (lines is null)
             return;
 
-        isCropping = true;
-        ApplyButton.Visibility = Visibility.Collapsed;
-        CropButtonPanel.Visibility = Visibility.Visible;
-        
         Point topLeftPoint = lines.Points[0];
         Point bottomRightPoint = lines.Points[2];
 
@@ -709,25 +708,61 @@ public partial class MainWindow : FluentWindow
 
         Canvas.SetLeft(BottomLeft, newBottomLeft.X - (BottomLeft.Width / 2));
         Canvas.SetTop(BottomLeft, newBottomLeft.Y - (BottomLeft.Height / 2));
-
-        lines.Visibility = Visibility.Visible;
-        lines.StrokeDashArray = new DoubleCollection([2, 2]);
     }
 
-    private void ResetButton_Click(object sender, RoutedEventArgs e)
+    private void CropImage_Click(object sender, RoutedEventArgs e)
+    {
+        isCropping = true;
+        ApplyButton.Visibility = Visibility.Collapsed;
+        CropButtonPanel.Visibility = Visibility.Visible;
+
+        foreach (UIElement element in _polygonElements)
+            element.Visibility = Visibility.Collapsed;
+
+        CroppingRectangle.Visibility = Visibility.Visible;
+    }
+
+    private async void ApplyCropButton_Click(object sender, RoutedEventArgs e)
     {
         CropButtonPanel.Visibility = Visibility.Collapsed;
         ApplyButton.Visibility = Visibility.Visible;
-        lines.StrokeDashArray.Clear();
 
+        foreach (UIElement element in _polygonElements)
+            element.Visibility = Visibility.Visible;
+
+        if (string.IsNullOrEmpty(imagePath))
+            return;
+
+        MagickGeometry cropGeometry = CroppingRectangle.CropShape;
+        MagickImage magickImage = new(imagePath);
+        MagickGeometry actualSize = new(magickImage.Width, magickImage.Height);
+
+        double factor = actualSize.Height / MainImage.ActualHeight;
+        cropGeometry.ScaleAll(factor);
+
+        SetUiForLongTask();
+
+        magickImage.Crop(cropGeometry);
+
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await magickImage.WriteAsync(tempFileName);
+        imagePath = tempFileName;
+
+        MainImage.Source = magickImage.ToBitmapSource();
+
+        CroppingRectangle.Visibility = Visibility.Collapsed;
+        SetUiForCompletedTask();
     }
 
     private void CancelCrop_Click(object sender, RoutedEventArgs e)
     {
         CropButtonPanel.Visibility = Visibility.Collapsed;
         ApplyButton.Visibility = Visibility.Visible;
-        lines.StrokeDashArray.Clear();
 
+        foreach (UIElement element in _polygonElements)
+            element.Visibility = Visibility.Visible;
+
+        CroppingRectangle.Visibility = Visibility.Collapsed;
     }
 }
 
