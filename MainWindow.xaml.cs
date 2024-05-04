@@ -1,6 +1,5 @@
 ﻿using ImageMagick;
 using Microsoft.Win32;
-using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -25,6 +24,7 @@ public partial class MainWindow : FluentWindow
     private Polygon? lines;
     private string? imagePath;
     private string? savedPath;
+    private bool isCropping = false;
 
     private double scaleFactor = 1;
     private bool isPanning = false;
@@ -46,6 +46,10 @@ public partial class MainWindow : FluentWindow
     private void DrawPolyLine()
     {
         Color color = (Color)ColorConverter.ConvertFromString("#0066FF");
+
+        if (lines is not null)
+            ShapeCanvas.Children.Remove(lines);
+
         lines = new()
         {
             Stroke = new SolidColorBrush(color),
@@ -497,7 +501,7 @@ public partial class MainWindow : FluentWindow
         SetUiForLongTask();
 
         MagickImage magickImage = new(imagePath);
-        await Task.Run(() =>  magickImage.SigmoidalContrast(5));
+        await Task.Run(() => magickImage.SigmoidalContrast(5));
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await magickImage.WriteAsync(tempFileName);
@@ -677,6 +681,53 @@ public partial class MainWindow : FluentWindow
         MainImage.Source = magickImage.ToBitmapSource();
 
         SetUiForCompletedTask();
+    }
+
+    private void CropImage_Click(object sender, RoutedEventArgs e)
+    {
+        if (lines is null)
+            return;
+
+        isCropping = true;
+        ApplyButton.Visibility = Visibility.Collapsed;
+        CropButtonPanel.Visibility = Visibility.Visible;
+        
+        Point topLeftPoint = lines.Points[0];
+        Point bottomRightPoint = lines.Points[2];
+
+        Point newTopRight = new(bottomRightPoint.X, topLeftPoint.Y);
+        Point newBottomLeft = new(topLeftPoint.X, bottomRightPoint.Y);
+
+        pointDraggingIndex = 1;
+        MovePolyline(newTopRight);
+        pointDraggingIndex = 3;
+        MovePolyline(newBottomLeft);
+        pointDraggingIndex = -1;
+
+        Canvas.SetLeft(TopRight, newTopRight.X - (TopRight.Width / 2));
+        Canvas.SetTop(TopRight, newTopRight.Y - (TopRight.Height / 2));
+
+        Canvas.SetLeft(BottomLeft, newBottomLeft.X - (BottomLeft.Width / 2));
+        Canvas.SetTop(BottomLeft, newBottomLeft.Y - (BottomLeft.Height / 2));
+
+        lines.Visibility = Visibility.Visible;
+        lines.StrokeDashArray = new DoubleCollection([2, 2]);
+    }
+
+    private void ResetButton_Click(object sender, RoutedEventArgs e)
+    {
+        CropButtonPanel.Visibility = Visibility.Collapsed;
+        ApplyButton.Visibility = Visibility.Visible;
+        lines.StrokeDashArray.Clear();
+
+    }
+
+    private void CancelCrop_Click(object sender, RoutedEventArgs e)
+    {
+        CropButtonPanel.Visibility = Visibility.Collapsed;
+        ApplyButton.Visibility = Visibility.Visible;
+        lines.StrokeDashArray.Clear();
+
     }
 }
 

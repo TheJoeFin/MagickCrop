@@ -84,10 +84,13 @@
                     MouseDown="TopLeft_MouseDown"
                     Tag="2" />
                 <Ellipse
+                    x:Name="BottomLeft"
                     Canvas.Left="100"
                     Canvas.Top="525"
                     MouseDown="TopLeft_MouseDown"
                     Tag="3" />
+
+                <local:ResizableRectangle />
                 <Canvas.ContextMenu>
                     <ContextMenu>
                         <MenuItem
@@ -260,10 +263,31 @@
                                         Name="Rotate90CcwMenuItem"
                                         Click="Rotate90CcwMenuItem_Click"
                                         Header="Rotate 90° Counter-Clockwise" />
+                                    <MenuItem
+                                        Name="CropImage"
+                                        Click="CropImage_Click"
+                                        Header="Crop Image" />
                                 </ContextMenu>
                             </wpfui:DropDownButton.Flyout>
                             <wpfui:SymbolIcon Symbol="ImageEdit24" />
                         </wpfui:DropDownButton>
+
+                        <StackPanel
+                            x:Name="CropButtonPanel"
+                            Orientation="Horizontal"
+                            Visibility="Collapsed">
+                            <wpfui:Button
+                                x:Name="ApplyCropButton"
+                                Margin="0,0,6,0"
+                                Appearance="Primary"
+                                Click="ResetButton_Click"
+                                Content="Apply Crop" />
+                            <wpfui:Button
+                                x:Name="CancelCropButton"
+                                Appearance="Danger"
+                                Click="CancelCrop_Click"
+                                Content="Cancel Crop" />
+                        </StackPanel>
                         <Button
                             x:Name="ApplyButton"
                             Margin="8,4"
