@@ -280,28 +280,40 @@
                                 Click="CancelCrop_Click"
                                 Content="Cancel Crop" />
                         </StackPanel>
-                        <Button
-                            x:Name="ApplyButton"
-                            Margin="8,4"
-                            Click="ApplyButton_Click"
-                            Content="Apply"
-                            IsDefault="True"
-                            IsEnabled="False"
-                            ToolTip="Apply Transform" />
-                        <Button
-                            x:Name="Save"
-                            Margin="8,4"
-                            Click="Save_Click"
-                            Content="Save"
-                            IsEnabled="False"
-                            ToolTip="Apply Transform, Save, and Preview file" />
-                        <Button
+                        <wpfui:DropDownButton
+                            x:Name="ApplySaveSplitButton"
+                            Content="Apply &amp; Save"
+                            IsEnabled="False">
+                            <wpfui:DropDownButton.Flyout>
+                                <ContextMenu>
+                                    <MenuItem
+                                        x:Name="ApplyAndSaveMenuItem"
+                                        Click="ApplySaveSplitButton_Click"
+                                        Header="Apply &amp; Save"
+                                        ToolTip="Apply Transform, Save, and Preview file" />
+                                    <MenuItem
+                                        x:Name="ApplyButton"
+                                        Click="ApplyButton_Click"
+                                        Header="Apply"
+                                        ToolTip="Apply Transform" />
+                                    <MenuItem
+                                        x:Name="Save"
+                                        Click="Save_Click"
+                                        Header="Save"
+                                        ToolTip="Apply Transform, Save, and Preview file" />
+                                </ContextMenu>
+                            </wpfui:DropDownButton.Flyout>
+                        </wpfui:DropDownButton>
+                        <wpfui:Button
                             x:Name="OpenFolderButton"
                             Margin="8,4"
                             Click="OpenFolderButton_Click"
-                            Content="Open Folder"
                             IsEnabled="False"
-                            ToolTip="Open Folder Where File Was Saved" />
+                            ToolTip="Open Folder Where File Was Saved">
+                            <wpfui:Button.Icon>
+                                <wpfui:SymbolIcon Symbol="FolderArrowRight24" />
+                            </wpfui:Button.Icon>
+                        </wpfui:Button>
                     </StackPanel>
                 </Grid>
             </Border>

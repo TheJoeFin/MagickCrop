@@ -267,7 +267,8 @@ public partial class MainWindow : FluentWindow
         SetUiForCompletedTask();
     }
 
-    private async void Save_Click(object sender, RoutedEventArgs e)
+
+    private async void ApplySaveSplitButton_Click(object sender, RoutedEventArgs e)
     {
         SetUiForLongTask();
 
@@ -282,6 +283,7 @@ public partial class MainWindow : FluentWindow
         {
             BottomPane.IsEnabled = true;
             BottomPane.Cursor = null;
+            SetUiForCompletedTask();
             return;
         }
 
@@ -294,6 +296,58 @@ public partial class MainWindow : FluentWindow
         }
 
         MagickImage image = await CorrectDistortion(imagePath);
+
+        try
+        {
+            await image.WriteAsync(correctedImageFileName);
+
+            OpenFolderButton.IsEnabled = true;
+            SaveWindow saveWindow = new(correctedImageFileName);
+            saveWindow.Show();
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show(
+                ex.Message,
+                "Error",
+                System.Windows.MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            savedPath = correctedImageFileName;
+
+            SetUiForCompletedTask();
+            image.Dispose();
+        }
+    }
+
+    private async void Save_Click(object sender, RoutedEventArgs e)
+    {
+        SaveFileDialog saveFileDialog = new()
+        {
+            Filter = "Image Files|*.jpg;",
+            RestoreDirectory = true,
+            FileName = $"{openedFileName}_corrected.jpg",
+        };
+
+        if (saveFileDialog.ShowDialog() is not true || lines is null)
+        {
+            BottomPane.IsEnabled = true;
+            BottomPane.Cursor = null;
+            SetUiForCompletedTask();
+            return;
+        }
+
+        string correctedImageFileName = saveFileDialog.FileName;
+
+        if (string.IsNullOrWhiteSpace(imagePath) || string.IsNullOrWhiteSpace(correctedImageFileName))
+        {
+            SetUiForCompletedTask();
+            return;
+        }
+
+        MagickImage image = new(imagePath);
 
         try
         {
@@ -351,6 +405,7 @@ public partial class MainWindow : FluentWindow
 
     private async Task OpenImagePath(string imageFilePath)
     {
+        ApplySaveSplitButton.IsEnabled = true;
         Save.IsEnabled = true;
         ApplyButton.IsEnabled = true;
         MagickImage bitmap = new(imageFilePath);
@@ -713,7 +768,7 @@ public partial class MainWindow : FluentWindow
     private void CropImage_Click(object sender, RoutedEventArgs e)
     {
         isCropping = true;
-        ApplyButton.Visibility = Visibility.Collapsed;
+        ApplySaveSplitButton.Visibility = Visibility.Collapsed;
         CropButtonPanel.Visibility = Visibility.Visible;
 
         foreach (UIElement element in _polygonElements)
@@ -725,7 +780,7 @@ public partial class MainWindow : FluentWindow
     private async void ApplyCropButton_Click(object sender, RoutedEventArgs e)
     {
         CropButtonPanel.Visibility = Visibility.Collapsed;
-        ApplyButton.Visibility = Visibility.Visible;
+        ApplySaveSplitButton.Visibility = Visibility.Visible;
 
         foreach (UIElement element in _polygonElements)
             element.Visibility = Visibility.Visible;
@@ -757,7 +812,7 @@ public partial class MainWindow : FluentWindow
     private void CancelCrop_Click(object sender, RoutedEventArgs e)
     {
         CropButtonPanel.Visibility = Visibility.Collapsed;
-        ApplyButton.Visibility = Visibility.Visible;
+        ApplySaveSplitButton.Visibility = Visibility.Visible;
 
         foreach (UIElement element in _polygonElements)
             element.Visibility = Visibility.Visible;
