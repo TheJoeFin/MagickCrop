@@ -35,7 +35,7 @@
 
         <wpfui:TitleBar
             x:Name="wpfuiTitleBar"
-            Title="Magick Crop by TheJoeFin v1.2.1"
+            Title="Magick Crop by TheJoeFin v1.3.0"
             Height="32"
             Foreground="{wpfui:ThemeResource TextFillColorPrimaryBrush}">
             <wpfui:TitleBar.Resources>
@@ -259,6 +259,10 @@
                                         Name="CropImage"
                                         Click="CropImage_Click"
                                         Header="Crop Image" />
+                                    <MenuItem
+                                        Name="PerspectiveCorrectionMenuItem"
+                                        Click="PerspectiveCorrectionMenuItem_Click"
+                                        Header="Perspective Correction" />
                                 </ContextMenu>
                             </wpfui:DropDownButton.Flyout>
                             <wpfui:SymbolIcon Symbol="ImageEdit24" />

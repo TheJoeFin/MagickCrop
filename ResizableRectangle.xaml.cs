@@ -1,5 +1,4 @@
 ﻿using ImageMagick;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -53,8 +52,6 @@ public partial class ResizableRectangle : UserControl
         // get delta of mouse move
         double canvasDeltaX = position.X - MouseDownCanvasPoint.Value.X;
         double canvasDeltaY = position.Y - MouseDownCanvasPoint.Value.Y;
-
-        Debug.WriteLine($"canvasDeltaX = {canvasDeltaX}, canvasDeltaY = {canvasDeltaY}");
 
         switch (KindOfMove)
         {

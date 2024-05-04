@@ -7,7 +7,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Wpf.Ui;
 using Wpf.Ui.Appearance;
@@ -32,6 +31,7 @@ public partial class MainWindow : FluentWindow
     private string openedFileName = string.Empty;
 
     private List<UIElement> _polygonElements;
+    private Visibility _perspectiveHandlesState = Visibility.Visible;
 
     public MainWindow()
     {
@@ -130,7 +130,6 @@ public partial class MainWindow : FluentWindow
         mat.Translate(deltaX, deltaY);
         matTrans.Matrix = mat;
         e.Handled = true;
-        Debug.WriteLine($"scaleFactor: {scaleFactor}");
     }
 
     private void MovePolyline(Point newPoint)
@@ -449,7 +448,6 @@ public partial class MainWindow : FluentWindow
 
         scaleFactor = e.Delta > 0 ? 1.1 : 1 / 1.1;
 
-        Debug.WriteLine($"scaleFactor: {scaleFactor}");
         Matrix mat = matTrans.Matrix;
         mat.ScaleAt(scaleFactor, scaleFactor, pos1.X, pos1.Y);
         matTrans.Matrix = mat;
@@ -771,6 +769,8 @@ public partial class MainWindow : FluentWindow
         ApplySaveSplitButton.Visibility = Visibility.Collapsed;
         CropButtonPanel.Visibility = Visibility.Visible;
 
+        _perspectiveHandlesState = TopLeft.Visibility;
+
         foreach (UIElement element in _polygonElements)
             element.Visibility = Visibility.Collapsed;
 
@@ -779,12 +779,6 @@ public partial class MainWindow : FluentWindow
 
     private async void ApplyCropButton_Click(object sender, RoutedEventArgs e)
     {
-        CropButtonPanel.Visibility = Visibility.Collapsed;
-        ApplySaveSplitButton.Visibility = Visibility.Visible;
-
-        foreach (UIElement element in _polygonElements)
-            element.Visibility = Visibility.Visible;
-
         if (string.IsNullOrEmpty(imagePath))
             return;
 
@@ -805,8 +799,14 @@ public partial class MainWindow : FluentWindow
 
         MainImage.Source = magickImage.ToBitmapSource();
 
-        CroppingRectangle.Visibility = Visibility.Collapsed;
         SetUiForCompletedTask();
+
+        foreach (UIElement element in _polygonElements)
+            element.Visibility = _perspectiveHandlesState;
+
+        CropButtonPanel.Visibility = Visibility.Collapsed;
+        ApplySaveSplitButton.Visibility = Visibility.Visible;
+        CroppingRectangle.Visibility = Visibility.Collapsed;
     }
 
     private void CancelCrop_Click(object sender, RoutedEventArgs e)
@@ -815,9 +815,19 @@ public partial class MainWindow : FluentWindow
         ApplySaveSplitButton.Visibility = Visibility.Visible;
 
         foreach (UIElement element in _polygonElements)
-            element.Visibility = Visibility.Visible;
+            element.Visibility = _perspectiveHandlesState;
 
         CroppingRectangle.Visibility = Visibility.Collapsed;
+    }
+
+    private void PerspectiveCorrectionMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        CroppingRectangle.Visibility = Visibility.Collapsed;
+
+        Visibility newState = TopLeft.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+
+        foreach (UIElement element in _polygonElements)
+            element.Visibility = newState;
     }
 }
 
