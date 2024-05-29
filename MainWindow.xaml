@@ -52,6 +52,10 @@
             Grid.Row="1"
             Background="Gray"
             ClipToBounds="True">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="auto" />
+            </Grid.ColumnDefinitions>
             <Canvas
                 x:Name="ShapeCanvas"
                 HorizontalAlignment="Stretch"
@@ -160,151 +164,146 @@
 
             <Border
                 x:Name="BottomBorder"
+                Grid.Column="1"
                 Padding="12,12"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Bottom"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Stretch"
                 Background="{wpfui:ThemeResource ApplicationBackgroundBrush}"
-                CornerRadius="8,8,0,0"
                 Visibility="Collapsed">
-                <Border.Effect>
-                    <DropShadowEffect
-                        BlurRadius="8"
-                        Direction="270"
-                        ShadowDepth="4" />
-                </Border.Effect>
-                <StackPanel
-                    x:Name="BottomPane"
-                    Grid.Row="1"
-                    Orientation="Horizontal">
-                    <wpfui:Button
-                        x:Name="ReOpenFileButton"
-                        Margin="8,4,0,4"
-                        Appearance="Transparent"
-                        Click="OpenFileButton_Click"
-                        ToolTip="Open a new image file">
-                        <wpfui:Button.Icon>
-                            <wpfui:SymbolIcon Symbol="FolderOpen24" />
-                        </wpfui:Button.Icon>
-                    </wpfui:Button>
-                    <wpfui:DropDownButton
-                        x:Name="AdjustButton"
-                        Margin="8,4"
-                        ToolTip="Adjust colors and contrast of the image">
-                        <wpfui:DropDownButton.Flyout>
-                            <ContextMenu>
-                                <MenuItem
-                                    Name="AutoContrastMenuItem"
-                                    Click="AutoContrastMenuItem_Click"
-                                    Header="5% Auto Contrast">
-                                    <MenuItem.Icon>
-                                        <wpfui:SymbolIcon Symbol="DarkTheme24" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem
-                                    Name="BlackPointMenuItem"
-                                    Click="BlackPointMenuItem_Click"
-                                    Header="10% Black Threshold">
-                                    <MenuItem.Icon>
-                                        <wpfui:SymbolIcon Symbol="WeatherMoon24" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem
-                                    Name="WhitePointMenuItem"
-                                    Click="WhitePointMenuItem_Click"
-                                    Header="10% White Threshold">
-                                    <MenuItem.Icon>
-                                        <wpfui:SymbolIcon Symbol="BrightnessHigh24" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <Separator />
-                                <MenuItem
-                                    Name="GrayscaleMenuItem"
-                                    Click="GrayscaleMenuItem_Click"
-                                    Header="Grayscale">
-                                    <MenuItem.Icon>
-                                        <wpfui:SymbolIcon Symbol="Color24" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem
-                                    Name="InvertMenuItem"
-                                    Click="InvertMenuItem_Click"
-                                    Header="Invert Colors">
-                                    <MenuItem.Icon>
-                                        <wpfui:SymbolIcon Symbol="SquareShadow20" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem
-                                    Name="WhiteBalanceMenuItem"
-                                    Click="WhiteBalanceMenuItem_Click"
-                                    Header="Auto White Balance">
-                                    <MenuItem.Icon>
-                                        <wpfui:SymbolIcon Symbol="Whiteboard24" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem
-                                    Name="AutoLevelsMenuItem"
-                                    Click="AutoLevelsMenuItem_Click"
-                                    Header="Auto Level">
-                                    <MenuItem.Icon>
-                                        <wpfui:SymbolIcon Symbol="BezierCurveSquare20" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem
-                                    Name="AutoGammaMenuItem"
-                                    Click="AutoGammaMenuItem_Click"
-                                    Header="Auto Gamma">
-                                    <MenuItem.Icon>
-                                        <wpfui:SymbolIcon Symbol="AddSubtractCircle24" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <Separator />
-                                <MenuItem
-                                    Name="Rotate90CwMenuItem"
-                                    Click="Rotate90CwMenuItem_Click"
-                                    Header="Rotate 90° Clockwise">
-                                    <MenuItem.Icon>
-                                        <wpfui:SymbolIcon Symbol="RotateRight24" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem
-                                    Name="Rotate90CcwMenuItem"
-                                    Click="Rotate90CcwMenuItem_Click"
-                                    Header="Rotate 90° Counter-Clockwise">
-                                    <MenuItem.Icon>
-                                        <wpfui:SymbolIcon Symbol="RotateLeft24" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem
-                                    Name="CropImage"
-                                    Click="CropImage_Click"
-                                    Header="Crop Image">
-                                    <MenuItem.Icon>
-                                        <wpfui:SymbolIcon Symbol="Crop24" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem
-                                    Name="PerspectiveCorrectionMenuItem"
-                                    Click="PerspectiveCorrectionMenuItem_Click"
-                                    Header="Transform Image">
-                                    <MenuItem.Icon>
-                                        <wpfui:SymbolIcon Symbol="SelectObjectSkewEdit24" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                            </ContextMenu>
-                        </wpfui:DropDownButton.Flyout>
-                        <StackPanel Orientation="Horizontal">
-                            <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="ImageEdit24" />
-                            <TextBlock Text="Tools" />
-                        </StackPanel>
-                    </wpfui:DropDownButton>
+                <Grid x:Name="BottomPane">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="auto" />
+                    </Grid.RowDefinitions>
+                    <ScrollViewer>
+                        <StackPanel Orientation="Vertical">
+                            <wpfui:Button
+                                x:Name="ReOpenFileButton"
+                                Width="160"
+                                Margin="0,0,0,8"
+                                Appearance="Transparent"
+                                Click="OpenFileButton_Click"
+                                Content="Open image..."
+                                ToolTip="Open a new image file">
+                                <wpfui:Button.Icon>
+                                    <wpfui:SymbolIcon Symbol="FolderOpen24" />
+                                </wpfui:Button.Icon>
+                            </wpfui:Button>
 
+                            <TextBlock Text="Tools" />
+                            <MenuItem
+                                Name="AutoContrastMenuItem"
+                                Click="AutoContrastMenuItem_Click"
+                                Header="5% Auto Contrast">
+                                <MenuItem.Icon>
+                                    <wpfui:SymbolIcon Symbol="DarkTheme24" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem
+                                Name="BlackPointMenuItem"
+                                Click="BlackPointMenuItem_Click"
+                                Header="10% Black Threshold">
+                                <MenuItem.Icon>
+                                    <wpfui:SymbolIcon Symbol="WeatherMoon24" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem
+                                Name="WhitePointMenuItem"
+                                Click="WhitePointMenuItem_Click"
+                                Header="10% White Threshold">
+                                <MenuItem.Icon>
+                                    <wpfui:SymbolIcon Symbol="BrightnessHigh24" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <Separator />
+                            <MenuItem
+                                Name="GrayscaleMenuItem"
+                                Click="GrayscaleMenuItem_Click"
+                                Header="Grayscale">
+                                <MenuItem.Icon>
+                                    <wpfui:SymbolIcon Symbol="Color24" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem
+                                Name="InvertMenuItem"
+                                Click="InvertMenuItem_Click"
+                                Header="Invert Colors">
+                                <MenuItem.Icon>
+                                    <wpfui:SymbolIcon Symbol="SquareShadow20" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem
+                                Name="WhiteBalanceMenuItem"
+                                Click="WhiteBalanceMenuItem_Click"
+                                Header="Auto White Balance">
+                                <MenuItem.Icon>
+                                    <wpfui:SymbolIcon Symbol="Whiteboard24" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem
+                                Name="AutoLevelsMenuItem"
+                                Click="AutoLevelsMenuItem_Click"
+                                Header="Auto Level">
+                                <MenuItem.Icon>
+                                    <wpfui:SymbolIcon Symbol="BezierCurveSquare20" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem
+                                Name="AutoGammaMenuItem"
+                                Click="AutoGammaMenuItem_Click"
+                                Header="Auto Gamma">
+                                <MenuItem.Icon>
+                                    <wpfui:SymbolIcon Symbol="AddSubtractCircle24" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <Separator />
+                            <MenuItem
+                                Name="Rotate90CwMenuItem"
+                                Click="Rotate90CwMenuItem_Click"
+                                Header="Rotate 90° CW"
+                                ToolTip="Rotate 90 degrees clockwise">
+                                <MenuItem.Icon>
+                                    <wpfui:SymbolIcon Symbol="RotateRight24" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem
+                                Name="Rotate90CcwMenuItem"
+                                Click="Rotate90CcwMenuItem_Click"
+                                Header="Rotate 90° CCW"
+                                ToolTip="Rotate 90 degrees counter-clockwise">
+                                <MenuItem.Icon>
+                                    <wpfui:SymbolIcon Symbol="RotateLeft24" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem
+                                Name="CropImage"
+                                Click="CropImage_Click"
+                                Header="Crop Image">
+                                <MenuItem.Icon>
+                                    <wpfui:SymbolIcon Symbol="Crop24" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem
+                                Name="PerspectiveCorrectionMenuItem"
+                                Click="PerspectiveCorrectionMenuItem_Click"
+                                Header="Transform Image">
+                                <MenuItem.Icon>
+                                    <wpfui:SymbolIcon Symbol="SelectObjectSkewEdit24" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+
+                        </StackPanel>
+                    </ScrollViewer>
                     <StackPanel
                         x:Name="CropButtonPanel"
-                        Orientation="Horizontal"
+                        Grid.Row="1"
+                        Orientation="Vertical"
                         Visibility="Collapsed">
                         <wpfui:Button
                             x:Name="ApplyCropButton"
-                            Margin="0,0,6,0"
+                            Width="160"
+                            Margin="0,8"
                             Appearance="Primary"
                             Click="ApplyCropButton_Click"
                             Content="Crop">
@@ -314,6 +313,7 @@
                         </wpfui:Button>
                         <wpfui:Button
                             x:Name="CancelCropButton"
+                            Width="160"
                             Appearance="Danger"
                             Click="CancelCrop_Click"
                             Content="Cancel">
@@ -324,13 +324,15 @@
                     </StackPanel>
                     <StackPanel
                         x:Name="TransformButtonPanel"
+                        Grid.Row="1"
                         Margin="0,0,8,0"
+                        HorizontalAlignment="Center"
                         d:Visibility="Visible"
-                        Orientation="Horizontal"
+                        Orientation="Vertical"
                         Visibility="Collapsed">
                         <ComboBox
                             x:Name="AspectRatioComboBox"
-                            Width="260"
+                            Width="160"
                             Margin="0,0,8,0"
                             VerticalAlignment="Center"
                             SelectionChanged="AspectRatioComboBox_SelectionChanged">
@@ -338,7 +340,7 @@
                                 <ComboBoxItem.Content>
                                     <StackPanel Orientation="Horizontal">
                                         <wpfui:SymbolIcon Margin="0,0,10,0" Symbol="DocumentLandscape24" />
-                                        <TextBlock Text="11in wide x 8.5in tall" />
+                                        <TextBlock Text="11x8.5 Landscape" />
                                     </StackPanel>
                                 </ComboBoxItem.Content>
                             </ComboBoxItem>
@@ -346,7 +348,7 @@
                                 <ComboBoxItem.Content>
                                     <StackPanel Orientation="Horizontal">
                                         <wpfui:SymbolIcon Margin="0,0,10,0" Symbol="Document24" />
-                                        <TextBlock Text="8.5in wide x 11in tall" />
+                                        <TextBlock Text="8.5x11 Portrit" />
                                     </StackPanel>
                                 </ComboBoxItem.Content>
                             </ComboBoxItem>
@@ -385,7 +387,7 @@
                                                 <RotateTransform Angle="90" />
                                             </TextBlock.RenderTransform>
                                         </TextBlock>
-                                        <TextBlock Text="US Dollar Bill Portrait" />
+                                        <TextBlock Text="US Dollar Port." />
                                     </StackPanel>
                                 </ComboBoxItem.Content>
                             </ComboBoxItem>
@@ -393,7 +395,7 @@
                                 <ComboBoxItem.Content>
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Margin="0,0,10,0" Text="💵" />
-                                        <TextBlock Text="US Dollar Bill Landscape" />
+                                        <TextBlock Text="US Dollar Land." />
                                     </StackPanel>
                                 </ComboBoxItem.Content>
                             </ComboBoxItem>
@@ -401,7 +403,7 @@
                                 <ComboBoxItem.Content>
                                     <StackPanel Orientation="Horizontal">
                                         <wpfui:SymbolIcon Margin="0,0,10,0" Symbol="TableEdit24" />
-                                        <TextBlock Text="Custom aspect ratio" />
+                                        <TextBlock Text="Custom..." />
                                     </StackPanel>
                                 </ComboBoxItem.Content>
                             </ComboBoxItem>
@@ -453,10 +455,10 @@
                                 <wpfui:SymbolIcon Symbol="RatioOneToOne24" />
                             </ToggleButton>
                         </Grid>
-
                         <wpfui:Button
                             x:Name="ApplyTransformButton"
-                            Margin="0,0,6,0"
+                            Width="160"
+                            Margin="0,6"
                             Appearance="Primary"
                             Click="ApplyButton_Click"
                             Content="Transform">
@@ -466,6 +468,7 @@
                         </wpfui:Button>
                         <wpfui:Button
                             x:Name="CancelTransformButton"
+                            Width="160"
                             Appearance="Danger"
                             Click="CancelTransformButton_Click"
                             Content="Cancel">
@@ -474,26 +477,34 @@
                             </wpfui:Button.Icon>
                         </wpfui:Button>
                     </StackPanel>
-                    <wpfui:Button
-                        x:Name="Save"
-                        Click="Save_Click"
-                        Content="Save to File..."
-                        ToolTip="Apply Transform, Save, and Preview file">
-                        <wpfui:Button.Icon>
-                            <wpfui:SymbolIcon Symbol="Save24" />
-                        </wpfui:Button.Icon>
-                    </wpfui:Button>
-                    <wpfui:Button
-                        x:Name="OpenFolderButton"
-                        Margin="8,4"
-                        Click="OpenFolderButton_Click"
-                        IsEnabled="False"
-                        ToolTip="Open Folder Where File Was Saved">
-                        <wpfui:Button.Icon>
-                            <wpfui:SymbolIcon Symbol="FolderArrowRight24" />
-                        </wpfui:Button.Icon>
-                    </wpfui:Button>
-                </StackPanel>
+                    <StackPanel
+                        Grid.Row="2"
+                        HorizontalAlignment="Center"
+                        Orientation="Vertical">
+                        <wpfui:Button
+                            x:Name="Save"
+                            Width="160"
+                            Margin="0,8"
+                            Click="Save_Click"
+                            Content="Save to File..."
+                            ToolTip="Apply Transform, Save, and Preview file">
+                            <wpfui:Button.Icon>
+                                <wpfui:SymbolIcon Symbol="Save24" />
+                            </wpfui:Button.Icon>
+                        </wpfui:Button>
+                        <wpfui:Button
+                            x:Name="OpenFolderButton"
+                            Width="160"
+                            Click="OpenFolderButton_Click"
+                            Content="Open Folder"
+                            IsEnabled="False"
+                            ToolTip="Open Folder Where File Was Saved">
+                            <wpfui:Button.Icon>
+                                <wpfui:SymbolIcon Symbol="FolderArrowRight24" />
+                            </wpfui:Button.Icon>
+                        </wpfui:Button>
+                    </StackPanel>
+                </Grid>
             </Border>
             <wpfui:ProgressRing
                 x:Name="IsWorkingBar"
