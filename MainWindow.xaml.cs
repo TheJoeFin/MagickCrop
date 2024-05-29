@@ -391,6 +391,8 @@ public partial class MainWindow : FluentWindow
 
     private async void OpenFileButton_Click(object sender, RoutedEventArgs e)
     {
+        SetUiForLongTask();
+
         OpenFileDialog openFileDialog = new()
         {
             Filter = "Image Files|*.png;*.jpg;*.jpeg;*.heic;*.bmp|All files (*.*)|*.*",
@@ -402,16 +404,24 @@ public partial class MainWindow : FluentWindow
 
         wpfuiTitleBar.Title = $"Magick Crop: {openFileDialog.FileName}";
         await OpenImagePath(openFileDialog.FileName);
+
+        WelcomeBorder.Visibility = Visibility.Collapsed;
+        BottomBorder.Visibility = Visibility.Visible;
+        SetUiForCompletedTask();
     }
 
     private async Task OpenImagePath(string imageFilePath)
     {
         Save.IsEnabled = true;
-        MagickImage bitmap = new(imageFilePath);
-        bitmap.AutoOrient();
 
         string tempFileName = System.IO.Path.GetTempFileName();
-        await bitmap.WriteAsync(tempFileName, MagickFormat.Jpeg);
+        await Task.Run(async () =>
+        {
+            MagickImage bitmap = new(imageFilePath);
+            bitmap.AutoOrient();
+
+            await bitmap.WriteAsync(tempFileName, MagickFormat.Jpeg);
+        });
 
         MagickImage bitmapImage = new(tempFileName);
 
