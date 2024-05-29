@@ -23,7 +23,6 @@ public partial class MainWindow : FluentWindow
     private Polygon? lines;
     private string? imagePath;
     private string? savedPath;
-    private bool isCropping = false;
 
     private double scaleFactor = 1;
     private bool isPanning = false;
@@ -31,7 +30,6 @@ public partial class MainWindow : FluentWindow
     private string openedFileName = string.Empty;
 
     private List<UIElement> _polygonElements;
-    private Visibility _perspectiveHandlesState = Visibility.Visible;
 
     public MainWindow()
     {
@@ -44,6 +42,9 @@ public partial class MainWindow : FluentWindow
         InitializeComponent();
         DrawPolyLine();
         _polygonElements = [lines, TopLeft, TopRight, BottomRight, BottomLeft];
+
+        foreach (UIElement element in _polygonElements)
+            element.Visibility = Visibility.Collapsed;
     }
 
     private void DrawPolyLine()
@@ -264,6 +265,7 @@ public partial class MainWindow : FluentWindow
             element.Visibility = Visibility.Collapsed;
 
         SetUiForCompletedTask();
+        HideTransformControls();
     }
 
 
@@ -404,14 +406,12 @@ public partial class MainWindow : FluentWindow
 
     private async Task OpenImagePath(string imageFilePath)
     {
-        ApplySaveSplitButton.IsEnabled = true;
         Save.IsEnabled = true;
-        ApplyButton.IsEnabled = true;
         MagickImage bitmap = new(imageFilePath);
         bitmap.AutoOrient();
 
         string tempFileName = System.IO.Path.GetTempFileName();
-        await bitmap.WriteAsync(tempFileName);
+        await bitmap.WriteAsync(tempFileName, MagickFormat.Jpeg);
 
         MagickImage bitmapImage = new(tempFileName);
 
@@ -739,42 +739,19 @@ public partial class MainWindow : FluentWindow
         SetUiForCompletedTask();
     }
 
-    private void SquareThePolygon()
-    {
-        if (lines is null)
-            return;
-
-        Point topLeftPoint = lines.Points[0];
-        Point bottomRightPoint = lines.Points[2];
-
-        Point newTopRight = new(bottomRightPoint.X, topLeftPoint.Y);
-        Point newBottomLeft = new(topLeftPoint.X, bottomRightPoint.Y);
-
-        pointDraggingIndex = 1;
-        MovePolyline(newTopRight);
-        pointDraggingIndex = 3;
-        MovePolyline(newBottomLeft);
-        pointDraggingIndex = -1;
-
-        Canvas.SetLeft(TopRight, newTopRight.X - (TopRight.Width / 2));
-        Canvas.SetTop(TopRight, newTopRight.Y - (TopRight.Height / 2));
-
-        Canvas.SetLeft(BottomLeft, newBottomLeft.X - (BottomLeft.Width / 2));
-        Canvas.SetTop(BottomLeft, newBottomLeft.Y - (BottomLeft.Height / 2));
-    }
-
     private void CropImage_Click(object sender, RoutedEventArgs e)
     {
-        isCropping = true;
-        ApplySaveSplitButton.Visibility = Visibility.Collapsed;
+        ShowCroppingControls();
+    }
+
+    private void ShowCroppingControls()
+    {
         CropButtonPanel.Visibility = Visibility.Visible;
+        CroppingRectangle.Visibility = Visibility.Visible;
 
-        _perspectiveHandlesState = TopLeft.Visibility;
-
+        TransformButtonPanel.Visibility = Visibility.Collapsed;
         foreach (UIElement element in _polygonElements)
             element.Visibility = Visibility.Collapsed;
-
-        CroppingRectangle.Visibility = Visibility.Visible;
     }
 
     private async void ApplyCropButton_Click(object sender, RoutedEventArgs e)
@@ -801,34 +778,49 @@ public partial class MainWindow : FluentWindow
 
         SetUiForCompletedTask();
 
-        foreach (UIElement element in _polygonElements)
-            element.Visibility = _perspectiveHandlesState;
-
-        CropButtonPanel.Visibility = Visibility.Collapsed;
-        ApplySaveSplitButton.Visibility = Visibility.Visible;
-        CroppingRectangle.Visibility = Visibility.Collapsed;
+        HideCroppingControls();
     }
 
     private void CancelCrop_Click(object sender, RoutedEventArgs e)
     {
+        HideCroppingControls();
+    }
+
+    private void HideCroppingControls()
+    {
         CropButtonPanel.Visibility = Visibility.Collapsed;
-        ApplySaveSplitButton.Visibility = Visibility.Visible;
-
-        foreach (UIElement element in _polygonElements)
-            element.Visibility = _perspectiveHandlesState;
-
         CroppingRectangle.Visibility = Visibility.Collapsed;
     }
 
     private void PerspectiveCorrectionMenuItem_Click(object sender, RoutedEventArgs e)
     {
-        CroppingRectangle.Visibility = Visibility.Collapsed;
+        ShowTransformControls();
+    }
 
-        Visibility newState = TopLeft.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+    private void CancelTransformButton_Click(object sender, RoutedEventArgs e)
+    {
+        HideTransformControls();
+    }
+
+    private void ShowTransformControls()
+    {
+        CroppingRectangle.Visibility = Visibility.Collapsed;
+        CropButtonPanel.Visibility = Visibility.Collapsed;
+
+        TransformButtonPanel.Visibility = Visibility.Visible;
 
         foreach (UIElement element in _polygonElements)
-            element.Visibility = newState;
+            element.Visibility = Visibility.Visible;
     }
+
+    private void HideTransformControls()
+    {
+        TransformButtonPanel.Visibility = Visibility.Collapsed;
+
+        foreach (UIElement element in _polygonElements)
+            element.Visibility = Visibility.Collapsed;
+    }
+
 }
 
 public enum AspectRatio

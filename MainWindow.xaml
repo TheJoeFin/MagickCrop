@@ -110,12 +110,10 @@
                         <RowDefinition Height="auto" />
                         <RowDefinition Height="auto" />
                     </Grid.RowDefinitions>
-                    <StackPanel Grid.Row="0" Orientation="Horizontal">
-                        <Button
-                            x:Name="OpenFileButton"
-                            Margin="8,4,12,4"
-                            Click="OpenFileButton_Click"
-                            Content="Open File" />
+                    <StackPanel
+                        Grid.Row="0"
+                        Orientation="Horizontal"
+                        Visibility="Collapsed">
                         <TextBlock
                             Padding="0,0,0,12"
                             HorizontalAlignment="Center"
@@ -135,135 +133,16 @@
                         x:Name="BottomPane"
                         Grid.Row="1"
                         Orientation="Horizontal">
-
-                        <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
-                            <ComboBox
-                                x:Name="AspectRatioComboBox"
-                                Width="220"
-                                Margin="8,4"
-                                VerticalAlignment="Center"
-                                SelectionChanged="AspectRatioComboBox_SelectionChanged">
-                                <ComboBoxItem IsSelected="True" Tag="LetterLandscape">
-                                    <ComboBoxItem.Content>
-                                        <StackPanel Orientation="Horizontal">
-                                            <wpfui:SymbolIcon Margin="0,0,10,0" Symbol="DocumentLandscape24" />
-                                            <TextBlock Text="11in wide x 8.5in tall" />
-                                        </StackPanel>
-                                    </ComboBoxItem.Content>
-                                </ComboBoxItem>
-                                <ComboBoxItem Tag="LetterPortrait">
-                                    <ComboBoxItem.Content>
-                                        <StackPanel Orientation="Horizontal">
-                                            <wpfui:SymbolIcon Margin="0,0,10,0" Symbol="Document24" />
-                                            <TextBlock Text="8.5in wide x 11in tall" />
-                                        </StackPanel>
-                                    </ComboBoxItem.Content>
-                                </ComboBoxItem>
-                                <ComboBoxItem Tag="Square">
-                                    <ComboBoxItem.Content>
-                                        <StackPanel Orientation="Horizontal">
-                                            <wpfui:SymbolIcon Margin="0,0,10,0" Symbol="RatioOneToOne24" />
-                                            <TextBlock Text="Square" />
-                                        </StackPanel>
-                                    </ComboBoxItem.Content>
-                                </ComboBoxItem>
-                                <ComboBoxItem Tag="A4Landscape">
-                                    <ComboBoxItem.Content>
-                                        <StackPanel Orientation="Horizontal">
-                                            <wpfui:SymbolIcon Margin="0,0,10,0" Symbol="DocumentLandscape24" />
-                                            <TextBlock Text="A4 Landscape" />
-                                        </StackPanel>
-                                    </ComboBoxItem.Content>
-                                </ComboBoxItem>
-                                <ComboBoxItem Tag="A4Portrait">
-                                    <ComboBoxItem.Content>
-                                        <StackPanel Orientation="Horizontal">
-                                            <wpfui:SymbolIcon Margin="0,0,10,0" Symbol="Document24" />
-                                            <TextBlock Text="A4 Portrait" />
-                                        </StackPanel>
-                                    </ComboBoxItem.Content>
-                                </ComboBoxItem>
-                                <ComboBoxItem Tag="UsDollarBillPortrait">
-                                    <ComboBoxItem.Content>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock
-                                                Margin="0,0,10,0"
-                                                RenderTransformOrigin="0.5, 0.5"
-                                                Text="💵">
-                                                <TextBlock.RenderTransform>
-                                                    <RotateTransform Angle="90" />
-                                                </TextBlock.RenderTransform>
-                                            </TextBlock>
-                                            <TextBlock Text="US Dollar Bill Portrait" />
-                                        </StackPanel>
-                                    </ComboBoxItem.Content>
-                                </ComboBoxItem>
-                                <ComboBoxItem Tag="UsDollarBillLandscape">
-                                    <ComboBoxItem.Content>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Margin="0,0,10,0" Text="💵" />
-                                            <TextBlock Text="US Dollar Bill Landscape" />
-                                        </StackPanel>
-                                    </ComboBoxItem.Content>
-                                </ComboBoxItem>
-                                <ComboBoxItem x:Name="CustomComboBoxItem" Tag="Custom">
-                                    <ComboBoxItem.Content>
-                                        <StackPanel Orientation="Horizontal">
-                                            <wpfui:SymbolIcon Margin="0,0,10,0" Symbol="TableEdit24" />
-                                            <TextBlock Text="Custom aspect ratio" />
-                                        </StackPanel>
-                                    </ComboBoxItem.Content>
-                                </ComboBoxItem>
-                            </ComboBox>
-
-                            <Grid x:Name="CustomButtonGrid" Visibility="Hidden">
-                                <wpfui:Flyout IsOpen="{Binding ElementName=EditToggleButton, Path=IsChecked, Mode=TwoWay}" Placement="Top">
-                                    <Grid x:Name="CustomSizeStackPanel">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="*" />
-                                            <RowDefinition Height="10" />
-                                            <RowDefinition Height="*" />
-                                        </Grid.RowDefinitions>
-                                        <Label
-                                            Width="80"
-                                            VerticalAlignment="Center"
-                                            Content="Width"
-                                            Target="{Binding ElementName=CustomWidth}" />
-                                        <wpfui:NumberBox
-                                            x:Name="CustomWidth"
-                                            Grid.Column="1"
-                                            Width="150"
-                                            VerticalAlignment="Center"
-                                            Minimum="0"
-                                            ValueChanged="CustomWidth_ValueChanged"
-                                            Value="100" />
-                                        <Label
-                                            Grid.Row="2"
-                                            Width="80"
-                                            VerticalAlignment="Center"
-                                            Content="Height"
-                                            Target="{Binding ElementName=CustomHeight}" />
-                                        <wpfui:NumberBox
-                                            x:Name="CustomHeight"
-                                            Grid.Row="2"
-                                            Grid.Column="1"
-                                            Width="150"
-                                            VerticalAlignment="Center"
-                                            Minimum="0"
-                                            ValueChanged="CustomWidth_ValueChanged"
-                                            Value="50" />
-                                    </Grid>
-                                </wpfui:Flyout>
-                                <ToggleButton x:Name="EditToggleButton" Margin="8,4">
-                                    <wpfui:SymbolIcon Symbol="RatioOneToOne24" />
-                                </ToggleButton>
-                            </Grid>
-
-                        </StackPanel>
+                        <wpfui:Button
+                            x:Name="OpenFileButton"
+                            Margin="8,4,0,4"
+                            Appearance="Transparent"
+                            Click="OpenFileButton_Click"
+                            ToolTip="Open a new image file">
+                            <wpfui:Button.Icon>
+                                <wpfui:SymbolIcon Symbol="FolderOpen24" />
+                            </wpfui:Button.Icon>
+                        </wpfui:Button>
                         <wpfui:DropDownButton
                             x:Name="AdjustButton"
                             Margin="8,4"
@@ -382,37 +261,182 @@
                                 Margin="0,0,6,0"
                                 Appearance="Primary"
                                 Click="ApplyCropButton_Click"
-                                Content="Apply Crop" />
+                                Content="Crop">
+                                <wpfui:Button.Icon>
+                                    <wpfui:SymbolIcon Symbol="Crop24" />
+                                </wpfui:Button.Icon>
+                            </wpfui:Button>
                             <wpfui:Button
                                 x:Name="CancelCropButton"
                                 Appearance="Danger"
                                 Click="CancelCrop_Click"
-                                Content="Cancel Crop" />
+                                Content="Cancel">
+                                <wpfui:Button.Icon>
+                                    <wpfui:SymbolIcon Symbol="Dismiss24" />
+                                </wpfui:Button.Icon>
+                            </wpfui:Button>
                         </StackPanel>
-                        <wpfui:DropDownButton
-                            x:Name="ApplySaveSplitButton"
-                            Content="Apply &amp; Save"
-                            IsEnabled="False">
-                            <wpfui:DropDownButton.Flyout>
-                                <ContextMenu>
-                                    <MenuItem
-                                        x:Name="ApplyAndSaveMenuItem"
-                                        Click="ApplySaveSplitButton_Click"
-                                        Header="Apply &amp; Save"
-                                        ToolTip="Apply Transform, Save, and Preview file" />
-                                    <MenuItem
-                                        x:Name="ApplyButton"
-                                        Click="ApplyButton_Click"
-                                        Header="Apply"
-                                        ToolTip="Apply Transform" />
-                                    <MenuItem
-                                        x:Name="Save"
-                                        Click="Save_Click"
-                                        Header="Save"
-                                        ToolTip="Apply Transform, Save, and Preview file" />
-                                </ContextMenu>
-                            </wpfui:DropDownButton.Flyout>
-                        </wpfui:DropDownButton>
+                        <StackPanel
+                            x:Name="TransformButtonPanel"
+                            Margin="0,0,8,0"
+                            d:Visibility="Visible"
+                            Orientation="Horizontal"
+                            Visibility="Collapsed">
+                            <ComboBox
+                                x:Name="AspectRatioComboBox"
+                                Width="260"
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center"
+                                SelectionChanged="AspectRatioComboBox_SelectionChanged">
+                                <ComboBoxItem IsSelected="True" Tag="LetterLandscape">
+                                    <ComboBoxItem.Content>
+                                        <StackPanel Orientation="Horizontal">
+                                            <wpfui:SymbolIcon Margin="0,0,10,0" Symbol="DocumentLandscape24" />
+                                            <TextBlock Text="11in wide x 8.5in tall" />
+                                        </StackPanel>
+                                    </ComboBoxItem.Content>
+                                </ComboBoxItem>
+                                <ComboBoxItem Tag="LetterPortrait">
+                                    <ComboBoxItem.Content>
+                                        <StackPanel Orientation="Horizontal">
+                                            <wpfui:SymbolIcon Margin="0,0,10,0" Symbol="Document24" />
+                                            <TextBlock Text="8.5in wide x 11in tall" />
+                                        </StackPanel>
+                                    </ComboBoxItem.Content>
+                                </ComboBoxItem>
+                                <ComboBoxItem Tag="Square">
+                                    <ComboBoxItem.Content>
+                                        <StackPanel Orientation="Horizontal">
+                                            <wpfui:SymbolIcon Margin="0,0,10,0" Symbol="RatioOneToOne24" />
+                                            <TextBlock Text="Square" />
+                                        </StackPanel>
+                                    </ComboBoxItem.Content>
+                                </ComboBoxItem>
+                                <ComboBoxItem Tag="A4Landscape">
+                                    <ComboBoxItem.Content>
+                                        <StackPanel Orientation="Horizontal">
+                                            <wpfui:SymbolIcon Margin="0,0,10,0" Symbol="DocumentLandscape24" />
+                                            <TextBlock Text="A4 Landscape" />
+                                        </StackPanel>
+                                    </ComboBoxItem.Content>
+                                </ComboBoxItem>
+                                <ComboBoxItem Tag="A4Portrait">
+                                    <ComboBoxItem.Content>
+                                        <StackPanel Orientation="Horizontal">
+                                            <wpfui:SymbolIcon Margin="0,0,10,0" Symbol="Document24" />
+                                            <TextBlock Text="A4 Portrait" />
+                                        </StackPanel>
+                                    </ComboBoxItem.Content>
+                                </ComboBoxItem>
+                                <ComboBoxItem Tag="UsDollarBillPortrait">
+                                    <ComboBoxItem.Content>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock
+                                                Margin="0,0,10,0"
+                                                RenderTransformOrigin="0.5, 0.5"
+                                                Text="💵">
+                                                <TextBlock.RenderTransform>
+                                                    <RotateTransform Angle="90" />
+                                                </TextBlock.RenderTransform>
+                                            </TextBlock>
+                                            <TextBlock Text="US Dollar Bill Portrait" />
+                                        </StackPanel>
+                                    </ComboBoxItem.Content>
+                                </ComboBoxItem>
+                                <ComboBoxItem Tag="UsDollarBillLandscape">
+                                    <ComboBoxItem.Content>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Margin="0,0,10,0" Text="💵" />
+                                            <TextBlock Text="US Dollar Bill Landscape" />
+                                        </StackPanel>
+                                    </ComboBoxItem.Content>
+                                </ComboBoxItem>
+                                <ComboBoxItem x:Name="CustomComboBoxItem" Tag="Custom">
+                                    <ComboBoxItem.Content>
+                                        <StackPanel Orientation="Horizontal">
+                                            <wpfui:SymbolIcon Margin="0,0,10,0" Symbol="TableEdit24" />
+                                            <TextBlock Text="Custom aspect ratio" />
+                                        </StackPanel>
+                                    </ComboBoxItem.Content>
+                                </ComboBoxItem>
+                            </ComboBox>
+
+                            <Grid x:Name="CustomButtonGrid" Visibility="Collapsed">
+                                <wpfui:Flyout IsOpen="{Binding ElementName=EditToggleButton, Path=IsChecked, Mode=TwoWay}" Placement="Top">
+                                    <Grid x:Name="CustomSizeStackPanel">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="10" />
+                                            <RowDefinition Height="*" />
+                                        </Grid.RowDefinitions>
+                                        <Label
+                                            Width="80"
+                                            VerticalAlignment="Center"
+                                            Content="Width"
+                                            Target="{Binding ElementName=CustomWidth}" />
+                                        <wpfui:NumberBox
+                                            x:Name="CustomWidth"
+                                            Grid.Column="1"
+                                            Width="150"
+                                            VerticalAlignment="Center"
+                                            Minimum="0"
+                                            ValueChanged="CustomWidth_ValueChanged"
+                                            Value="100" />
+                                        <Label
+                                            Grid.Row="2"
+                                            Width="80"
+                                            VerticalAlignment="Center"
+                                            Content="Height"
+                                            Target="{Binding ElementName=CustomHeight}" />
+                                        <wpfui:NumberBox
+                                            x:Name="CustomHeight"
+                                            Grid.Row="2"
+                                            Grid.Column="1"
+                                            Width="150"
+                                            VerticalAlignment="Center"
+                                            Minimum="0"
+                                            ValueChanged="CustomWidth_ValueChanged"
+                                            Value="50" />
+                                    </Grid>
+                                </wpfui:Flyout>
+                                <ToggleButton x:Name="EditToggleButton" Margin="8,4">
+                                    <wpfui:SymbolIcon Symbol="RatioOneToOne24" />
+                                </ToggleButton>
+                            </Grid>
+
+                            <wpfui:Button
+                                x:Name="ApplyTransformButton"
+                                Margin="0,0,6,0"
+                                Appearance="Primary"
+                                Click="ApplyButton_Click"
+                                Content="Transform">
+                                <wpfui:Button.Icon>
+                                    <wpfui:SymbolIcon Symbol="SelectObjectSkewEdit24" />
+                                </wpfui:Button.Icon>
+                            </wpfui:Button>
+                            <wpfui:Button
+                                x:Name="CancelTransformButton"
+                                Appearance="Danger"
+                                Click="CancelTransformButton_Click"
+                                Content="Cancel">
+                                <wpfui:Button.Icon>
+                                    <wpfui:SymbolIcon Symbol="Dismiss24" />
+                                </wpfui:Button.Icon>
+                            </wpfui:Button>
+                        </StackPanel>
+                        <wpfui:Button
+                            x:Name="Save"
+                            Click="Save_Click"
+                            Content="Save to File..."
+                            ToolTip="Apply Transform, Save, and Preview file">
+                            <wpfui:Button.Icon>
+                                <wpfui:SymbolIcon Symbol="Save24" />
+                            </wpfui:Button.Icon>
+                        </wpfui:Button>
                         <wpfui:Button
                             x:Name="OpenFolderButton"
                             Margin="8,4"
