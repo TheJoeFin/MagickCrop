@@ -16,8 +16,9 @@ namespace MagickCrop;
 
 public partial class MainWindow : FluentWindow
 {
-    private bool isDragging = false;
     private Point clickedPoint = new();
+    private Size oldGridSize = new();
+    private Size originalImageSize = new();
     private FrameworkElement? clickedElement;
     private int pointDraggingIndex = -1;
     private Polygon? lines;
@@ -25,7 +26,8 @@ public partial class MainWindow : FluentWindow
     private string? savedPath;
 
     private double scaleFactor = 1;
-    private bool isPanning = false;
+
+    private DraggingMode draggingMode = DraggingMode.None;
 
     private string openedFileName = string.Empty;
 
@@ -81,27 +83,37 @@ public partial class MainWindow : FluentWindow
 
         pointDraggingIndex = int.Parse(intAsString);
         clickedElement = ellipse;
-        isDragging = true;
+        draggingMode = DraggingMode.MoveElement;
         clickedPoint = e.GetPosition(ShapeCanvas);
         CaptureMouse();
     }
 
     private void TopLeft_MouseMove(object sender, MouseEventArgs e)
     {
-        if (isPanning)
+        if (Mouse.MiddleButton == MouseButtonState.Released && Mouse.LeftButton == MouseButtonState.Released)
+        {
+            if (draggingMode == DraggingMode.Panning)
+                Mouse.SetCursor(null);
+
+            clickedElement = null;
+            ReleaseMouseCapture();
+            draggingMode = DraggingMode.None;
+            return;
+        }
+
+        if (draggingMode == DraggingMode.Panning)
         {
             PanCanvas(e);
             return;
         }
 
-        if (Mouse.LeftButton != MouseButtonState.Pressed && Mouse.RightButton != MouseButtonState.Pressed)
+        if (draggingMode == DraggingMode.Resizing)
         {
-            isDragging = false;
-            clickedElement = null;
-            ReleaseMouseCapture();
+            ResizeImage(e);
+            return;
         }
 
-        if (!isDragging || clickedElement is null)
+        if (draggingMode != DraggingMode.MoveElement || clickedElement is null)
             return;
 
         Point movingPoint = e.GetPosition(ShapeCanvas);
@@ -111,15 +123,23 @@ public partial class MainWindow : FluentWindow
         MovePolyline(movingPoint);
     }
 
+    private void ResizeImage(MouseEventArgs e)
+    {
+        MainImage.Stretch = Stretch.Fill;
+        Mouse.SetCursor(Cursors.SizeAll);
+        Point currentPoint = e.GetPosition(ShapeCanvas);
+        double deltaX = currentPoint.X - clickedPoint.X;
+        double deltaY = currentPoint.Y - clickedPoint.Y;
+
+        ImageGrid.Width = oldGridSize.Width + deltaX;
+        ImageGrid.Height = oldGridSize.Height + deltaY;
+
+        e.Handled = true;
+    }
+
     private void PanCanvas(MouseEventArgs e)
     {
-        if (Mouse.MiddleButton == MouseButtonState.Released && Mouse.LeftButton == MouseButtonState.Released)
-        {
-            isPanning = false;
-            return;
-        }
-
-
+        Mouse.SetCursor(Cursors.SizeAll);
         Point currentPoint = e.GetPosition(ShapeCanvas);
         double deltaX = currentPoint.X - clickedPoint.X;
         double deltaY = currentPoint.Y - clickedPoint.Y;
@@ -128,7 +148,7 @@ public partial class MainWindow : FluentWindow
             return;
 
         Matrix mat = matTrans.Matrix;
-        mat.Translate(deltaX, deltaY);
+        mat.Translate(deltaX / scaleFactor, deltaY / scaleFactor);
         matTrans.Matrix = mat;
         e.Handled = true;
     }
@@ -404,15 +424,13 @@ public partial class MainWindow : FluentWindow
 
         wpfuiTitleBar.Title = $"Magick Crop: {openFileDialog.FileName}";
         await OpenImagePath(openFileDialog.FileName);
-
-        WelcomeBorder.Visibility = Visibility.Collapsed;
-        BottomBorder.Visibility = Visibility.Visible;
-        SetUiForCompletedTask();
     }
 
     private async Task OpenImagePath(string imageFilePath)
     {
         Save.IsEnabled = true;
+        ImageGrid.Width = 700;
+        MainImage.Stretch = Stretch.Uniform;
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await Task.Run(async () =>
@@ -428,6 +446,10 @@ public partial class MainWindow : FluentWindow
         imagePath = tempFileName;
         openedFileName = System.IO.Path.GetFileNameWithoutExtension(imageFilePath);
         MainImage.Source = bitmapImage.ToBitmapSource();
+
+        WelcomeBorder.Visibility = Visibility.Collapsed;
+        BottomBorder.Visibility = Visibility.Visible;
+        SetUiForCompletedTask();
     }
 
     private void OpenFolderButton_Click(object sender, RoutedEventArgs e)
@@ -469,7 +491,7 @@ public partial class MainWindow : FluentWindow
         if (Mouse.MiddleButton == MouseButtonState.Pressed || Mouse.LeftButton == MouseButtonState.Pressed)
         {
             clickedPoint = e.GetPosition(ShapeCanvas);
-            isPanning = true;
+            draggingMode = DraggingMode.Panning;
         }
     }
 
@@ -493,7 +515,7 @@ public partial class MainWindow : FluentWindow
             return;
         }
 
-        CustomButtonGrid.Visibility = Visibility.Hidden;
+        CustomButtonGrid.Visibility = Visibility.Collapsed;
     }
 
     private void CustomWidth_ValueChanged(object sender, RoutedEventArgs e)
@@ -507,7 +529,7 @@ public partial class MainWindow : FluentWindow
             aspectRatio = height / width;
 
         double trimmedValue = Math.Round(aspectRatio, 2);
-        CustomComboBoxItem.Content = $"Custom aspect ratio: {trimmedValue}";
+        AspectRatioTextBox.Text = $"Ratio: {trimmedValue}";
     }
 
     private void FluentWindow_PreviewDragOver(object sender, DragEventArgs e)
@@ -749,6 +771,51 @@ public partial class MainWindow : FluentWindow
         SetUiForCompletedTask();
     }
 
+    private async void FlipVertMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+            return;
+
+        SetUiForLongTask();
+
+        MagickImage magickImage = new(imagePath);
+        await Task.Run(() => magickImage.Flip());
+
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await magickImage.WriteAsync(tempFileName);
+        imagePath = tempFileName;
+
+        MainImage.Source = magickImage.ToBitmapSource();
+
+        SetUiForCompletedTask();
+    }
+
+    private async void FlipHozMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+            return;
+
+        SetUiForLongTask();
+
+        MagickImage magickImage = new(imagePath);
+        await Task.Run(() => magickImage.Flop());
+
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await magickImage.WriteAsync(tempFileName);
+        imagePath = tempFileName;
+
+        MainImage.Source = magickImage.ToBitmapSource();
+
+        SetUiForCompletedTask();
+    }
+
+    private void StretchMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        oldGridSize = new(ImageGrid.ActualWidth, ImageGrid.ActualHeight);
+        originalImageSize = new(MainImage.ActualWidth, MainImage.ActualHeight);
+        ShowResizeControls();
+    }
+
     private void CropImage_Click(object sender, RoutedEventArgs e)
     {
         ShowCroppingControls();
@@ -756,12 +823,11 @@ public partial class MainWindow : FluentWindow
 
     private void ShowCroppingControls()
     {
+        HideResizeControls();
+        HideTransformControls();
+
         CropButtonPanel.Visibility = Visibility.Visible;
         CroppingRectangle.Visibility = Visibility.Visible;
-
-        TransformButtonPanel.Visibility = Visibility.Collapsed;
-        foreach (UIElement element in _polygonElements)
-            element.Visibility = Visibility.Collapsed;
     }
 
     private async void ApplyCropButton_Click(object sender, RoutedEventArgs e)
@@ -814,8 +880,8 @@ public partial class MainWindow : FluentWindow
 
     private void ShowTransformControls()
     {
-        CroppingRectangle.Visibility = Visibility.Collapsed;
-        CropButtonPanel.Visibility = Visibility.Collapsed;
+        HideCroppingControls();
+        HideResizeControls();
 
         TransformButtonPanel.Visibility = Visibility.Visible;
 
@@ -831,6 +897,69 @@ public partial class MainWindow : FluentWindow
             element.Visibility = Visibility.Collapsed;
     }
 
+    private void ImageResizeGrip_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (Mouse.LeftButton == MouseButtonState.Pressed)
+        {
+            clickedPoint = e.GetPosition(ShapeCanvas);
+            draggingMode = DraggingMode.Resizing;
+        }
+    }
+
+    private async void ApplyResizeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(imagePath))
+            return;
+
+        MagickImage magickImage = new(imagePath);
+        Percentage imageWidthChangePercentage = new((MainImage.ActualWidth / originalImageSize.Width) * 100);
+        Percentage imageHeightChangePercentage = new((MainImage.ActualHeight / originalImageSize.Height) * 100);
+
+        MagickGeometry resizeGeometry = new(imageWidthChangePercentage, imageHeightChangePercentage)
+        {
+            IgnoreAspectRatio = true
+        };
+
+        SetUiForLongTask();
+
+        magickImage.Resize(resizeGeometry);
+
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await magickImage.WriteAsync(tempFileName);
+        imagePath = tempFileName;
+
+        MainImage.Source = null;
+
+        MainImage.Source = magickImage.ToBitmapSource();
+
+        SetUiForCompletedTask();
+
+        HideResizeControls();
+    }
+
+    private void CancelResizeButton_Click(object sender, RoutedEventArgs e)
+    {
+        ImageGrid.Width = oldGridSize.Width;
+        ImageGrid.Height = oldGridSize.Height;
+        ImageGrid.InvalidateMeasure();
+
+        HideResizeControls();
+    }
+
+    private void HideResizeControls()
+    {
+        ResizeButtonsPanel.Visibility = Visibility.Collapsed;
+        ImageResizeGrip.Visibility = Visibility.Hidden;
+    }
+
+    private void ShowResizeControls()
+    {
+        HideCroppingControls();
+        HideTransformControls();
+
+        ResizeButtonsPanel.Visibility = Visibility.Visible;
+        ImageResizeGrip.Visibility = Visibility.Visible;
+    }
 }
 
 public enum AspectRatio
@@ -843,4 +972,12 @@ public enum AspectRatio
     UsDollarBillPortrait = 5,
     UsDollarBillLandscape = 6,
     Custom = 7,
+}
+
+public enum DraggingMode
+{
+    None = 0,
+    MoveElement = 1,
+    Panning = 2,
+    Resizing = 3,
 }

@@ -26,12 +26,15 @@
         <Rectangle
             x:Name="rectangle"
             Cursor="SizeAll"
-            Fill="Transparent"
             MouseDown="element_MouseDown"
             Stroke="Blue"
             StrokeDashArray="2,2"
             StrokeThickness="2"
-            Tag="Pan" />
+            Tag="Pan">
+            <Rectangle.Fill>
+                <SolidColorBrush Opacity="0.06" Color="Blue" />
+            </Rectangle.Fill>
+        </Rectangle>
 
         <Ellipse
             Margin="-5,-5,0,0"
