@@ -149,21 +149,23 @@
                     </TextBlock>
                     <TextBlock
                         Padding="0,0,0,12"
-                        HorizontalAlignment="Center"
+                        HorizontalAlignment="Center" LineHeight="24"
                         VerticalAlignment="Center"
+                        d:Foreground="White"
                         Foreground="{wpfui:ThemeResource TextFillColorPrimaryBrush}"
                         TextWrapping="Wrap">
                         Hello there! this is a simple tool that uses the Magick.NET library to fix images. Scenarios where this tool is useful:<LineBreak />
-                        - Squaring up a photo of a paper on a table<LineBreak />
-                        - Making a whiteboard photo look more presentable<LineBreak />
-                        - Undoing distortion from camera angle<LineBreak />
+                        ► Squaring up a photo of a paper on a table<LineBreak />
+                        ► Making a whiteboard photo look more presentable<LineBreak />
+                        ► Undoing distortion from camera angle<LineBreak />
                         This tool is free and open source. Enjoy!<LineBreak />
                         Scroll to Zoom, Click and drag to pan and move points.<LineBreak /><LineBreak />
-                        - Joe<LineBreak /><Hyperlink
+                        - Joe Finney<LineBreak /><Hyperlink
                             Click="Hyperlink_Click"
+                            Foreground="#1e9bfd"
                             NavigateUri="https://www.JoeFinApps.com"
                             ToolTip="Learn more about the app developer of this app at JoeFinApps.com">
-                            JoeFinApps
+                            more JoeFinApps...
                         </Hyperlink>
 
                     </TextBlock>
