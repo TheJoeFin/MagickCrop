@@ -149,10 +149,11 @@
                     </TextBlock>
                     <TextBlock
                         Padding="0,0,0,12"
-                        HorizontalAlignment="Center" LineHeight="24"
+                        HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         d:Foreground="White"
                         Foreground="{wpfui:ThemeResource TextFillColorPrimaryBrush}"
+                        LineHeight="24"
                         TextWrapping="Wrap">
                         Hello there! this is a simple tool that uses the Magick.NET library to fix images. Scenarios where this tool is useful:<LineBreak />
                         ► Squaring up a photo of a paper on a table<LineBreak />
@@ -389,7 +390,10 @@
                             x:Name="CustomButtonGrid"
                             HorizontalAlignment="Left"
                             Visibility="Collapsed">
-                            <wpfui:Flyout IsOpen="{Binding ElementName=EditToggleButton, Path=IsChecked, Mode=TwoWay}" Placement="Top">
+                            <wpfui:Flyout
+                                Margin="0,0,0,20"
+                                IsOpen="{Binding ElementName=EditToggleButton, Path=IsChecked, Mode=TwoWay}"
+                                Placement="Top">
                                 <Grid x:Name="CustomSizeStackPanel">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -412,7 +416,7 @@
                                         VerticalAlignment="Center"
                                         Minimum="0"
                                         ValueChanged="CustomWidth_ValueChanged"
-                                        Value="100" />
+                                        Value="10" />
                                     <Label
                                         Grid.Row="2"
                                         Width="80"
@@ -427,7 +431,7 @@
                                         VerticalAlignment="Center"
                                         Minimum="0"
                                         ValueChanged="CustomWidth_ValueChanged"
-                                        Value="50" />
+                                        Value="5" />
                                 </Grid>
                             </wpfui:Flyout>
                             <ToggleButton
@@ -447,19 +451,22 @@
                             HorizontalAlignment="Left"
                             VerticalAlignment="Center"
                             SelectionChanged="AspectRatioComboBox_SelectionChanged">
-                            <ComboBoxItem IsSelected="True" Tag="LetterLandscape">
+                            <ComboBoxItem
+                                IsSelected="True"
+                                Tag="LetterLandscape"
+                                ToolTip="8.5in tall by 11in wide">
                                 <ComboBoxItem.Content>
                                     <StackPanel Orientation="Horizontal">
                                         <wpfui:SymbolIcon Margin="0,0,10,0" Symbol="DocumentLandscape24" />
-                                        <TextBlock Text="11x8.5 Landscape" />
+                                        <TextBlock Text="Letter Landscape" />
                                     </StackPanel>
                                 </ComboBoxItem.Content>
                             </ComboBoxItem>
-                            <ComboBoxItem Tag="LetterPortrait">
+                            <ComboBoxItem Tag="LetterPortrait" ToolTip="11in tall by 8.5in wide">
                                 <ComboBoxItem.Content>
                                     <StackPanel Orientation="Horizontal">
                                         <wpfui:SymbolIcon Margin="0,0,10,0" Symbol="Document24" />
-                                        <TextBlock Text="8.5x11 Portrait" />
+                                        <TextBlock Text="Letter Portrait" />
                                     </StackPanel>
                                 </ComboBoxItem.Content>
                             </ComboBoxItem>
