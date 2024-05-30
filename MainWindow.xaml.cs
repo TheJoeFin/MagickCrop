@@ -26,12 +26,12 @@ public partial class MainWindow : FluentWindow
     private string? savedPath;
 
     private double scaleFactor = 1;
-
     private DraggingMode draggingMode = DraggingMode.None;
 
     private string openedFileName = string.Empty;
-
     private List<UIElement> _polygonElements;
+
+    private UndoRedo undoRedo = new();
 
     public MainWindow()
     {
@@ -593,6 +593,10 @@ public partial class MainWindow : FluentWindow
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await magickImage.WriteAsync(tempFileName);
+
+        MagickImageUndoRedoItem undoRedoItem = new(MainImage, imagePath, tempFileName);
+        undoRedo.AddUndo(undoRedoItem);
+
         imagePath = tempFileName;
 
         MainImage.Source = magickImage.ToBitmapSource();
@@ -612,6 +616,10 @@ public partial class MainWindow : FluentWindow
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await magickImage.WriteAsync(tempFileName);
+
+        MagickImageUndoRedoItem undoRedoItem = new(MainImage, imagePath, tempFileName);
+        undoRedo.AddUndo(undoRedoItem);
+
         imagePath = tempFileName;
 
         MainImage.Source = magickImage.ToBitmapSource();
@@ -631,6 +639,10 @@ public partial class MainWindow : FluentWindow
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await magickImage.WriteAsync(tempFileName);
+
+        MagickImageUndoRedoItem undoRedoItem = new(MainImage, imagePath, tempFileName);
+        undoRedo.AddUndo(undoRedoItem);
+
         imagePath = tempFileName;
 
         MainImage.Source = magickImage.ToBitmapSource();
@@ -650,6 +662,10 @@ public partial class MainWindow : FluentWindow
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await magickImage.WriteAsync(tempFileName);
+
+        MagickImageUndoRedoItem undoRedoItem = new(MainImage, imagePath, tempFileName);
+        undoRedo.AddUndo(undoRedoItem);
+
         imagePath = tempFileName;
 
         MainImage.Source = magickImage.ToBitmapSource();
@@ -669,6 +685,10 @@ public partial class MainWindow : FluentWindow
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await magickImage.WriteAsync(tempFileName);
+
+        MagickImageUndoRedoItem undoRedoItem = new(MainImage, imagePath, tempFileName);
+        undoRedo.AddUndo(undoRedoItem);
+
         imagePath = tempFileName;
 
         MainImage.Source = magickImage.ToBitmapSource();
@@ -688,6 +708,10 @@ public partial class MainWindow : FluentWindow
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await magickImage.WriteAsync(tempFileName);
+
+        MagickImageUndoRedoItem undoRedoItem = new(MainImage, imagePath, tempFileName);
+        undoRedo.AddUndo(undoRedoItem);
+
         imagePath = tempFileName;
 
         MainImage.Source = magickImage.ToBitmapSource();
@@ -707,6 +731,10 @@ public partial class MainWindow : FluentWindow
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await magickImage.WriteAsync(tempFileName);
+
+        MagickImageUndoRedoItem undoRedoItem = new(MainImage, imagePath, tempFileName);
+        undoRedo.AddUndo(undoRedoItem);
+
         imagePath = tempFileName;
 
         MainImage.Source = magickImage.ToBitmapSource();
@@ -726,6 +754,10 @@ public partial class MainWindow : FluentWindow
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await magickImage.WriteAsync(tempFileName);
+
+        MagickImageUndoRedoItem undoRedoItem = new(MainImage, imagePath, tempFileName);
+        undoRedo.AddUndo(undoRedoItem);
+
         imagePath = tempFileName;
 
         MainImage.Source = magickImage.ToBitmapSource();
@@ -745,6 +777,10 @@ public partial class MainWindow : FluentWindow
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await magickImage.WriteAsync(tempFileName);
+
+        MagickImageUndoRedoItem undoRedoItem = new(MainImage, imagePath, tempFileName);
+        undoRedo.AddUndo(undoRedoItem);
+
         imagePath = tempFileName;
 
         MainImage.Source = magickImage.ToBitmapSource();
@@ -764,6 +800,10 @@ public partial class MainWindow : FluentWindow
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await magickImage.WriteAsync(tempFileName);
+
+        MagickImageUndoRedoItem undoRedoItem = new(MainImage, imagePath, tempFileName);
+        undoRedo.AddUndo(undoRedoItem);
+
         imagePath = tempFileName;
 
         MainImage.Source = magickImage.ToBitmapSource();
@@ -783,6 +823,10 @@ public partial class MainWindow : FluentWindow
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await magickImage.WriteAsync(tempFileName);
+
+        MagickImageUndoRedoItem undoRedoItem = new(MainImage, imagePath, tempFileName);
+        undoRedo.AddUndo(undoRedoItem);
+
         imagePath = tempFileName;
 
         MainImage.Source = magickImage.ToBitmapSource();
@@ -802,6 +846,10 @@ public partial class MainWindow : FluentWindow
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await magickImage.WriteAsync(tempFileName);
+
+        MagickImageUndoRedoItem undoRedoItem = new(MainImage, imagePath, tempFileName);
+        undoRedo.AddUndo(undoRedoItem);
+
         imagePath = tempFileName;
 
         MainImage.Source = magickImage.ToBitmapSource();
@@ -848,6 +896,10 @@ public partial class MainWindow : FluentWindow
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await magickImage.WriteAsync(tempFileName);
+
+        MagickImageUndoRedoItem undoRedoItem = new(MainImage, imagePath, tempFileName);
+        undoRedo.AddUndo(undoRedoItem);
+
         imagePath = tempFileName;
 
         MainImage.Source = magickImage.ToBitmapSource();
@@ -926,14 +978,16 @@ public partial class MainWindow : FluentWindow
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await magickImage.WriteAsync(tempFileName);
+
+        ResizeUndoRedoItem undoRedoItem = new(MainImage, ImageGrid, oldGridSize, imagePath, tempFileName);
+        undoRedo.AddUndo(undoRedoItem);
+
         imagePath = tempFileName;
 
         MainImage.Source = null;
-
         MainImage.Source = magickImage.ToBitmapSource();
 
         SetUiForCompletedTask();
-
         HideResizeControls();
     }
 
@@ -959,6 +1013,20 @@ public partial class MainWindow : FluentWindow
 
         ResizeButtonsPanel.Visibility = Visibility.Visible;
         ImageResizeGrip.Visibility = Visibility.Visible;
+    }
+
+    private void UndoMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        string path = undoRedo.Undo();
+        if (!string.IsNullOrWhiteSpace(path))
+            imagePath = path;
+    }
+
+    private void RedoMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        string path = undoRedo.Redo();
+        if (!string.IsNullOrWhiteSpace(path))
+            imagePath = path;
     }
 }
 

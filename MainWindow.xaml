@@ -8,7 +8,7 @@
     xmlns:wpfui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="Magick Crop"
     Width="1000"
-    Height="700"
+    Height="800"
     AllowDrop="True"
     Background="Gray"
     MouseMove="TopLeft_MouseMove"
@@ -214,7 +214,26 @@
                                     <wpfui:SymbolIcon Symbol="FolderOpen24" />
                                 </wpfui:Button.Icon>
                             </wpfui:Button>
-
+                            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                                <MenuItem
+                                    x:Name="UndoMenuItem"
+                                    Click="UndoMenuItem_Click"
+                                    Header="Undo"
+                                    IsEnabled="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type wpfui:FluentWindow}}, Path=undoRedo.CanUndo, Mode=OneWay}">
+                                    <MenuItem.Icon>
+                                        <wpfui:SymbolIcon Symbol="ArrowUndo24" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem
+                                    x:Name="RedoMenuItem"
+                                    Click="RedoMenuItem_Click"
+                                    Header=""
+                                    IsEnabled="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type wpfui:FluentWindow}}, Path=undoRedo.CanRedo, Mode=OneWay}">
+                                    <MenuItem.Icon>
+                                        <wpfui:SymbolIcon Symbol="ArrowRedo24" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </StackPanel>
                             <TextBlock Text="Tools" />
                             <MenuItem
                                 Name="AutoContrastMenuItem"
