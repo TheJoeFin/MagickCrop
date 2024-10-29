@@ -8,6 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using Windows.ApplicationModel;
 using Wpf.Ui;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
@@ -47,6 +48,9 @@ public partial class MainWindow : FluentWindow
 
         foreach (UIElement element in _polygonElements)
             element.Visibility = Visibility.Collapsed;
+
+        PackageVersion version = Package.Current.Id.Version;
+        wpfuiTitleBar.Title += $"{version.Major}.{version.Minor}.{version.Build}";
     }
 
     private void DrawPolyLine()

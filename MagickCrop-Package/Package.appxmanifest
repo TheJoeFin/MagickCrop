@@ -9,7 +9,7 @@
   <Identity
     Name="49171c9a-6a37-4cb2-a1eb-eaff3127a5d6"
     Publisher="CN=josep"
-    Version="1.0.0.0" />
+    Version="1.4.0.0" />
 
   <Properties>
     <DisplayName>MagickCrop-Package</DisplayName>
