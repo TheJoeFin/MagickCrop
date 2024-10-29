@@ -49,8 +49,15 @@ public partial class MainWindow : FluentWindow
         foreach (UIElement element in _polygonElements)
             element.Visibility = Visibility.Collapsed;
 
-        PackageVersion version = Package.Current.Id.Version;
-        wpfuiTitleBar.Title += $"{version.Major}.{version.Minor}.{version.Build}";
+        try
+        {
+            PackageVersion version = Package.Current.Id.Version;
+            wpfuiTitleBar.Title += $"{version.Major}.{version.Minor}.{version.Build}";
+        }
+        catch (Exception)
+        {
+            // do nothing this is just running unpackaged.
+        }
     }
 
     private void DrawPolyLine()
