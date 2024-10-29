@@ -27,8 +27,8 @@ public partial class ResizableRectangle : UserControl
         get => new(
         (int)(Canvas.GetLeft(this) + Padding.Left),
         (int)(Canvas.GetTop(this) + Padding.Top),
-        (int)rectangle.ActualWidth,
-        (int)rectangle.ActualHeight);
+        (uint)rectangle.ActualWidth,
+        (uint)rectangle.ActualHeight);
     }
 
     private void UserControl_MouseMove(object sender, MouseEventArgs e)

@@ -7,7 +7,7 @@ public static class MagickExtensions
     {
         geometry.X = (int)(geometry.X * factor);
         geometry.Y = (int)(geometry.Y * factor);
-        geometry.Width = (int)(geometry.Width * factor);
-        geometry.Height = (int)(geometry.Height * factor);
+        geometry.Width = (uint)(geometry.Width * factor);
+        geometry.Height = (uint)(geometry.Height * factor);
     }
 }

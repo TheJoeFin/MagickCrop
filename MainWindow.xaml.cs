@@ -245,14 +245,15 @@ public partial class MainWindow : FluentWindow
             lines.Points[1].X * scaleFactor, lines.Points[1].Y * scaleFactor,
             finalSize.Width, 0,
         ];
-        DistortSettings distortSettings = new()
+
+        DistortSettings distortSettings = new(DistortMethod.Perspective)
         {
             Bestfit = true,
         };
 
         try
         {
-            await Task.Run(() => image.Distort(DistortMethod.Perspective, distortSettings, arguments));
+            await Task.Run(() => image.Distort(distortSettings, arguments));
         }
         catch (Exception ex)
         {

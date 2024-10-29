@@ -11,11 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="LetterPaperTest.jpg" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="LetterPaperTest.jpg">
+    <Content Include="Images\LetterPaperTest.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="MagickCropLogo.ico">
@@ -24,11 +20,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="13.7.0" />
-    <PackageReference Include="Magick.NET.SystemDrawing" Version="7.2.3" />
-    <PackageReference Include="Magick.NET.SystemWindowsMedia" Version="7.2.3" />
+    <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="14.0.0" />
+    <PackageReference Include="Magick.NET.SystemDrawing" Version="8.0.0" />
+    <PackageReference Include="Magick.NET.SystemWindowsMedia" Version="8.0.0" />
     <PackageReference Include="System.Drawing.Common" Version="9.0.0-preview.3.24172.9" />
-    <PackageReference Include="WPF-UI" Version="3.0.4" />
+    <PackageReference Include="WPF-UI" Version="3.0.5" />
   </ItemGroup>
 
 </Project>
