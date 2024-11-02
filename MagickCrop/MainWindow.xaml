@@ -35,7 +35,7 @@
 
         <wpfui:TitleBar
             x:Name="wpfuiTitleBar"
-            Title="Magick Crop by TheJoeFin v"
+            Title="Magick Crop by TheJoeFin"
             Height="32"
             Foreground="{wpfui:ThemeResource TextFillColorPrimaryBrush}">
             <wpfui:TitleBar.Resources>

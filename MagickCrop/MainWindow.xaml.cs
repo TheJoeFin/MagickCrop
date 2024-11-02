@@ -52,7 +52,7 @@ public partial class MainWindow : FluentWindow
         try
         {
             PackageVersion version = Package.Current.Id.Version;
-            wpfuiTitleBar.Title += $"{version.Major}.{version.Minor}.{version.Build}";
+            wpfuiTitleBar.Title += $" v{version.Major}.{version.Minor}.{version.Build}";
         }
         catch (Exception)
         {
