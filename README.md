@@ -8,7 +8,7 @@
   Correct perspective distortion in photos with ImageMagick.
 </p>
 <p align="center">
-  <a href="https://www.microsoft.com/store/productId/9PF6ZX8RJ8Q2?cid=MagickCropGitHub" target="_blank">
+  <a href="https://apps.microsoft.com/detail/9pf6zx8rj8q2?cid=MagickCropGitHub" target="_blank">
     <img src="Images/storeBadge.png" width="200" alt="Store link" />
   </a>
 </p>
