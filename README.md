@@ -1,6 +1,19 @@
-# MagickCrop
+<p align="center">
+  <img width="128" align="center" src=Images\MagickCropLogo.png>
+</p>
+<h1 align="center">
+  MagickCrop
+</h1>
+<p align="center">
+  Correct perspective distortion in photos with ImageMagick.
+</p>
+<p align="center">
+  <a href="https://www.microsoft.com/store/productId/9PF6ZX8RJ8Q2?cid=MagickCropGitHub" target="_blank">
+    <img src="Images/storeBadge.png" width="200" alt="Store link" />
+  </a>
+</p>
 
-![The welcome experience in Magick Crop 1.4](Images/Welcome1.4.png)
+![The welcome experience in MagickCrop 1.4](Images/Welcome1.4.png)
 
 Using ImageMagick to via to correct perspective distortion in images.
 ![A piece of paper on a table in need of correction](Images/Transform1.4.png)
@@ -8,7 +21,7 @@ Using ImageMagick to via to correct perspective distortion in images.
 ## Powered by Image Magick and Magick.NET
 
 - GitHub: https://github.com/dlemstra/Magick.NET
-- Nuget search: https://www.nuget.org/packages?q=magick.net 
+- Nuget search: https://www.nuget.org/packages?q=magick.net
 
 This is a simple app which does a few things.
 
