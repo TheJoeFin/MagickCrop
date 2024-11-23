@@ -7,8 +7,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Width="500"
     Height="400"
-    Padding="50"
-    Background="Transparent"
     MouseMove="UserControl_MouseMove"
     mc:Ignorable="d">
     <UserControl.Resources>

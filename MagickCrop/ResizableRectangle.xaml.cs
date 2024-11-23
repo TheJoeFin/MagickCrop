@@ -13,6 +13,7 @@ public partial class ResizableRectangle : UserControl
     private Point? MouseDownPoint = null;
     private Point? MouseDownCanvasPoint = null;
     private Size? OldSize = null;
+    private FrameworkElement? currentCapter;
 
     public ResizableRectangle()
     {
@@ -43,7 +44,7 @@ public partial class ResizableRectangle : UserControl
             MouseDownPoint = null;
             MouseDownCanvasPoint = null;
             OldSize = null;
-            ReleaseMouseCapture();
+            currentCapter?.ReleaseMouseCapture();
             return;
         }
 
@@ -109,7 +110,8 @@ public partial class ResizableRectangle : UserControl
             return;
         }
 
-        // CaptureMouse();
+        currentCapter = element;
+        currentCapter.CaptureMouse();
         OldSize = new(Width, Height);
         MouseDownPoint = e.GetPosition(this);
         MouseDownCanvasPoint = e.GetPosition(Parent as FrameworkElement);
