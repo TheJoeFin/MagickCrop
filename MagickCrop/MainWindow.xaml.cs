@@ -1,4 +1,5 @@
 ﻿using ImageMagick;
+using MagickCrop.Models;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.IO;
@@ -33,6 +34,7 @@ public partial class MainWindow : FluentWindow
     private List<UIElement> _polygonElements;
 
     private UndoRedo undoRedo = new();
+    private AspectRatioItem? selectedAspectRatio;
 
     public MainWindow()
     {
@@ -58,6 +60,11 @@ public partial class MainWindow : FluentWindow
         {
             // do nothing this is just running unpackaged.
         }
+
+        AspectRatioComboBox.ItemsSource = AspectRatioItem.GetStandardAspectRatios();
+        AspectRatioComboBox.SelectedIndex = 0;
+        selectedAspectRatio = AspectRatioComboBox.SelectedItem as AspectRatioItem;
+        AspectRatioTransformPreview.RatioItem = selectedAspectRatio;
     }
 
     private void DrawPolyLine()
@@ -172,14 +179,10 @@ public partial class MainWindow : FluentWindow
         lines.Points[pointDraggingIndex] = newPoint;
     }
 
-    private async Task<MagickImage> CorrectDistortion(string pathOfImage)
+    private async Task<MagickImage?> CorrectDistortion(string pathOfImage)
     {
-        if (lines is null)
-            return new();
-
-        AspectRatio aspectRatioEnum = AspectRatio.LetterLandscape;
-        if (AspectRatioComboBox.SelectedItem is ComboBoxItem boxItem && boxItem.Tag is string tag)
-            _ = Enum.TryParse(tag, out aspectRatioEnum);
+        if (lines is null || selectedAspectRatio is null)
+            return null;
 
         MagickImage image = new(pathOfImage);
         double scaleFactor = image.Width / MainImage.ActualWidth;
@@ -192,40 +195,17 @@ public partial class MainWindow : FluentWindow
         //  3264 x 1836
 
         // Ratio defined by Height / Width
-        double aspectRatio = 1;
+        double aspectRatio = selectedAspectRatio.RatioValue;
 
-        switch (aspectRatioEnum)
+        if (selectedAspectRatio.AspectRatioEnum == AspectRatio.Custom)
         {
-            case AspectRatio.Square:
-                // already 1
-                break;
-            case AspectRatio.LetterPortrait:
-                aspectRatio = 11 / 8.5;
-                break;
-            case AspectRatio.LetterLandscape:
-                aspectRatio = 8.5 / 11;
-                break;
-            case AspectRatio.A4Portrait:
-                aspectRatio = 297 / 210;
-                break;
-            case AspectRatio.A4Landscape:
-                aspectRatio = 210 / 297;
-                break;
-            case AspectRatio.UsDollarBillLandscape:
-                aspectRatio = 2.61 / 6.14;
-                break;
-            case AspectRatio.UsDollarBillPortrait:
-                aspectRatio = 6.14 / 2.61;
-                break;
-            case AspectRatio.Custom:
-                if (CustomHeight.Value is double height
-                    && CustomWidth.Value is double width
-                    && height != 0
-                    && width != 0)
-                    aspectRatio = height / width;
-                break;
-            default:
-                break;
+            if (CustomHeight.Value is double height
+                && CustomWidth.Value is double width
+                && height != 0
+                && width != 0)
+                aspectRatio = height / width;
+            else
+                return null;
         }
 
         Rect? visualContentBounds = GetPrivatePropertyValue(lines, "VisualContentBounds") as Rect?;
@@ -285,7 +265,13 @@ public partial class MainWindow : FluentWindow
 
         SetUiForLongTask();
 
-        MagickImage image = await CorrectDistortion(imagePath);
+        MagickImage? image = await CorrectDistortion(imagePath);
+
+        if (image is null)
+        {
+            SetUiForCompletedTask();
+            return;
+        }
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await image.WriteAsync(tempFileName);
@@ -328,7 +314,14 @@ public partial class MainWindow : FluentWindow
             return;
         }
 
-        MagickImage image = await CorrectDistortion(imagePath);
+        MagickImage? image = await CorrectDistortion(imagePath);
+
+
+        if (image is null)
+        {
+            SetUiForCompletedTask();
+            return;
+        }
 
         try
         {
@@ -432,7 +425,10 @@ public partial class MainWindow : FluentWindow
         };
 
         if (openFileDialog.ShowDialog() != true)
+        {
+            SetUiForCompletedTask();
             return;
+        }
 
         wpfuiTitleBar.Title = $"Magick Crop: {openFileDialog.FileName}";
         await OpenImagePath(openFileDialog.FileName);
@@ -445,6 +441,7 @@ public partial class MainWindow : FluentWindow
         MainImage.Stretch = Stretch.Uniform;
 
         string tempFileName = System.IO.Path.GetTempFileName();
+        tempFileName = System.IO.Path.ChangeExtension(tempFileName, ".jpg");
         await Task.Run(async () =>
         {
             MagickImage bitmap = new(imageFilePath);
@@ -518,16 +515,19 @@ public partial class MainWindow : FluentWindow
 
     private void AspectRatioComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (sender is not ComboBox comboBox || comboBox.SelectedItem is not ComboBoxItem item || !IsLoaded)
+        if (sender is not ComboBox comboBox || comboBox.SelectedItem is not AspectRatioItem item || !IsLoaded)
             return;
 
-        if (item.Tag is "Custom")
+        selectedAspectRatio = item;
+
+        if (item.AspectRatioEnum == AspectRatio.Custom)
         {
             CustomButtonGrid.Visibility = Visibility.Visible;
             return;
         }
 
         CustomButtonGrid.Visibility = Visibility.Collapsed;
+        AspectRatioTransformPreview.RatioItem = item;
     }
 
     private void CustomWidth_ValueChanged(object sender, RoutedEventArgs e)
@@ -1040,24 +1040,4 @@ public partial class MainWindow : FluentWindow
         if (!string.IsNullOrWhiteSpace(path))
             imagePath = path;
     }
-}
-
-public enum AspectRatio
-{
-    Square = 0,
-    LetterPortrait = 1,
-    LetterLandscape = 2,
-    A4Portrait = 3,
-    A4Landscape = 4,
-    UsDollarBillPortrait = 5,
-    UsDollarBillLandscape = 6,
-    Custom = 7,
-}
-
-public enum DraggingMode
-{
-    None = 0,
-    MoveElement = 1,
-    Panning = 2,
-    Resizing = 3,
 }
