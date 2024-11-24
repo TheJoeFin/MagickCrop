@@ -54,46 +54,54 @@ public partial class ResizableRectangle : UserControl
         double canvasDeltaX = position.X - MouseDownCanvasPoint.Value.X;
         double canvasDeltaY = position.Y - MouseDownCanvasPoint.Value.Y;
 
-        switch (KindOfMove)
+        try
         {
-            case MovingKind.Pan:
-                Canvas.SetLeft(this, position.X - MouseDownPoint.Value.X);
-                Canvas.SetTop(this, position.Y - MouseDownPoint.Value.Y);
-                break;
-            case MovingKind.TopLeft:
-                Canvas.SetLeft(this, position.X - MouseDownPoint.Value.X);
-                Canvas.SetTop(this, position.Y - MouseDownPoint.Value.Y);
-                Width = OldSize.Value.Width - canvasDeltaX;
-                Height = OldSize.Value.Height - canvasDeltaY;
-                break;
-            case MovingKind.TopRight:
-                Canvas.SetTop(this, position.Y - MouseDownPoint.Value.Y);
-                Width = OldSize.Value.Width + canvasDeltaX;
-                Height = OldSize.Value.Height - canvasDeltaY;
-                break;
-            case MovingKind.BottomLeft:
-                Canvas.SetLeft(this, position.X - MouseDownPoint.Value.X);
-                Width = OldSize.Value.Width - canvasDeltaX;
-                Height = OldSize.Value.Height + canvasDeltaY;
-                break;
-            case MovingKind.BottomRight:
-                Width = OldSize.Value.Width + canvasDeltaX;
-                Height = OldSize.Value.Height + canvasDeltaY;
-                break;
-            case MovingKind.Top:
-                Canvas.SetTop(this, position.Y - MouseDownPoint.Value.Y);
-                Height = OldSize.Value.Height - canvasDeltaY;
-                break;
-            case MovingKind.Bottom:
-                Height = OldSize.Value.Height + canvasDeltaY;
-                break;
-            case MovingKind.Left:
-                Canvas.SetLeft(this, position.X - MouseDownPoint.Value.X);
-                Width = OldSize.Value.Width - canvasDeltaX;
-                break;
-            case MovingKind.Right:
-                Width = OldSize.Value.Width + canvasDeltaX;
-                break;
+            switch (KindOfMove)
+            {
+                case MovingKind.Pan:
+                    Canvas.SetLeft(this, position.X - MouseDownPoint.Value.X);
+                    Canvas.SetTop(this, position.Y - MouseDownPoint.Value.Y);
+                    break;
+                case MovingKind.TopLeft:
+                    Canvas.SetLeft(this, position.X - MouseDownPoint.Value.X);
+                    Canvas.SetTop(this, position.Y - MouseDownPoint.Value.Y);
+                    Width = OldSize.Value.Width - canvasDeltaX;
+                    Height = OldSize.Value.Height - canvasDeltaY;
+                    break;
+                case MovingKind.TopRight:
+                    Canvas.SetTop(this, position.Y - MouseDownPoint.Value.Y);
+                    Width = OldSize.Value.Width + canvasDeltaX;
+                    Height = OldSize.Value.Height - canvasDeltaY;
+                    break;
+                case MovingKind.BottomLeft:
+                    Canvas.SetLeft(this, position.X - MouseDownPoint.Value.X);
+                    Width = OldSize.Value.Width - canvasDeltaX;
+                    Height = OldSize.Value.Height + canvasDeltaY;
+                    break;
+                case MovingKind.BottomRight:
+                    Width = OldSize.Value.Width + canvasDeltaX;
+                    Height = OldSize.Value.Height + canvasDeltaY;
+                    break;
+                case MovingKind.Top:
+                    Canvas.SetTop(this, position.Y - MouseDownPoint.Value.Y);
+                    Height = OldSize.Value.Height - canvasDeltaY;
+                    break;
+                case MovingKind.Bottom:
+                    Height = OldSize.Value.Height + canvasDeltaY;
+                    break;
+                case MovingKind.Left:
+                    Canvas.SetLeft(this, position.X - MouseDownPoint.Value.X);
+                    Width = OldSize.Value.Width - canvasDeltaX;
+                    break;
+                case MovingKind.Right:
+                    Width = OldSize.Value.Width + canvasDeltaX;
+                    break;
+            }
+        }
+        catch (ArgumentException)
+        {
+            // tried to set a width or height to a negative number
+            // swallow the exception
         }
     }
 
