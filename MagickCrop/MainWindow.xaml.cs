@@ -117,9 +117,6 @@ public partial class MainWindow : FluentWindow
             ReleaseMouseCapture();
             draggingMode = DraggingMode.None;
 
-            if (lines is not null)
-                AspectRatioTransformPreview.SetAndScalePoints(lines.Points);
-
             return;
         }
 
@@ -181,6 +178,7 @@ public partial class MainWindow : FluentWindow
             return;
 
         lines.Points[pointDraggingIndex] = newPoint;
+        AspectRatioTransformPreview.SetAndScalePoints(lines.Points);
     }
 
     private async Task<MagickImage?> CorrectDistortion(string pathOfImage)
