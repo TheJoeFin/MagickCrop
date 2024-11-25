@@ -116,6 +116,10 @@ public partial class MainWindow : FluentWindow
             clickedElement = null;
             ReleaseMouseCapture();
             draggingMode = DraggingMode.None;
+
+            if (lines is not null)
+                AspectRatioTransformPreview.SetAndScalePoints(lines.Points);
+
             return;
         }
 
