@@ -458,7 +458,6 @@ public partial class MainWindow : FluentWindow
         openedFileName = System.IO.Path.GetFileNameWithoutExtension(imageFilePath);
         MainImage.Source = bitmapImage.ToBitmapSource();
 
-        WelcomeBorder.Visibility = Visibility.Collapsed;
         BottomBorder.Visibility = Visibility.Visible;
         SetUiForCompletedTask();
     }
@@ -504,15 +503,6 @@ public partial class MainWindow : FluentWindow
             clickedPoint = e.GetPosition(ShapeCanvas);
             draggingMode = DraggingMode.Panning;
         }
-    }
-
-    private void Hyperlink_Click(object sender, RoutedEventArgs e)
-    {
-        Process.Start(new ProcessStartInfo
-        {
-            FileName = "https://www.JoeFinApps.com",
-            UseShellExecute = true
-        });
     }
 
     private void AspectRatioComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)

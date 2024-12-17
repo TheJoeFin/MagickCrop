@@ -2,14 +2,14 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows10.0.20348.0</TargetFramework>
+    <TargetFramework>net9.0-windows10.0.20348.0</TargetFramework>
     <RootNamespace>MagickCrop</RootNamespace>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>MagickCropLogo.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Platforms>x86;x64;arm64</Platforms>
+    <Platforms>arm64;x86;x64</Platforms>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
     <AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
     <RuntimeIdentifiers>win-arm64;win-x86;win-x64</RuntimeIdentifiers>
@@ -26,10 +26,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="14.0.0" />
-    <PackageReference Include="Magick.NET.SystemDrawing" Version="8.0.0" />
-    <PackageReference Include="Magick.NET.SystemWindowsMedia" Version="8.0.0" />
-    <PackageReference Include="System.Drawing.Common" Version="9.0.0-preview.3.24172.9" />
+    <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="14.2.0" />
+    <PackageReference Include="Magick.NET.SystemDrawing" Version="8.0.2" />
+    <PackageReference Include="Magick.NET.SystemWindowsMedia" Version="8.0.2" />
+    <PackageReference Include="System.Drawing.Common" Version="9.0.0" />
     <PackageReference Include="WPF-UI" Version="3.0.5" />
   </ItemGroup>
 
