@@ -35,4 +35,13 @@ public partial class WelcomeMessage : UserControl
         WelcomeBorder.Visibility = Visibility.Collapsed;
         PrimaryButtonEvent?.Invoke(sender, e);
     }
+
+    private void SourceLink_Click(object sender, RoutedEventArgs e)
+    {
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "https://github.com/TheJoeFin/MagickCrop",
+            UseShellExecute = true
+        });
+    }
 }

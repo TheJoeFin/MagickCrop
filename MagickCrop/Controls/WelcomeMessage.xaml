@@ -11,7 +11,7 @@
     mc:Ignorable="d">
     <Border
         x:Name="WelcomeBorder"
-        MaxWidth="480"
+        MaxWidth="540"
         Padding="30,20"
         HorizontalAlignment="Center"
         VerticalAlignment="Center"
@@ -50,7 +50,13 @@
                 ► Squaring up a photo of a paper on a table<LineBreak />
                 ► Making a whiteboard photo look more presentable<LineBreak />
                 ► Undoing distortion from camera angle<LineBreak />
-                This tool is free and open source. Enjoy!<LineBreak />
+                This tool works 100% locally and offline and is<Run /> <Hyperlink
+                    x:Name="SourceLink"
+                    Click="SourceLink_Click"
+                    Foreground="#1e9bfd">
+                    fully open source
+                </Hyperlink>
+                . Enjoy!<LineBreak />
                 Scroll to Zoom, Click and drag to pan and move points.<LineBreak /><LineBreak />
                 - Joe Finney<LineBreak /><Hyperlink
                     Click="Hyperlink_Click"
