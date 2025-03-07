@@ -33,7 +33,7 @@ public partial class MainWindow : FluentWindow
     private string openedFileName = string.Empty;
     private List<UIElement> _polygonElements;
 
-    private UndoRedo undoRedo = new();
+    private readonly UndoRedo undoRedo = new();
     private AspectRatioItem? selectedAspectRatio;
 
     public MainWindow()
@@ -82,7 +82,7 @@ public partial class MainWindow : FluentWindow
             Opacity = 0.8,
         };
 
-        List<Ellipse> ellipseList = ShapeCanvas.Children.OfType<Ellipse>().ToList();
+        List<Ellipse> ellipseList = [.. ShapeCanvas.Children.OfType<Ellipse>()];
 
         foreach (Ellipse ellipse in ellipseList)
         {

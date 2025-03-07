@@ -25,9 +25,13 @@
             Background="Transparent">
             <Polygon
                 x:Name="Polygon"
-                d:Points="-5,-5 -7,6 8,6 5,-5"
+                d:Points="5,5 -2,16 18,16 15,5"
                 Stroke="white"
-                StrokeThickness="2" />
+                StrokeThickness="2">
+                <Polygon.RenderTransformOrigin>
+                    <Point X="0.5" Y="0.5" />
+                </Polygon.RenderTransformOrigin>
+            </Polygon>
         </Canvas>
         <wpfui:SymbolIcon Grid.Column="1" Symbol="ArrowRight24" />
         <Canvas
