@@ -66,6 +66,9 @@
                     more JoeFinApps...
                 </Hyperlink>
             </TextBlock>
+            <wpfui:HyperlinkButton Name="AboutHyperbuttons" Click="AboutHyperbuttons_Click">
+                More about MagickCrop...
+            </wpfui:HyperlinkButton>
 
             <wpfui:Button
                 x:Name="OpenFileButton"

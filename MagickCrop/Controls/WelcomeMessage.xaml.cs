@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using MagickCrop.Windows;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -43,5 +44,11 @@ public partial class WelcomeMessage : UserControl
             FileName = "https://github.com/TheJoeFin/MagickCrop",
             UseShellExecute = true
         });
+    }
+
+    private void AboutHyperbuttons_Click(object sender, RoutedEventArgs e)
+    {
+        AboutWindow aboutWindow = new();
+        aboutWindow.ShowDialog();
     }
 }
