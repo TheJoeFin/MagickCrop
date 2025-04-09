@@ -1,9 +1,10 @@
-﻿namespace MagickCrop;
+﻿namespace MagickCrop.Models;
 
 public enum DraggingMode
 {
-    None = 0,
-    MoveElement = 1,
-    Panning = 2,
-    Resizing = 3,
+    None,
+    MoveElement,
+    Panning,
+    Resizing,
+    MeasureDistance
 }

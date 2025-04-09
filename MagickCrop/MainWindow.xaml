@@ -313,7 +313,15 @@
                                 <wpfui:SymbolIcon Foreground="#0066FF" Symbol="SelectObjectSkewEdit24" />
                             </MenuItem.Icon>
                         </MenuItem>
-
+                        <Separator />
+                        <MenuItem
+                            Name="MeasureDistanceMenuItem"
+                            Click="MeasureDistanceMenuItem_Click"
+                            Header="Measure Distance">
+                            <MenuItem.Icon>
+                                <wpfui:SymbolIcon Symbol="Ruler24" />
+                            </MenuItem.Icon>
+                        </MenuItem>
                     </StackPanel>
                 </ScrollViewer>
                 <StackPanel
@@ -339,6 +347,22 @@
                         Appearance="Danger"
                         Click="CancelCrop_Click"
                         Content="Cancel">
+                        <wpfui:Button.Icon>
+                            <wpfui:SymbolIcon Symbol="Dismiss24" />
+                        </wpfui:Button.Icon>
+                    </wpfui:Button>
+                </StackPanel>
+                <StackPanel
+                    x:Name="MeasurementButtonPanel"
+                    Grid.Row="1"
+                    Orientation="Vertical"
+                    Visibility="Collapsed">
+                    <wpfui:Button
+                        x:Name="CloseMeasurementButton"
+                        Width="160"
+                        Appearance="Danger"
+                        Click="CloseMeasurementButton_Click"
+                        Content="Close">
                         <wpfui:Button.Icon>
                             <wpfui:SymbolIcon Symbol="Dismiss24" />
                         </wpfui:Button.Icon>

@@ -1,4 +1,5 @@
 ﻿using ImageMagick;
+using MagickCrop.Controls;
 using MagickCrop.Models;
 using Microsoft.Win32;
 using System.Diagnostics;
@@ -35,6 +36,7 @@ public partial class MainWindow : FluentWindow
 
     private readonly UndoRedo undoRedo = new();
     private AspectRatioItem? selectedAspectRatio;
+    private DistanceMeasurementControl? measurementControl;
 
     public MainWindow()
     {
@@ -113,6 +115,9 @@ public partial class MainWindow : FluentWindow
             if (draggingMode == DraggingMode.Panning)
                 Mouse.SetCursor(null);
 
+            if (draggingMode == DraggingMode.MeasureDistance && measurementControl != null)
+                measurementControl.ResetActivePoint();
+
             clickedElement = null;
             ReleaseMouseCapture();
             draggingMode = DraggingMode.None;
@@ -132,10 +137,21 @@ public partial class MainWindow : FluentWindow
             return;
         }
 
+        Point movingPoint = e.GetPosition(ShapeCanvas);
+        if (draggingMode == DraggingMode.MeasureDistance && measurementControl != null)
+        {
+            int pointIndex = measurementControl.GetActivePointIndex();
+            if (pointIndex >= 0)
+            {
+                measurementControl.MovePoint(pointIndex, movingPoint);
+            }
+            e.Handled = true;
+            return;
+        }
+
         if (draggingMode != DraggingMode.MoveElement || clickedElement is null)
             return;
 
-        Point movingPoint = e.GetPosition(ShapeCanvas);
         Canvas.SetTop(clickedElement, movingPoint.Y - (clickedElement.Height / 2));
         Canvas.SetLeft(clickedElement, movingPoint.X - (clickedElement.Width / 2));
 
@@ -1031,5 +1047,68 @@ public partial class MainWindow : FluentWindow
         string path = undoRedo.Redo();
         if (!string.IsNullOrWhiteSpace(path))
             imagePath = path;
+    }
+
+    private void MeasureDistanceMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        ShowMeasurementControls();
+    }
+
+    private void CloseMeasurementButton_Click(object sender, RoutedEventArgs e)
+    {
+        HideMeasurementControls();
+    }
+
+    private void ShowMeasurementControls()
+    {
+        // Hide other controls first
+        HideCroppingControls();
+        HideResizeControls();
+        HideTransformControls();
+
+        // Create measurement control if it doesn't exist
+        if (measurementControl == null)
+        {
+            measurementControl = new DistanceMeasurementControl();
+            measurementControl.MeasurementPointMouseDown += MeasurementPoint_MouseDown;
+            ShapeCanvas.Children.Add(measurementControl);
+
+            // Initialize with reasonable positions based on the canvas size
+            measurementControl.InitializePositions(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight);
+        }
+
+        // Update scale factor
+        if (MainImage.Source != null)
+        {
+            double imageScale = 1.0;
+            if (MainImage.Source is System.Windows.Media.Imaging.BitmapSource bitmapSource && MainImage.ActualWidth > 0)
+            {
+                imageScale = bitmapSource.PixelWidth / MainImage.ActualWidth;
+            }
+            measurementControl.ScaleFactor = imageScale;
+        }
+
+        measurementControl.Visibility = Visibility.Visible;
+        MeasurementButtonPanel.Visibility = Visibility.Visible;
+    }
+
+    private void HideMeasurementControls()
+    {
+        if (measurementControl != null)
+        {
+            measurementControl.Visibility = Visibility.Collapsed;
+        }
+        MeasurementButtonPanel.Visibility = Visibility.Collapsed;
+        draggingMode = DraggingMode.None;
+    }
+
+    private void MeasurementPoint_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (measurementControl == null)
+            return;
+        
+        draggingMode = DraggingMode.MeasureDistance;
+        clickedPoint = e.GetPosition(ShapeCanvas);
+        CaptureMouse();
     }
 }
