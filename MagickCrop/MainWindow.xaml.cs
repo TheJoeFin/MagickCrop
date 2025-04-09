@@ -36,7 +36,8 @@ public partial class MainWindow : FluentWindow
 
     private readonly UndoRedo undoRedo = new();
     private AspectRatioItem? selectedAspectRatio;
-    private DistanceMeasurementControl? measurementControl;
+    private readonly List<DistanceMeasurementControl> measurementTools = [];
+    private DistanceMeasurementControl? activeMeasureControl;
 
     public MainWindow()
     {
@@ -115,8 +116,11 @@ public partial class MainWindow : FluentWindow
             if (draggingMode == DraggingMode.Panning)
                 Mouse.SetCursor(null);
 
-            if (draggingMode == DraggingMode.MeasureDistance && measurementControl != null)
-                measurementControl.ResetActivePoint();
+            if (draggingMode == DraggingMode.MeasureDistance && activeMeasureControl is not null)
+            {
+                activeMeasureControl.ResetActivePoint();
+                activeMeasureControl = null;
+            }
 
             clickedElement = null;
             ReleaseMouseCapture();
@@ -138,12 +142,12 @@ public partial class MainWindow : FluentWindow
         }
 
         Point movingPoint = e.GetPosition(ShapeCanvas);
-        if (draggingMode == DraggingMode.MeasureDistance && measurementControl != null)
+        if (draggingMode == DraggingMode.MeasureDistance && activeMeasureControl is not null)
         {
-            int pointIndex = measurementControl.GetActivePointIndex();
+            int pointIndex = activeMeasureControl.GetActivePointIndex();
             if (pointIndex >= 0)
             {
-                measurementControl.MovePoint(pointIndex, movingPoint);
+                activeMeasureControl.MovePoint(pointIndex, movingPoint);
             }
             e.Handled = true;
             return;
@@ -1067,15 +1071,8 @@ public partial class MainWindow : FluentWindow
         HideTransformControls();
 
         // Create measurement control if it doesn't exist
-        if (measurementControl == null)
-        {
-            measurementControl = new DistanceMeasurementControl();
-            measurementControl.MeasurementPointMouseDown += MeasurementPoint_MouseDown;
-            ShapeCanvas.Children.Add(measurementControl);
-
-            // Initialize with reasonable positions based on the canvas size
-            measurementControl.InitializePositions(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight);
-        }
+        if (measurementTools.Count is 0)
+            AddNewMeasurementToolToCanvas();
 
         // Update scale factor
         if (MainImage.Source != null)
@@ -1085,30 +1082,75 @@ public partial class MainWindow : FluentWindow
             {
                 imageScale = bitmapSource.PixelWidth / MainImage.ActualWidth;
             }
-            measurementControl.ScaleFactor = imageScale;
+
+            foreach (DistanceMeasurementControl tool in measurementTools)
+                tool.ScaleFactor = imageScale;
         }
 
-        measurementControl.Visibility = Visibility.Visible;
+        // Show measurement controls
+        foreach (DistanceMeasurementControl tool in measurementTools)
+            tool.Visibility = Visibility.Visible;
+
         MeasurementButtonPanel.Visibility = Visibility.Visible;
+    }
+
+    private void AddNewMeasurementToolToCanvas()
+    {
+        double scale = ScaleInput.Value ?? 1.0;
+        DistanceMeasurementControl measurementControl = new()
+        {
+            ScaleFactor = scale,
+        };
+        measurementControl.MeasurementPointMouseDown += MeasurementPoint_MouseDown;
+        measurementTools.Add(measurementControl);
+        ShapeCanvas.Children.Add(measurementControl);
+
+        // Initialize with reasonable positions based on the canvas size
+        measurementControl.InitializePositions(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight);
     }
 
     private void HideMeasurementControls()
     {
-        if (measurementControl != null)
-        {
-            measurementControl.Visibility = Visibility.Collapsed;
-        }
+        foreach (DistanceMeasurementControl measurementControl in measurementTools)
+            ShapeCanvas.Children.Remove(measurementControl);
+
         MeasurementButtonPanel.Visibility = Visibility.Collapsed;
         draggingMode = DraggingMode.None;
     }
 
     private void MeasurementPoint_MouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (measurementControl == null)
+        if (sender is Ellipse senderEllipse
+            && senderEllipse.Parent is Canvas measureCanvas
+            && measureCanvas.Parent is DistanceMeasurementControl measureControl
+            )
+        {
+            activeMeasureControl = measureControl;
+
+            draggingMode = DraggingMode.MeasureDistance;
+            clickedPoint = e.GetPosition(ShapeCanvas);
+            CaptureMouse();
+        }
+    }
+
+    private void AddMeasurementToolButton_Click(object sender, RoutedEventArgs e)
+    {
+        AddNewMeasurementToolToCanvas();
+    }
+
+    private void ScaleInput_ValueChanged(object sender, RoutedEventArgs e)
+    {
+        double newScale = ScaleInput.Value ?? 1.0;
+        foreach (DistanceMeasurementControl tool in measurementTools)
+            tool.ScaleFactor = newScale;
+    }
+
+    private void MeasurementUnits_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.TextBox textBox || string.IsNullOrWhiteSpace(textBox.Text))
             return;
-        
-        draggingMode = DraggingMode.MeasureDistance;
-        clickedPoint = e.GetPosition(ShapeCanvas);
-        CaptureMouse();
+
+        foreach (DistanceMeasurementControl tool in measurementTools)
+            tool.Units = textBox.Text;
     }
 }

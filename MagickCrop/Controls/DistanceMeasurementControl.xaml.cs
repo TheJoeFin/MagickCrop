@@ -15,7 +15,28 @@ public partial class DistanceMeasurementControl : UserControl
     public event MouseButtonEventHandler? MeasurementPointMouseDown;
     public event MouseEventHandler? MeasurementPointMouseMove;
 
-    public double ScaleFactor { get; set; } = 1.0;
+    public double ScaleFactor
+    {
+        get => scaleFactor;
+        set
+        {
+            scaleFactor = value;
+            UpdatePositions();
+        }
+    }
+    private double scaleFactor = 1.0;
+
+    private string units = "pixels";
+
+    public string Units
+    {
+        get { return units; }
+        set 
+        { 
+            units = value;
+            UpdatePositions();
+        }
+    }
 
     public DistanceMeasurementControl()
     {
@@ -49,7 +70,7 @@ public partial class DistanceMeasurementControl : UserControl
         // Calculate distance and update text
         double distance = CalculateDistance();
         double scaledDistance = distance * ScaleFactor;
-        DistanceTextBlock.Text = $"{scaledDistance:F2} pixels";
+        DistanceTextBlock.Text = $"{scaledDistance:F2} {Units}";
 
         // Position the measurement text in the middle of the line
         Point midPoint = new(
