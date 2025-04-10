@@ -2,6 +2,7 @@
 using MagickCrop.Controls;
 using MagickCrop.Models;
 using Microsoft.Win32;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -37,9 +38,9 @@ public partial class MainWindow : FluentWindow
 
     private readonly UndoRedo undoRedo = new();
     private AspectRatioItem? selectedAspectRatio;
-    private readonly List<DistanceMeasurementControl> measurementTools = [];
+    private readonly ObservableCollection<DistanceMeasurementControl> measurementTools = [];
     private DistanceMeasurementControl? activeMeasureControl;
-    private readonly List<AngleMeasurementControl> angleMeasurementTools = [];
+    private readonly ObservableCollection<AngleMeasurementControl> angleMeasurementTools = [];
     private AngleMeasurementControl? activeAngleMeasureControl;
 
     public MainWindow()
@@ -1075,56 +1076,12 @@ public partial class MainWindow : FluentWindow
 
     private void MeasureDistanceMenuItem_Click(object sender, RoutedEventArgs e)
     {
-        ShowMeasurementControls();
+        AddNewMeasurementToolToCanvas();
     }
 
     private void MeasureAngleMenuItem_Click(object sender, RoutedEventArgs e)
     {
-        ShowAngleMeasurementControls();
-    }
-
-    private void ShowMeasurementControls()
-    {
-        HideCroppingControls();
-        HideResizeControls();
-        HideTransformControls();
-        HideAngleMeasurementControls(); // Hide angle measurement tools
-
-        if (measurementTools.Count is 0)
-            AddNewMeasurementToolToCanvas();
-
-        if (MainImage.Source is not null)
-        {
-            double imageScale = 1.0;
-            if (MainImage.Source is BitmapSource bitmapSource && MainImage.ActualWidth > 0)
-                imageScale = bitmapSource.PixelWidth / MainImage.ActualWidth;
-
-            foreach (DistanceMeasurementControl tool in measurementTools)
-                tool.ScaleFactor = imageScale;
-        }
-
-        // Show measurement controls
-        foreach (DistanceMeasurementControl tool in measurementTools)
-            tool.Visibility = Visibility.Visible;
-
-        MeasurementButtonPanel.Visibility = Visibility.Visible;
-    }
-
-    private void ShowAngleMeasurementControls()
-    {
-        HideCroppingControls();
-        HideResizeControls();
-        HideTransformControls();
-        HideMeasurementControls(); // Hide distance measurement tools
-
-        if (angleMeasurementTools.Count is 0)
-            AddNewAngleMeasurementToolToCanvas();
-
-        // Show angle measurement controls
-        foreach (AngleMeasurementControl tool in angleMeasurementTools)
-            tool.Visibility = Visibility.Visible;
-
-        MeasurementButtonPanel.Visibility = Visibility.Visible;
+        AddNewAngleMeasurementToolToCanvas();
     }
 
     private void AddNewMeasurementToolToCanvas()
@@ -1133,6 +1090,7 @@ public partial class MainWindow : FluentWindow
         DistanceMeasurementControl measurementControl = new()
         {
             ScaleFactor = scale,
+            Units = MeasurementUnits.Text
         };
         measurementControl.MeasurementPointMouseDown += MeasurementPoint_MouseDown;
         measurementControl.SetRealWorldLengthRequested += MeasurementControl_SetRealWorldLengthRequested;
@@ -1164,7 +1122,7 @@ public partial class MainWindow : FluentWindow
         {
             PlaceholderText = "ex: 8.5 in",
             ClearButtonEnabled = true,
-            Width = 250
+            Width = 250,
         };
 
         ContentDialog dialog = new()
@@ -1204,7 +1162,13 @@ public partial class MainWindow : FluentWindow
         foreach (DistanceMeasurementControl measurementControl in measurementTools)
             ShapeCanvas.Children.Remove(measurementControl);
 
-        MeasurementButtonPanel.Visibility = Visibility.Collapsed;
+        measurementTools.Clear();
+
+        foreach (AngleMeasurementControl measurementControl in angleMeasurementTools)
+            ShapeCanvas.Children.Remove(measurementControl);
+
+        angleMeasurementTools.Clear();
+
         draggingMode = DraggingMode.None;
     }
 
@@ -1244,19 +1208,6 @@ public partial class MainWindow : FluentWindow
             draggingMode = DraggingMode.MeasureAngle;
             clickedPoint = e.GetPosition(ShapeCanvas);
             CaptureMouse();
-        }
-    }
-
-    private void AddMeasurementToolButton_Click(object sender, RoutedEventArgs e)
-    {
-        // Check which measurement mode we're in and add the appropriate tool
-        if (measurementTools.Count > 0 && measurementTools[0].Visibility == Visibility.Visible)
-        {
-            AddNewMeasurementToolToCanvas();
-        }
-        else if (angleMeasurementTools.Count > 0 && angleMeasurementTools[0].Visibility == Visibility.Visible)
-        {
-            AddNewAngleMeasurementToolToCanvas();
         }
     }
 
