@@ -382,16 +382,17 @@
                                             Text="Pixels"
                                             TextChanged="MeasurementUnits_TextChanged" />
 
-                                        <wpfui:Button
+                                        <wpfui:HyperlinkButton
                                             x:Name="CloseMeasurementButton"
                                             Width="160"
                                             Appearance="Danger"
                                             Click="CloseMeasurementButton_Click"
-                                            Content="Clear all">
-                                            <wpfui:Button.Icon>
+                                            Content="Clear all"
+                                            Foreground="Red">
+                                            <wpfui:HyperlinkButton.Icon>
                                                 <wpfui:SymbolIcon Symbol="Dismiss24" />
-                                            </wpfui:Button.Icon>
-                                        </wpfui:Button>
+                                            </wpfui:HyperlinkButton.Icon>
+                                        </wpfui:HyperlinkButton>
                                     </StackPanel>
                                 </StackPanel>
                             </TabItem>

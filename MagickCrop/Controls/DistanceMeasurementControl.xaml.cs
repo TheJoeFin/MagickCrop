@@ -17,6 +17,9 @@ public partial class DistanceMeasurementControl : UserControl
     // New event for real world length setting
     public delegate void SetRealWorldLengthRequestedEventHandler(object sender, double pixelDistance);
     public event SetRealWorldLengthRequestedEventHandler? SetRealWorldLengthRequested;
+    // New event for removal request
+    public delegate void RemoveControlRequestedEventHandler(object sender, EventArgs e);
+    public event RemoveControlRequestedEventHandler? RemoveControlRequested;
 
     public double ScaleFactor
     {
@@ -134,5 +137,23 @@ public partial class DistanceMeasurementControl : UserControl
     {
         double pixelDistance = CalculateDistance();
         SetRealWorldLengthRequested?.Invoke(this, pixelDistance);
+    }
+    
+    private void MeasurementButton_Click(object sender, RoutedEventArgs e)
+    {
+        // Show context menu when button is clicked
+        ContextMenu? contextMenu = MeasurementText.ContextMenu;
+        if (contextMenu != null)
+        {
+            contextMenu.PlacementTarget = MeasurementText;
+            contextMenu.IsOpen = true;
+            e.Handled = true;
+        }
+    }
+    
+    private void RemoveMeasurementMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        // Trigger the removal event so the parent canvas can remove this control
+        RemoveControlRequested?.Invoke(this, EventArgs.Empty);
     }
 }

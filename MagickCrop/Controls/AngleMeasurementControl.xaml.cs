@@ -17,6 +17,8 @@ public partial class AngleMeasurementControl : UserControl
 
     public event MouseButtonEventHandler? MeasurementPointMouseDown;
     public event MouseEventHandler? MeasurementPointMouseMove;
+    public delegate void RemoveControlRequestedEventHandler(object sender, EventArgs e);
+    public event RemoveControlRequestedEventHandler? RemoveControlRequested;
 
     public AngleMeasurementControl()
     {
@@ -193,5 +195,23 @@ public partial class AngleMeasurementControl : UserControl
     {
         string angle = AngleTextBlock.Text;
         Clipboard.SetText(angle);
+    }
+    
+    private void MeasurementButton_Click(object sender, RoutedEventArgs e)
+    {
+        // Show context menu when button is clicked
+        ContextMenu? contextMenu = MeasurementText.ContextMenu;
+        if (contextMenu != null)
+        {
+            contextMenu.PlacementTarget = MeasurementText;
+            contextMenu.IsOpen = true;
+            e.Handled = true;
+        }
+    }
+    
+    private void RemoveMeasurementMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        // Trigger the removal event so the parent canvas can remove this control
+        RemoveControlRequested?.Invoke(this, EventArgs.Empty);
     }
 }

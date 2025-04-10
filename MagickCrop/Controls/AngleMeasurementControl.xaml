@@ -71,12 +71,20 @@
             <Border.ContextMenu>
                 <ContextMenu>
                     <MenuItem Click="CopyMeasurementMenuItem_Click" Header="Copy Measurement" />
+                    <MenuItem Click="RemoveMeasurementMenuItem_Click" Header="Remove Measurement" />
                 </ContextMenu>
             </Border.ContextMenu>
-            <TextBlock
-                x:Name="AngleTextBlock"
-                FontWeight="Bold"
-                Foreground="White" />
+            <Button 
+                x:Name="MeasurementButton" 
+                Background="Transparent"
+                BorderThickness="0"
+                Padding="0"
+                Click="MeasurementButton_Click">
+                <TextBlock
+                    x:Name="AngleTextBlock"
+                    FontWeight="Bold"
+                    Foreground="White" />
+            </Button>
         </Border>
     </Canvas>
 </UserControl>

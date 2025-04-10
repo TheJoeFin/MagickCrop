@@ -1094,6 +1094,7 @@ public partial class MainWindow : FluentWindow
         };
         measurementControl.MeasurementPointMouseDown += MeasurementPoint_MouseDown;
         measurementControl.SetRealWorldLengthRequested += MeasurementControl_SetRealWorldLengthRequested;
+        measurementControl.RemoveControlRequested += DistanceMeasurementControl_RemoveControlRequested;
         measurementTools.Add(measurementControl);
         ShapeCanvas.Children.Add(measurementControl);
 
@@ -1101,15 +1102,34 @@ public partial class MainWindow : FluentWindow
         measurementControl.InitializePositions(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight);
     }
 
+    private void DistanceMeasurementControl_RemoveControlRequested(object sender, EventArgs e)
+    {
+        if (sender is DistanceMeasurementControl control)
+        {
+            ShapeCanvas.Children.Remove(control);
+            measurementTools.Remove(control);
+        }
+    }
+
     private void AddNewAngleMeasurementToolToCanvas()
     {
         AngleMeasurementControl measurementControl = new();
         measurementControl.MeasurementPointMouseDown += AngleMeasurementPoint_MouseDown;
+        measurementControl.RemoveControlRequested += AngleMeasurementControl_RemoveControlRequested;
         angleMeasurementTools.Add(measurementControl);
         ShapeCanvas.Children.Add(measurementControl);
 
         // Initialize with reasonable positions based on the canvas size
         measurementControl.InitializePositions(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight);
+    }
+
+    private void AngleMeasurementControl_RemoveControlRequested(object sender, EventArgs e)
+    {
+        if (sender is AngleMeasurementControl control)
+        {
+            ShapeCanvas.Children.Remove(control);
+            angleMeasurementTools.Remove(control);
+        }
     }
 
     private async void MeasurementControl_SetRealWorldLengthRequested(object sender, double pixelDistance)
@@ -1172,15 +1192,6 @@ public partial class MainWindow : FluentWindow
         draggingMode = DraggingMode.None;
     }
 
-    private void HideAngleMeasurementControls()
-    {
-        foreach (AngleMeasurementControl measurementControl in angleMeasurementTools)
-            ShapeCanvas.Children.Remove(measurementControl);
-
-        MeasurementButtonPanel.Visibility = Visibility.Collapsed;
-        draggingMode = DraggingMode.None;
-    }
-
     private void MeasurementPoint_MouseDown(object sender, MouseButtonEventArgs e)
     {
         if (sender is Ellipse senderEllipse
@@ -1230,6 +1241,5 @@ public partial class MainWindow : FluentWindow
     private void CloseMeasurementButton_Click(object sender, RoutedEventArgs e)
     {
         HideMeasurementControls();
-        HideAngleMeasurementControls();
     }
 }
