@@ -77,13 +77,24 @@ public partial class AngleMeasurementControl : UserControl
         vector1.Normalize();
         vector2.Normalize();
 
-        // Calculate angle using dot product
+        // Calculate angle using dot product (gives angle between 0-180 degrees)
         double dotProduct = Vector.Multiply(vector1, vector2);
         dotProduct = Math.Clamp(dotProduct, -1.0, 1.0); // Clamp to prevent floating point errors
         double angleInRadians = Math.Acos(dotProduct);
-        
+
         // Convert to degrees
         double angleInDegrees = angleInRadians * (180 / Math.PI);
+
+        // Use cross product to determine the direction/orientation of the angle
+        // In 2D, the cross product's Z component tells us if we're going clockwise or counterclockwise
+        double crossProductZ = (vector1.X * vector2.Y) - (vector1.Y * vector2.X);
+
+        // If cross product is negative, we need to use 360 - angle to get the correct angle in the 0-360 range
+        if (crossProductZ < 0)
+        {
+            angleInDegrees = 360 - angleInDegrees;
+        }
+
         return angleInDegrees;
     }
 

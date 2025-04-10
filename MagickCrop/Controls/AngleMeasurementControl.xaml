@@ -6,6 +6,27 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
     <Canvas x:Name="MeasurementCanvas">
+        <Line
+            x:Name="Line1"
+            Opacity="0.8"
+            Stroke="#0066FF"
+            StrokeDashArray="4,2"
+            StrokeThickness="2" />
+
+        <Line
+            x:Name="Line2"
+            Opacity="0.8"
+            Stroke="#0066FF"
+            StrokeDashArray="4,2"
+            StrokeThickness="2" />
+
+        <Path
+            x:Name="AngleArc"
+            Fill="#200066FF"
+            Opacity="0.8"
+            Stroke="#0066FF"
+            StrokeThickness="2" />
+
         <Ellipse
             x:Name="Point1"
             Width="12"
@@ -41,27 +62,6 @@
             Stroke="White"
             StrokeThickness="1"
             Tag="2" />
-
-        <Line
-            x:Name="Line1"
-            Opacity="0.8"
-            Stroke="#0066FF"
-            StrokeDashArray="4,2"
-            StrokeThickness="2" />
-
-        <Line
-            x:Name="Line2"
-            Opacity="0.8"
-            Stroke="#0066FF"
-            StrokeDashArray="4,2"
-            StrokeThickness="2" />
-
-        <Path
-            x:Name="AngleArc"
-            Fill="#200066FF"
-            Opacity="0.8"
-            Stroke="#0066FF"
-            StrokeThickness="2" />
 
         <Border
             x:Name="MeasurementText"
