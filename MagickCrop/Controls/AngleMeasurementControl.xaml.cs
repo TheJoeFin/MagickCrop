@@ -59,7 +59,7 @@ public partial class AngleMeasurementControl : UserControl
         // Calculate angle and update the arc and text
         double angle = CalculateAngle();
         UpdateAngleArc();
-        
+
         AngleTextBlock.Text = $"{angle:F1}°";
 
         // Position the measurement text near the vertex
@@ -101,7 +101,7 @@ public partial class AngleMeasurementControl : UserControl
     private void UpdateAngleArc()
     {
         double arcRadius = 25;
-        
+
         // Calculate vectors from vertex to points
         Vector vector1 = new(point1Position.X - vertexPosition.X, point1Position.Y - vertexPosition.Y);
         Vector vector2 = new(point3Position.X - vertexPosition.X, point3Position.Y - vertexPosition.Y);
@@ -143,7 +143,7 @@ public partial class AngleMeasurementControl : UserControl
 
         // Close path back to center
         pathFigure.Segments.Add(new LineSegment(vertexPosition, true));
-        
+
         pathGeometry.Figures.Add(pathFigure);
         AngleArc.Data = pathGeometry;
     }

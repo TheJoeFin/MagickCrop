@@ -8,7 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="clr-namespace:MagickCrop.Models"
     xmlns:wpfui="http://schemas.lepo.co/wpfui/2022/xaml"
-    Title="Magick Crop"
+    Title="Magick Crop &amp; Measure"
     Width="1000"
     Height="800"
     AllowDrop="True"
@@ -42,7 +42,7 @@
 
         <wpfui:TitleBar
             x:Name="wpfuiTitleBar"
-            Title="Magick Crop by TheJoeFin"
+            Title="Magick Crop &amp; Measure by TheJoeFin"
             Grid.ColumnSpan="2"
             Height="32"
             Foreground="{wpfui:ThemeResource TextFillColorPrimaryBrush}">

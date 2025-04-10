@@ -31,12 +31,19 @@
                 </StackPanel>
             </Viewbox>
             <TextBlock
-                Margin="0,0,0,8"
                 HorizontalAlignment="Center"
-                FontSize="28"
+                FontSize="20"
                 FontWeight="Bold"
                 TextAlignment="Center">
-                Welcome to Magick Crop!
+                Welcome to
+            </TextBlock>
+            <TextBlock
+                Margin="0,0,0,8"
+                HorizontalAlignment="Center"
+                FontSize="32"
+                FontWeight="Bold"
+                TextAlignment="Center">
+                Magick Crop &amp; Measure!
             </TextBlock>
             <TextBlock
                 Padding="0,0,0,12"
@@ -50,6 +57,7 @@
                 ► Squaring up a photo of a paper on a table<LineBreak />
                 ► Making a whiteboard photo look more presentable<LineBreak />
                 ► Undoing distortion from camera angle<LineBreak />
+                ► Measuring distances and angles on the newly rectilinear image<LineBreak />
                 This tool works 100% locally and offline and is<Run /> <Hyperlink
                     x:Name="SourceLink"
                     Click="SourceLink_Click"
@@ -66,7 +74,10 @@
                     more JoeFinApps...
                 </Hyperlink>
             </TextBlock>
-            <wpfui:HyperlinkButton Name="AboutHyperbuttons" Click="AboutHyperbuttons_Click">
+            <wpfui:HyperlinkButton
+                Name="AboutHyperbuttons"
+                Click="AboutHyperbuttons_Click"
+                Foreground="#1e9bfd">
                 More about MagickCrop...
             </wpfui:HyperlinkButton>
 

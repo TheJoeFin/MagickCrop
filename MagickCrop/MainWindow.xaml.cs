@@ -472,7 +472,7 @@ public partial class MainWindow : FluentWindow
             return;
         }
 
-        wpfuiTitleBar.Title = $"Magick Crop: {openFileDialog.FileName}";
+        wpfuiTitleBar.Title = $"Magick Crop & Measure: {openFileDialog.FileName}";
         await OpenImagePath(openFileDialog.FileName);
     }
 

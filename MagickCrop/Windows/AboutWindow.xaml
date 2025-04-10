@@ -6,7 +6,7 @@
     xmlns:local="clr-namespace:MagickCrop.Windows"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-    Title="AboutWindow"
+    Title="About"
     Width="800"
     Height="450"
     WindowStyle="ToolWindow"
@@ -16,23 +16,84 @@
             <RowDefinition Height="auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <ui:TitleBar Title="About Magick Crop" Grid.Row="0" />
-        <StackPanel Grid.Row="1">
+
+        <Grid.Resources>
+            <Style TargetType="Hyperlink">
+                <Setter Property="Foreground" Value="#1e9bfd" />
+            </Style>
+        </Grid.Resources>
+        <ui:TitleBar
+            Title="About Magick Crop &amp; Measure"
+            Grid.Row="0"
+            Height="32" />
+        <StackPanel Grid.Row="1" Margin="16">
             <TextBlock
                 Margin="0,0,0,8"
                 HorizontalAlignment="Center"
                 FontSize="28"
                 FontWeight="Bold"
                 TextAlignment="Center">
-                About Magick Crop
+                About Magick Crop &amp; Measure
             </TextBlock>
-            <!--
-                Version
-                Created by TheJoeFin - Link to GitHub
-                Uses packages ImageMagick.NET and Magick.NET
-                links to repos
-            -->
 
+            <!--  Version  -->
+            <TextBlock
+                x:Name="VersionTextBlock"
+                Margin="0,0,0,8"
+                HorizontalAlignment="Center"
+                FontSize="16" />
+
+            <!--  Created by  -->
+            <TextBlock
+                Margin="0,0,0,8"
+                HorizontalAlignment="Center"
+                FontSize="16">
+                Created by<Hyperlink NavigateUri="https://JoeFinApps.com" RequestNavigate="Hyperlink_RequestNavigate">
+                    TheJoeFin
+                </Hyperlink>
+            </TextBlock>
+
+            <!--  Project GitHub Link  -->
+            <TextBlock
+                Margin="0,0,0,8"
+                HorizontalAlignment="Center"
+                FontSize="16">
+                <Hyperlink NavigateUri="https://github.com/TheJoeFin/MagickCrop" RequestNavigate="Hyperlink_RequestNavigate">
+                    View this project on GitHub
+                </Hyperlink>
+            </TextBlock>
+
+            <!--  Uses packages  -->
+            <TextBlock
+                Margin="0,0,0,8"
+                HorizontalAlignment="Center"
+                FontSize="16">
+                Uses packages:
+            </TextBlock>
+            <TextBlock
+                Margin="0,0,0,8"
+                HorizontalAlignment="Center"
+                FontSize="16">
+                <Hyperlink NavigateUri="https://github.com/dlemstra/Magick.NET" RequestNavigate="Hyperlink_RequestNavigate">
+                    Magick.NET
+                </Hyperlink>
+            </TextBlock>
+            <TextBlock
+                Margin="0,0,0,8"
+                HorizontalAlignment="Center"
+                FontSize="16">
+                <Hyperlink NavigateUri="https://github.com/ImageMagick/ImageMagick" RequestNavigate="Hyperlink_RequestNavigate">
+                    ImageMagick
+                </Hyperlink>
+            </TextBlock>
+            <TextBlock
+                Margin="0,0,0,8"
+                HorizontalAlignment="Center"
+                FontSize="16">
+                <Hyperlink NavigateUri="https://github.com/lepoco/wpfui" RequestNavigate="Hyperlink_RequestNavigate">
+                    WPF-UI
+                </Hyperlink>
+            </TextBlock>
         </StackPanel>
     </Grid>
 </ui:FluentWindow>
