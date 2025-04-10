@@ -45,6 +45,7 @@
             <Border.ContextMenu>
                 <ContextMenu>
                     <MenuItem Click="CopyMeasurementMenuItem_Click" Header="Copy Measurement" />
+                    <MenuItem Click="SetRealWorldLengthMenuItem_Click" Header="Set Real World Length" />
                 </ContextMenu>
             </Border.ContextMenu>
             <TextBlock

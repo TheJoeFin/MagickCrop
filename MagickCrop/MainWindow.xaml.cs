@@ -9,6 +9,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Windows.ApplicationModel;
 using Wpf.Ui;
@@ -1065,23 +1066,18 @@ public partial class MainWindow : FluentWindow
 
     private void ShowMeasurementControls()
     {
-        // Hide other controls first
         HideCroppingControls();
         HideResizeControls();
         HideTransformControls();
 
-        // Create measurement control if it doesn't exist
         if (measurementTools.Count is 0)
             AddNewMeasurementToolToCanvas();
 
-        // Update scale factor
-        if (MainImage.Source != null)
+        if (MainImage.Source is not null)
         {
             double imageScale = 1.0;
-            if (MainImage.Source is System.Windows.Media.Imaging.BitmapSource bitmapSource && MainImage.ActualWidth > 0)
-            {
+            if (MainImage.Source is BitmapSource bitmapSource && MainImage.ActualWidth > 0)
                 imageScale = bitmapSource.PixelWidth / MainImage.ActualWidth;
-            }
 
             foreach (DistanceMeasurementControl tool in measurementTools)
                 tool.ScaleFactor = imageScale;
@@ -1102,11 +1098,57 @@ public partial class MainWindow : FluentWindow
             ScaleFactor = scale,
         };
         measurementControl.MeasurementPointMouseDown += MeasurementPoint_MouseDown;
+        measurementControl.SetRealWorldLengthRequested += MeasurementControl_SetRealWorldLengthRequested;
         measurementTools.Add(measurementControl);
         ShapeCanvas.Children.Add(measurementControl);
 
         // Initialize with reasonable positions based on the canvas size
         measurementControl.InitializePositions(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight);
+    }
+
+    private async void MeasurementControl_SetRealWorldLengthRequested(object sender, double pixelDistance)
+    {
+        if (sender is not DistanceMeasurementControl measurementControl)
+            return;
+
+        // Create and configure the number input dialog
+        Wpf.Ui.Controls.TextBox inputTextBox = new()
+        {
+            PlaceholderText = "ex: 8.5 in",
+            ClearButtonEnabled = true,
+            Width = 250
+        };
+
+        ContentDialog dialog = new()
+        {
+            Title = "Set Real World Length",
+            Content = inputTextBox,
+            PrimaryButtonText = "Apply",
+            CloseButtonText = "Cancel"
+        };
+
+        // Show the dialog and handle the result
+        ContentDialogService dialogService = new();
+        dialog.DialogHost = Presenter;
+        dialog.Closing += (s, args) =>
+        {
+            // Check if the primary button was clicked and input is valid
+            string[] strings = inputTextBox.Text.Split(' ');
+            if (args.Result == ContentDialogResult.Primary &&
+                strings.Length > 0 &&
+                double.TryParse(strings[0], out double realWorldLength) && 
+                realWorldLength > 0)
+            {
+                // Calculate new scale factor (real-world units per pixel)
+                double newScaleFactor = realWorldLength / pixelDistance;
+                ScaleInput.Value = newScaleFactor;
+
+                if (strings.Length > 1)
+                    MeasurementUnits.Text = strings[1];
+            }
+        };
+
+        await dialog.ShowAsync();
     }
 
     private void HideMeasurementControls()

@@ -14,6 +14,9 @@ public partial class DistanceMeasurementControl : UserControl
 
     public event MouseButtonEventHandler? MeasurementPointMouseDown;
     public event MouseEventHandler? MeasurementPointMouseMove;
+    // New event for real world length setting
+    public delegate void SetRealWorldLengthRequestedEventHandler(object sender, double pixelDistance);
+    public event SetRealWorldLengthRequestedEventHandler? SetRealWorldLengthRequested;
 
     public double ScaleFactor
     {
@@ -125,5 +128,11 @@ public partial class DistanceMeasurementControl : UserControl
     {
         string distance = DistanceTextBlock.Text;
         Clipboard.SetText(distance);
+    }
+    
+    private void SetRealWorldLengthMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        double pixelDistance = CalculateDistance();
+        SetRealWorldLengthRequested?.Invoke(this, pixelDistance);
     }
 }

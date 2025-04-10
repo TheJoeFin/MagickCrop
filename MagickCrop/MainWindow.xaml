@@ -583,6 +583,11 @@
             IsIndeterminate="True"
             Visibility="Collapsed" />
 
+        <ContentPresenter
+            x:Name="Presenter"
+            Grid.Row="1"
+            Grid.ColumnSpan="2" />
+
         <Grid.ContextMenu>
             <ContextMenu>
                 <MenuItem
