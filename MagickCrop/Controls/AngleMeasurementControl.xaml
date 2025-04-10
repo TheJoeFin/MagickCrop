@@ -1,0 +1,82 @@
+<UserControl
+    x:Class="MagickCrop.Controls.AngleMeasurementControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    <Canvas x:Name="MeasurementCanvas">
+        <Ellipse
+            x:Name="Point1"
+            Width="12"
+            Height="12"
+            Cursor="SizeAll"
+            Fill="#0066FF"
+            MouseDown="MeasurementPoint_MouseDown"
+            Opacity="0.8"
+            Stroke="White"
+            StrokeThickness="1"
+            Tag="0" />
+
+        <Ellipse
+            x:Name="VertexPoint"
+            Width="12"
+            Height="12"
+            Cursor="SizeAll"
+            Fill="#0066FF"
+            MouseDown="MeasurementPoint_MouseDown"
+            Opacity="0.8"
+            Stroke="White"
+            StrokeThickness="1"
+            Tag="1" />
+
+        <Ellipse
+            x:Name="Point3"
+            Width="12"
+            Height="12"
+            Cursor="SizeAll"
+            Fill="#0066FF"
+            MouseDown="MeasurementPoint_MouseDown"
+            Opacity="0.8"
+            Stroke="White"
+            StrokeThickness="1"
+            Tag="2" />
+
+        <Line
+            x:Name="Line1"
+            Opacity="0.8"
+            Stroke="#0066FF"
+            StrokeDashArray="4,2"
+            StrokeThickness="2" />
+
+        <Line
+            x:Name="Line2"
+            Opacity="0.8"
+            Stroke="#0066FF"
+            StrokeDashArray="4,2"
+            StrokeThickness="2" />
+
+        <Path
+            x:Name="AngleArc"
+            Fill="#200066FF"
+            Opacity="0.8"
+            Stroke="#0066FF"
+            StrokeThickness="2" />
+
+        <Border
+            x:Name="MeasurementText"
+            Padding="5,2"
+            Background="#7F000000"
+            CornerRadius="3">
+            <Border.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Click="CopyMeasurementMenuItem_Click" Header="Copy Measurement" />
+                </ContextMenu>
+            </Border.ContextMenu>
+            <TextBlock
+                x:Name="AngleTextBlock"
+                FontWeight="Bold"
+                Foreground="White" />
+        </Border>
+    </Canvas>
+</UserControl>

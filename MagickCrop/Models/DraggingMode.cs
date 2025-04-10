@@ -6,5 +6,6 @@ public enum DraggingMode
     MoveElement,
     Panning,
     Resizing,
-    MeasureDistance
+    MeasureDistance,
+    MeasureAngle
 }

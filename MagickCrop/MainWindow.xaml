@@ -322,6 +322,14 @@
                                 <wpfui:SymbolIcon Symbol="Ruler24" />
                             </MenuItem.Icon>
                         </MenuItem>
+                        <MenuItem
+                            Name="MeasureAngleMenuItem"
+                            Click="MeasureAngleMenuItem_Click"
+                            Header="Measure Angle">
+                            <MenuItem.Icon>
+                                <wpfui:SymbolIcon Symbol="Triangle24" />
+                            </MenuItem.Icon>
+                        </MenuItem>
                     </StackPanel>
                 </ScrollViewer>
                 <StackPanel

@@ -39,6 +39,8 @@ public partial class MainWindow : FluentWindow
     private AspectRatioItem? selectedAspectRatio;
     private readonly List<DistanceMeasurementControl> measurementTools = [];
     private DistanceMeasurementControl? activeMeasureControl;
+    private readonly List<AngleMeasurementControl> angleMeasurementTools = [];
+    private AngleMeasurementControl? activeAngleMeasureControl;
 
     public MainWindow()
     {
@@ -123,6 +125,12 @@ public partial class MainWindow : FluentWindow
                 activeMeasureControl = null;
             }
 
+            if (draggingMode == DraggingMode.MeasureAngle && activeAngleMeasureControl is not null)
+            {
+                activeAngleMeasureControl.ResetActivePoint();
+                activeAngleMeasureControl = null;
+            }
+
             clickedElement = null;
             ReleaseMouseCapture();
             draggingMode = DraggingMode.None;
@@ -149,6 +157,17 @@ public partial class MainWindow : FluentWindow
             if (pointIndex >= 0)
             {
                 activeMeasureControl.MovePoint(pointIndex, movingPoint);
+            }
+            e.Handled = true;
+            return;
+        }
+
+        if (draggingMode == DraggingMode.MeasureAngle && activeAngleMeasureControl is not null)
+        {
+            int pointIndex = activeAngleMeasureControl.GetActivePointIndex();
+            if (pointIndex >= 0)
+            {
+                activeAngleMeasureControl.MovePoint(pointIndex, movingPoint);
             }
             e.Handled = true;
             return;
@@ -1059,9 +1078,9 @@ public partial class MainWindow : FluentWindow
         ShowMeasurementControls();
     }
 
-    private void CloseMeasurementButton_Click(object sender, RoutedEventArgs e)
+    private void MeasureAngleMenuItem_Click(object sender, RoutedEventArgs e)
     {
-        HideMeasurementControls();
+        ShowAngleMeasurementControls();
     }
 
     private void ShowMeasurementControls()
@@ -1069,6 +1088,7 @@ public partial class MainWindow : FluentWindow
         HideCroppingControls();
         HideResizeControls();
         HideTransformControls();
+        HideAngleMeasurementControls(); // Hide angle measurement tools
 
         if (measurementTools.Count is 0)
             AddNewMeasurementToolToCanvas();
@@ -1090,6 +1110,23 @@ public partial class MainWindow : FluentWindow
         MeasurementButtonPanel.Visibility = Visibility.Visible;
     }
 
+    private void ShowAngleMeasurementControls()
+    {
+        HideCroppingControls();
+        HideResizeControls();
+        HideTransformControls();
+        HideMeasurementControls(); // Hide distance measurement tools
+
+        if (angleMeasurementTools.Count is 0)
+            AddNewAngleMeasurementToolToCanvas();
+
+        // Show angle measurement controls
+        foreach (AngleMeasurementControl tool in angleMeasurementTools)
+            tool.Visibility = Visibility.Visible;
+
+        MeasurementButtonPanel.Visibility = Visibility.Visible;
+    }
+
     private void AddNewMeasurementToolToCanvas()
     {
         double scale = ScaleInput.Value ?? 1.0;
@@ -1100,6 +1137,17 @@ public partial class MainWindow : FluentWindow
         measurementControl.MeasurementPointMouseDown += MeasurementPoint_MouseDown;
         measurementControl.SetRealWorldLengthRequested += MeasurementControl_SetRealWorldLengthRequested;
         measurementTools.Add(measurementControl);
+        ShapeCanvas.Children.Add(measurementControl);
+
+        // Initialize with reasonable positions based on the canvas size
+        measurementControl.InitializePositions(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight);
+    }
+
+    private void AddNewAngleMeasurementToolToCanvas()
+    {
+        AngleMeasurementControl measurementControl = new();
+        measurementControl.MeasurementPointMouseDown += AngleMeasurementPoint_MouseDown;
+        angleMeasurementTools.Add(measurementControl);
         ShapeCanvas.Children.Add(measurementControl);
 
         // Initialize with reasonable positions based on the canvas size
@@ -1160,6 +1208,15 @@ public partial class MainWindow : FluentWindow
         draggingMode = DraggingMode.None;
     }
 
+    private void HideAngleMeasurementControls()
+    {
+        foreach (AngleMeasurementControl measurementControl in angleMeasurementTools)
+            ShapeCanvas.Children.Remove(measurementControl);
+
+        MeasurementButtonPanel.Visibility = Visibility.Collapsed;
+        draggingMode = DraggingMode.None;
+    }
+
     private void MeasurementPoint_MouseDown(object sender, MouseButtonEventArgs e)
     {
         if (sender is Ellipse senderEllipse
@@ -1175,9 +1232,32 @@ public partial class MainWindow : FluentWindow
         }
     }
 
+    private void AngleMeasurementPoint_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is Ellipse senderEllipse
+            && senderEllipse.Parent is Canvas measureCanvas
+            && measureCanvas.Parent is AngleMeasurementControl measureControl
+            )
+        {
+            activeAngleMeasureControl = measureControl;
+
+            draggingMode = DraggingMode.MeasureAngle;
+            clickedPoint = e.GetPosition(ShapeCanvas);
+            CaptureMouse();
+        }
+    }
+
     private void AddMeasurementToolButton_Click(object sender, RoutedEventArgs e)
     {
-        AddNewMeasurementToolToCanvas();
+        // Check which measurement mode we're in and add the appropriate tool
+        if (measurementTools.Count > 0 && measurementTools[0].Visibility == Visibility.Visible)
+        {
+            AddNewMeasurementToolToCanvas();
+        }
+        else if (angleMeasurementTools.Count > 0 && angleMeasurementTools[0].Visibility == Visibility.Visible)
+        {
+            AddNewAngleMeasurementToolToCanvas();
+        }
     }
 
     private void ScaleInput_ValueChanged(object sender, RoutedEventArgs e)
@@ -1194,5 +1274,11 @@ public partial class MainWindow : FluentWindow
 
         foreach (DistanceMeasurementControl tool in measurementTools)
             tool.Units = textBox.Text;
+    }
+
+    private void CloseMeasurementButton_Click(object sender, RoutedEventArgs e)
+    {
+        HideMeasurementControls();
+        HideAngleMeasurementControls();
     }
 }
