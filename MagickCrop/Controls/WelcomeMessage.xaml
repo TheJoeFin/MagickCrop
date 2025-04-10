@@ -28,6 +28,7 @@
                 <StackPanel Orientation="Horizontal">
                     <wpfui:SymbolIcon Symbol="Wand48" />
                     <wpfui:SymbolIcon Symbol="Crop48" />
+                    <wpfui:SymbolIcon Symbol="Ruler48" />
                 </StackPanel>
             </Viewbox>
             <TextBlock

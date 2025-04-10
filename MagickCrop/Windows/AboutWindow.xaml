@@ -7,8 +7,9 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="About"
-    Width="800"
+    Width="450"
     Height="450"
+    ResizeMode="NoResize"
     WindowStyle="ToolWindow"
     mc:Ignorable="d">
     <Grid>
@@ -39,7 +40,7 @@
             <!--  Version  -->
             <TextBlock
                 x:Name="VersionTextBlock"
-                Margin="0,0,0,8"
+                Margin="0,0,0,40"
                 HorizontalAlignment="Center"
                 FontSize="16" />
 

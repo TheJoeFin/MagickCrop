@@ -2,7 +2,7 @@
   <img width="128" align="center" src=Images\MagickCropLogo.png>
 </p>
 <h1 align="center">
-  MagickCrop
+  Magick Crop & Measure
 </h1>
 <p align="center">
   Correct perspective distortion in photos with ImageMagick.
@@ -32,5 +32,6 @@ This is a simple app which does a few things.
 - Crop the image
 - Resize the image to remove stretch
 - Adjust color and contrast
+- Measure distance and angle
 
 If you like this app you'll probably enjoy some of my other apps: [JoeFinApps.com](https://www.JoeFinApps.com)
