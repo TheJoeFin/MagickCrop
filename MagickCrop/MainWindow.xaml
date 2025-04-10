@@ -185,7 +185,7 @@
                         <MenuItem
                             Name="AutoContrastMenuItem"
                             Click="AutoContrastMenuItem_Click"
-                            Header="5% Auto Contrast">
+                            Header="10% Auto Contrast">
                             <MenuItem.Icon>
                                 <wpfui:SymbolIcon Symbol="DarkTheme24" />
                             </MenuItem.Icon>

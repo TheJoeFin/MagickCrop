@@ -633,7 +633,7 @@ public partial class MainWindow : FluentWindow
         SetUiForLongTask();
 
         MagickImage magickImage = new(imagePath);
-        await Task.Run(() => magickImage.SigmoidalContrast(5));
+        await Task.Run(() => magickImage.SigmoidalContrast(10));
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await magickImage.WriteAsync(tempFileName);
