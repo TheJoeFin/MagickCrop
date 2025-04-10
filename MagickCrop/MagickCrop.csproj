@@ -26,11 +26,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="14.2.0" />
-    <PackageReference Include="Magick.NET.SystemDrawing" Version="8.0.2" />
-    <PackageReference Include="Magick.NET.SystemWindowsMedia" Version="8.0.2" />
-    <PackageReference Include="System.Drawing.Common" Version="9.0.0" />
-    <PackageReference Include="WPF-UI" Version="3.0.5" />
+    <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="14.6.0" />
+    <PackageReference Include="Magick.NET.SystemDrawing" Version="8.0.6" />
+    <PackageReference Include="Magick.NET.SystemWindowsMedia" Version="8.0.6" />
+    <PackageReference Include="System.Drawing.Common" Version="9.0.4" />
+    <PackageReference Include="WPF-UI" Version="4.0.2" />
   </ItemGroup>
 
 </Project>
