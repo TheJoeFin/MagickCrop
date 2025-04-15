@@ -6,6 +6,13 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
     <Canvas x:Name="MeasurementCanvas">
+        <Line
+            x:Name="MeasurementLine"
+            Opacity="0.8"
+            Stroke="#0066FF"
+            StrokeDashArray="4,2"
+            StrokeThickness="2" />
+
         <Ellipse
             x:Name="StartPoint"
             Width="12"
@@ -17,7 +24,6 @@
             Stroke="White"
             StrokeThickness="1"
             Tag="0" />
-
         <Ellipse
             x:Name="EndPoint"
             Width="12"
@@ -29,13 +35,6 @@
             Stroke="White"
             StrokeThickness="1"
             Tag="1" />
-
-        <Line
-            x:Name="MeasurementLine"
-            Opacity="0.8"
-            Stroke="#0066FF"
-            StrokeDashArray="4,2"
-            StrokeThickness="2" />
 
         <Border
             x:Name="MeasurementText"
@@ -49,11 +48,11 @@
                     <MenuItem Click="RemoveMeasurementMenuItem_Click" Header="Remove Measurement" />
                 </ContextMenu>
             </Border.ContextMenu>
-            <Button 
-                x:Name="MeasurementButton" 
+            <Button
+                x:Name="MeasurementButton"
+                Padding="0"
                 Background="Transparent"
                 BorderThickness="0"
-                Padding="0"
                 Click="MeasurementButton_Click">
                 <TextBlock
                     x:Name="DistanceTextBlock"
