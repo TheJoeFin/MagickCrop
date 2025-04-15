@@ -13,10 +13,13 @@
   </a>
 </p>
 
-![The welcome experience in MagickCrop 1.4](Images/Welcome1.4.png)
+![The welcome experience in MagickCrop 1.5](Images/Welcome1.5.png)
 
 Using ImageMagick to via to correct perspective distortion in images.
-![A piece of paper on a table in need of correction](Images/Transform1.4.png)
+![A piece of paper on a table in need of correction](Images/Transform1.5.png)
+
+After the perspective distortion has been removed you can use the measure tools!
+![Measure Tools on the corrected image of a piece of paper](Images/Measure.png)
 
 ## Powered by Image Magick and Magick.NET
 
