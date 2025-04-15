@@ -1,6 +1,7 @@
 ﻿using ImageMagick;
 using MagickCrop.Controls;
 using MagickCrop.Models;
+using MagickCrop.Models.MeasurementControls;
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -1180,12 +1181,21 @@ public partial class MainWindow : FluentWindow
     private void HideMeasurementControls()
     {
         foreach (DistanceMeasurementControl measurementControl in measurementTools)
+        {
+            measurementControl.MeasurementPointMouseDown -= MeasurementPoint_MouseDown;
+            measurementControl.SetRealWorldLengthRequested -= MeasurementControl_SetRealWorldLengthRequested;
+            measurementControl.RemoveControlRequested -= DistanceMeasurementControl_RemoveControlRequested;
             ShapeCanvas.Children.Remove(measurementControl);
+        }
 
         measurementTools.Clear();
 
         foreach (AngleMeasurementControl measurementControl in angleMeasurementTools)
+        {
+            measurementControl.MeasurementPointMouseDown -= AngleMeasurementPoint_MouseDown;
+            measurementControl.RemoveControlRequested -= AngleMeasurementControl_RemoveControlRequested;
             ShapeCanvas.Children.Remove(measurementControl);
+        }
 
         angleMeasurementTools.Clear();
 
@@ -1241,5 +1251,102 @@ public partial class MainWindow : FluentWindow
     private void CloseMeasurementButton_Click(object sender, RoutedEventArgs e)
     {
         HideMeasurementControls();
+    }
+
+    private void SaveMeasurementsToFile()
+    {
+        // Create the measurement collection
+        MeasurementCollection collection = new()
+        {
+            GlobalScaleFactor = ScaleInput.Value ?? 1.0,
+            GlobalUnits = MeasurementUnits.Text
+        };
+
+        foreach (DistanceMeasurementControl control in measurementTools)
+            collection.DistanceMeasurements.Add(control.ToDto());
+
+        foreach (AngleMeasurementControl control in angleMeasurementTools)
+            collection.AngleMeasurements.Add(control.ToDto());
+
+        // Show save file dialog
+        SaveFileDialog saveFileDialog = new()
+        {
+            Filter = "Measurement Files|*.measurements.json",
+            RestoreDirectory = true,
+            FileName = $"{openedFileName}_measurements.json"
+        };
+
+        if (saveFileDialog.ShowDialog() != true)
+            return;
+
+        // Save to the selected file
+        collection.SaveToFile(saveFileDialog.FileName);
+    }
+
+    private void LoadMeasurementsFromFile()
+    {
+        OpenFileDialog openFileDialog = new()
+        {
+            Filter = "Measurement Files|*.measurements.json|All Files|*.*",
+            RestoreDirectory = true
+        };
+
+        if (openFileDialog.ShowDialog() != true)
+            return;
+
+        // Clear existing measurements
+        HideMeasurementControls();
+
+        // Load from file
+        MeasurementCollection? collection = MeasurementCollection.LoadFromFile(openFileDialog.FileName);
+        if (collection == null)
+        {
+            System.Windows.MessageBox.Show(
+                "Failed to load measurements file.",
+                "Error",
+                System.Windows.MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            return;
+        }
+
+        ScaleInput.Value = collection.GlobalScaleFactor;
+        MeasurementUnits.Text = collection.GlobalUnits;
+
+        // Add distance measurements
+        foreach (DistanceMeasurementControlDto dto in collection.DistanceMeasurements)
+        {
+            DistanceMeasurementControl control = new()
+            {
+                ScaleFactor = dto.ScaleFactor,
+                Units = dto.Units
+            };
+            control.FromDto(dto);
+            control.MeasurementPointMouseDown += MeasurementPoint_MouseDown;
+            control.SetRealWorldLengthRequested += MeasurementControl_SetRealWorldLengthRequested;
+            control.RemoveControlRequested += DistanceMeasurementControl_RemoveControlRequested;
+            measurementTools.Add(control);
+            ShapeCanvas.Children.Add(control);
+        }
+
+        // Add angle measurements
+        foreach (AngleMeasurementControlDto dto in collection.AngleMeasurements)
+        {
+            AngleMeasurementControl control = new();
+            control.FromDto(dto);
+            control.MeasurementPointMouseDown += AngleMeasurementPoint_MouseDown;
+            control.RemoveControlRequested += AngleMeasurementControl_RemoveControlRequested;
+            angleMeasurementTools.Add(control);
+            ShapeCanvas.Children.Add(control);
+        }
+    }
+
+    private void SaveMeasurementsMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        SaveMeasurementsToFile();
+    }
+
+    private void LoadMeasurementsMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        LoadMeasurementsFromFile();
     }
 }

@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using MagickCrop.Models.MeasurementControls;
 
 namespace MagickCrop.Controls;
 
@@ -155,5 +156,31 @@ public partial class DistanceMeasurementControl : UserControl
     {
         // Trigger the removal event so the parent canvas can remove this control
         RemoveControlRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Convert this control to a data transfer object
+    /// </summary>
+    public DistanceMeasurementControlDto ToDto()
+    {
+        return new DistanceMeasurementControlDto
+        {
+            StartPosition = startPosition,
+            EndPosition = endPosition,
+            ScaleFactor = ScaleFactor,
+            Units = Units
+        };
+    }
+
+    /// <summary>
+    /// Apply data from a DTO to this control
+    /// </summary>
+    public void FromDto(DistanceMeasurementControlDto dto)
+    {
+        startPosition = dto.StartPosition;
+        endPosition = dto.EndPosition;
+        ScaleFactor = dto.ScaleFactor;
+        Units = dto.Units;
+        UpdatePositions();
     }
 }

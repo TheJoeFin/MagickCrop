@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using MagickCrop.Models.MeasurementControls;
 
 namespace MagickCrop.Controls;
 
@@ -213,5 +214,29 @@ public partial class AngleMeasurementControl : UserControl
     {
         // Trigger the removal event so the parent canvas can remove this control
         RemoveControlRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Convert this control to a data transfer object
+    /// </summary>
+    public AngleMeasurementControlDto ToDto()
+    {
+        return new AngleMeasurementControlDto
+        {
+            Point1Position = point1Position,
+            VertexPosition = vertexPosition,
+            Point3Position = point3Position
+        };
+    }
+
+    /// <summary>
+    /// Apply data from a DTO to this control
+    /// </summary>
+    public void FromDto(AngleMeasurementControlDto dto)
+    {
+        point1Position = dto.Point1Position;
+        vertexPosition = dto.VertexPosition;
+        point3Position = dto.Point3Position;
+        UpdatePositions();
     }
 }
