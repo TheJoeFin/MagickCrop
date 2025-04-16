@@ -11,7 +11,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Windows.ApplicationModel;
 using Wpf.Ui;
@@ -95,8 +94,8 @@ public partial class MainWindow : FluentWindow
         foreach (Ellipse ellipse in ellipseList)
         {
             lines.Points.Add(
-                new Point(Canvas.GetLeft(ellipse) + ellipse.Width / 2,
-                                Canvas.GetTop(ellipse) + ellipse.Height / 2));
+                new Point(Canvas.GetLeft(ellipse) + (ellipse.Width / 2),
+                                Canvas.GetTop(ellipse) + (ellipse.Height / 2)));
         }
 
         ShapeCanvas.Children.Add(lines);
@@ -1010,8 +1009,8 @@ public partial class MainWindow : FluentWindow
             return;
 
         MagickImage magickImage = new(imagePath);
-        Percentage imageWidthChangePercentage = new((MainImage.ActualWidth / originalImageSize.Width) * 100);
-        Percentage imageHeightChangePercentage = new((MainImage.ActualHeight / originalImageSize.Height) * 100);
+        Percentage imageWidthChangePercentage = new(MainImage.ActualWidth / originalImageSize.Width * 100);
+        Percentage imageHeightChangePercentage = new(MainImage.ActualHeight / originalImageSize.Height * 100);
 
         MagickGeometry resizeGeometry = new(imageWidthChangePercentage, imageHeightChangePercentage)
         {
@@ -1163,7 +1162,7 @@ public partial class MainWindow : FluentWindow
             string[] strings = inputTextBox.Text.Split(' ');
             if (args.Result == ContentDialogResult.Primary &&
                 strings.Length > 0 &&
-                double.TryParse(strings[0], out double realWorldLength) && 
+                double.TryParse(strings[0], out double realWorldLength) &&
                 realWorldLength > 0)
             {
                 // Calculate new scale factor (real-world units per pixel)
@@ -1340,13 +1339,162 @@ public partial class MainWindow : FluentWindow
         }
     }
 
-    private void SaveMeasurementsMenuItem_Click(object sender, RoutedEventArgs e)
+    private async void SaveMeasurementsPackageToFile()
     {
-        SaveMeasurementsToFile();
+        if (string.IsNullOrWhiteSpace(imagePath))
+        {
+            System.Windows.MessageBox.Show(
+                "No image loaded. Please open an image first.",
+                "Error",
+                System.Windows.MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            return;
+        }
+
+        // Create the package
+        MagickCropMeasurementPackage package = new()
+        {
+            ImagePath = imagePath,
+            Metadata = new PackageMetadata
+            {
+                OriginalFilename = openedFileName
+            },
+            Measurements = new MeasurementCollection
+            {
+                GlobalScaleFactor = ScaleInput.Value ?? 1.0,
+                GlobalUnits = MeasurementUnits.Text
+            }
+        };
+
+        // Add all measurements to the package
+        foreach (DistanceMeasurementControl control in measurementTools)
+        {
+            package.Measurements.DistanceMeasurements.Add(control.ToDto());
+        }
+
+        foreach (AngleMeasurementControl control in angleMeasurementTools)
+        {
+            package.Measurements.AngleMeasurements.Add(control.ToDto());
+        }
+
+        // Show save file dialog
+        SaveFileDialog saveFileDialog = new()
+        {
+            Filter = "MagickCrop Measurement Files|*.mcm",
+            RestoreDirectory = true,
+            FileName = $"{openedFileName}_measurements.mcm"
+        };
+
+        if (saveFileDialog.ShowDialog() != true)
+            return;
+
+        SetUiForLongTask();
+
+        try
+        {
+            // Save to the selected file
+            bool success = await package.SaveToFileAsync(saveFileDialog.FileName);
+
+            if (success)
+            {
+                System.Windows.MessageBox.Show(
+                    "Measurements and image saved successfully.",
+                    "Success",
+                    System.Windows.MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            else
+            {
+                System.Windows.MessageBox.Show(
+                    "Failed to save the measurement package.",
+                    "Error",
+                    System.Windows.MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+        finally
+        {
+            SetUiForCompletedTask();
+        }
+    }
+
+    public async void LoadMeasurementsPackageFromFile()
+    {
+        OpenFileDialog openFileDialog = new()
+        {
+            Filter = "MagickCrop Measurement Files|*.mcm|All Files|*.*",
+            RestoreDirectory = true
+        };
+
+        if (openFileDialog.ShowDialog() != true)
+            return;
+
+        SetUiForLongTask();
+
+        try
+        {
+            // Load the package
+            MagickCropMeasurementPackage? package = await MagickCropMeasurementPackage.LoadFromFileAsync(openFileDialog.FileName);
+            if (package == null || string.IsNullOrEmpty(package.ImagePath) || !File.Exists(package.ImagePath))
+            {
+                System.Windows.MessageBox.Show(
+                    "Failed to load measurement package.",
+                    "Error",
+                    System.Windows.MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
+            }
+
+            // Load the image
+            await OpenImagePath(package.ImagePath);
+
+            // Clear existing measurements
+            HideMeasurementControls();
+
+            // Set global measurement properties
+            ScaleInput.Value = package.Measurements.GlobalScaleFactor;
+            MeasurementUnits.Text = package.Measurements.GlobalUnits;
+
+            // Add distance measurements
+            foreach (DistanceMeasurementControlDto dto in package.Measurements.DistanceMeasurements)
+            {
+                DistanceMeasurementControl control = new()
+                {
+                    ScaleFactor = dto.ScaleFactor,
+                    Units = dto.Units
+                };
+                control.FromDto(dto);
+                control.MeasurementPointMouseDown += MeasurementPoint_MouseDown;
+                control.SetRealWorldLengthRequested += MeasurementControl_SetRealWorldLengthRequested;
+                control.RemoveControlRequested += DistanceMeasurementControl_RemoveControlRequested;
+                measurementTools.Add(control);
+                ShapeCanvas.Children.Add(control);
+            }
+
+            // Add angle measurements
+            foreach (AngleMeasurementControlDto dto in package.Measurements.AngleMeasurements)
+            {
+                AngleMeasurementControl control = new();
+                control.FromDto(dto);
+                control.MeasurementPointMouseDown += AngleMeasurementPoint_MouseDown;
+                control.RemoveControlRequested += AngleMeasurementControl_RemoveControlRequested;
+                angleMeasurementTools.Add(control);
+                ShapeCanvas.Children.Add(control);
+            }
+        }
+        finally
+        {
+            SetUiForCompletedTask();
+        }
     }
 
     private void LoadMeasurementsMenuItem_Click(object sender, RoutedEventArgs e)
     {
-        LoadMeasurementsFromFile();
+        LoadMeasurementsPackageFromFile();
+    }
+
+    private void SavePackageButton_Click(object sender, RoutedEventArgs e)
+    {
+        SaveMeasurementsPackageToFile();
     }
 }

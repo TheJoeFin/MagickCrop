@@ -51,4 +51,12 @@ public partial class WelcomeMessage : UserControl
         AboutWindow aboutWindow = new();
         aboutWindow.ShowDialog();
     }
+
+    private void OpenPackageButton_Click(object sender, RoutedEventArgs e)
+    {
+        WelcomeBorder.Visibility = Visibility.Collapsed;
+        if (Window.GetWindow(this) is MainWindow mainWindow)
+            mainWindow.LoadMeasurementsPackageFromFile();
+    }
+
 }

@@ -574,6 +574,17 @@
                     HorizontalAlignment="Stretch"
                     Orientation="Vertical">
                     <wpfui:Button
+                        x:Name="SavePackageButton"
+                        Width="160"
+                        Margin="0,8,0,0"
+                        Click="SavePackageButton_Click"
+                        Content="Save Package..."
+                        ToolTip="Save image with measurements as a .mcm package">
+                        <wpfui:Button.Icon>
+                            <wpfui:SymbolIcon Symbol="SaveCopy24" />
+                        </wpfui:Button.Icon>
+                    </wpfui:Button>
+                    <wpfui:Button
                         x:Name="Save"
                         Width="160"
                         Margin="0,8"

@@ -95,6 +95,18 @@
                     <wpfui:SymbolIcon Symbol="FolderOpen24" />
                 </wpfui:Button.Icon>
             </wpfui:Button>
+            <wpfui:Button
+                x:Name="OpenPackageButton"
+                Margin="8,4,0,4"
+                HorizontalAlignment="Center"
+                Appearance="Secondary"
+                Click="OpenPackageButton_Click"
+                Content="Open Measurement Package..."
+                ToolTip="Open a saved .mcm measurement package">
+                <wpfui:Button.Icon>
+                    <wpfui:SymbolIcon Symbol="Ruler24" />
+                </wpfui:Button.Icon>
+            </wpfui:Button>
         </StackPanel>
     </Border>
 </UserControl>

@@ -44,6 +44,17 @@
         </uap:DefaultTile >
         <uap:SplashScreen Image="Images\SplashScreen.png" />
       </uap:VisualElements>
+      <Extensions>
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="magickcropandmeasure">
+            <uap:SupportedFileTypes>
+              <uap:FileType>.mcm</uap:FileType>
+            </uap:SupportedFileTypes>
+            <uap:DisplayName>Magick Crop &amp; Measure</uap:DisplayName>
+            <uap:Logo>MagickCropLogo.png</uap:Logo>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+      </Extensions>
     </Application>
   </Applications>
 
