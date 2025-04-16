@@ -1431,10 +1431,17 @@ public partial class MainWindow : FluentWindow
 
         SetUiForLongTask();
 
+        string fileName = openFileDialog.FileName;
+
+        await LoadMeasurementPackageAsync(fileName);
+    }
+
+    private async Task LoadMeasurementPackageAsync(string fileName)
+    {
         try
         {
             // Load the package
-            MagickCropMeasurementPackage? package = await MagickCropMeasurementPackage.LoadFromFileAsync(openFileDialog.FileName);
+            MagickCropMeasurementPackage? package = await MagickCropMeasurementPackage.LoadFromFileAsync(fileName);
             if (package == null || string.IsNullOrEmpty(package.ImagePath) || !File.Exists(package.ImagePath))
             {
                 System.Windows.MessageBox.Show(
@@ -1486,6 +1493,14 @@ public partial class MainWindow : FluentWindow
         {
             SetUiForCompletedTask();
         }
+    }
+
+    public async void LoadMeasurementsPackageFromFile(string filePath)
+    {
+        SetUiForLongTask();
+        WelcomeMessageModal.Visibility = Visibility.Collapsed;
+
+        await LoadMeasurementPackageAsync(filePath);
     }
 
     private void LoadMeasurementsMenuItem_Click(object sender, RoutedEventArgs e)

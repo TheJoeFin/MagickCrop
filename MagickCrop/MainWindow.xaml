@@ -134,7 +134,10 @@
             </Canvas>
         </Grid>
 
-        <c:WelcomeMessage Grid.Row="1" PrimaryButtonEvent="OpenFileButton_Click" />
+        <c:WelcomeMessage
+            x:Name="WelcomeMessageModal"
+            Grid.Row="1"
+            PrimaryButtonEvent="OpenFileButton_Click" />
 
         <Border
             x:Name="BottomBorder"
