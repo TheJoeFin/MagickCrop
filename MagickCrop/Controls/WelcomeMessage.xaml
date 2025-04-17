@@ -11,7 +11,8 @@
     mc:Ignorable="d">
     <Border
         x:Name="WelcomeBorder"
-        MaxWidth="540"
+        MaxWidth="700"
+        Margin="30,20"
         Padding="30,20"
         HorizontalAlignment="Center"
         VerticalAlignment="Center"
@@ -23,90 +24,158 @@
                 Direction="270"
                 ShadowDepth="4" />
         </Border.Effect>
-        <StackPanel Grid.Row="0" Orientation="Vertical">
-            <Viewbox Height="100" Margin="0,0,0,20">
-                <StackPanel Orientation="Horizontal">
-                    <wpfui:SymbolIcon Symbol="Wand48" />
-                    <wpfui:SymbolIcon Symbol="Crop48" />
-                    <wpfui:SymbolIcon Symbol="Ruler48" />
-                </StackPanel>
-            </Viewbox>
-            <TextBlock
-                HorizontalAlignment="Center"
-                FontSize="20"
-                FontWeight="Bold"
-                TextAlignment="Center">
-                Welcome to
-            </TextBlock>
-            <TextBlock
-                Margin="0,0,0,8"
-                HorizontalAlignment="Center"
-                FontSize="32"
-                FontWeight="Bold"
-                TextAlignment="Center">
-                Magick Crop &amp; Measure!
-            </TextBlock>
-            <TextBlock
-                Padding="0,0,0,12"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                d:Foreground="White"
-                Foreground="{wpfui:ThemeResource TextFillColorPrimaryBrush}"
-                LineHeight="24"
-                TextWrapping="Wrap">
-                Hello there! this is a simple tool that uses the Magick.NET library to fix images. Scenarios where this tool is useful:<LineBreak />
-                ► Squaring up a photo of a paper on a table<LineBreak />
-                ► Making a whiteboard photo look more presentable<LineBreak />
-                ► Undoing distortion from camera angle<LineBreak />
-                ► Measuring distances and angles on the newly rectilinear image<LineBreak />
-                This tool works 100% locally and offline and is<Run /> <Hyperlink
-                    x:Name="SourceLink"
-                    Click="SourceLink_Click"
-                    Foreground="#1e9bfd">
-                    fully open source
-                </Hyperlink>
-                . Enjoy!<LineBreak />
-                Scroll to Zoom, Click and drag to pan and move points.<LineBreak /><LineBreak />
-                - Joe Finney<LineBreak /><Hyperlink
-                    Click="Hyperlink_Click"
-                    Foreground="#1e9bfd"
-                    NavigateUri="https://www.JoeFinApps.com"
-                    ToolTip="Learn more about the app developer of this app at JoeFinApps.com">
-                    more JoeFinApps...
-                </Hyperlink>
-            </TextBlock>
-            <wpfui:HyperlinkButton
-                Name="AboutHyperbuttons"
-                Click="AboutHyperbuttons_Click"
-                Foreground="#1e9bfd">
-                More about MagickCrop...
-            </wpfui:HyperlinkButton>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="auto" />
+            </Grid.RowDefinitions>
 
-            <wpfui:Button
-                x:Name="OpenFileButton"
-                Margin="8,4,0,4"
+            <!--  Welcome Header  -->
+            <StackPanel Grid.Row="0" Orientation="Vertical">
+                <Viewbox Height="100" Margin="0,0,0,20">
+                    <StackPanel Orientation="Horizontal">
+                        <wpfui:SymbolIcon Symbol="Wand48" />
+                        <wpfui:SymbolIcon Symbol="Crop48" />
+                        <wpfui:SymbolIcon Symbol="Ruler48" />
+                    </StackPanel>
+                </Viewbox>
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontSize="20"
+                    FontWeight="Bold"
+                    TextAlignment="Center">
+                    Welcome to
+                </TextBlock>
+                <TextBlock
+                    Margin="0,0,0,8"
+                    HorizontalAlignment="Center"
+                    FontSize="32"
+                    FontWeight="Bold"
+                    TextAlignment="Center">
+                    Magick Crop &amp; Measure!
+                </TextBlock>
+            </StackPanel>
+
+            <!--  Content with Tabs for Intro/Recent Projects  -->
+            <TabControl
+                Grid.Row="1"
+                Background="Transparent"
+                BorderThickness="0">
+                <TabItem Header="Welcome">
+                    <StackPanel>
+                        <TextBlock
+                            Padding="0,0,0,12"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            d:Foreground="White"
+                            Foreground="{wpfui:ThemeResource TextFillColorPrimaryBrush}"
+                            LineHeight="24"
+                            TextWrapping="Wrap">
+                            Hello there! this is a simple tool that uses the Magick.NET library to fix images. Scenarios where this tool is useful:<LineBreak />
+                            ► Squaring up a photo of a paper on a table<LineBreak />
+                            ► Making a whiteboard photo look more presentable<LineBreak />
+                            ► Undoing distortion from camera angle<LineBreak />
+                            ► Measuring distances and angles on the newly rectilinear image<LineBreak />
+                            This tool works 100% locally and offline and is<Run /> <Hyperlink
+                                x:Name="SourceLink"
+                                Click="SourceLink_Click"
+                                Foreground="#1e9bfd">
+                                fully open source
+                            </Hyperlink>
+                            . Enjoy!<LineBreak />
+                            Scroll to Zoom, Click and drag to pan and move points.<LineBreak /><LineBreak />
+                            - Joe Finney<LineBreak /><Hyperlink
+                                Click="Hyperlink_Click"
+                                Foreground="#1e9bfd"
+                                NavigateUri="https://www.JoeFinApps.com"
+                                ToolTip="Learn more about the app developer of this app at JoeFinApps.com">
+                                more JoeFinApps...
+                            </Hyperlink>
+                        </TextBlock>
+
+                        <wpfui:HyperlinkButton
+                            Name="AboutHyperbuttons"
+                            Click="AboutHyperbuttons_Click"
+                            Foreground="#1e9bfd">
+                            More about MagickCrop...
+                        </wpfui:HyperlinkButton>
+                    </StackPanel>
+                </TabItem>
+
+                <TabItem x:Name="RecentTab" Header="Recent Projects">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock
+                            Grid.Row="0"
+                            Margin="0,10,0,15"
+                            HorizontalAlignment="Center"
+                            FontSize="16"
+                            FontWeight="SemiBold"
+                            Text="Recent Projects" />
+
+                        <ScrollViewer
+                            Grid.Row="1"
+                            HorizontalScrollBarVisibility="Disabled"
+                            VerticalScrollBarVisibility="Auto">
+                            <ItemsControl x:Name="RecentProjectsList" HorizontalAlignment="Center">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <TextBlock
+                            x:Name="NoRecentProjectsMessage"
+                            Grid.Row="1"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Opacity="0.7"
+                            Text="No recent projects found. Open an image to get started."
+                            TextWrapping="Wrap"
+                            Visibility="Collapsed" />
+                    </Grid>
+                </TabItem>
+            </TabControl>
+
+            <!--  Action Buttons  -->
+            <StackPanel
+                Grid.Row="2"
+                Margin="0,20,0,0"
                 HorizontalAlignment="Center"
-                Appearance="Primary"
-                Click="OpenFileButton_Click"
-                Content="Open Image File..."
-                Foreground="White"
-                ToolTip="Open a new image file">
-                <wpfui:Button.Icon>
-                    <wpfui:SymbolIcon Symbol="FolderOpen24" />
-                </wpfui:Button.Icon>
-            </wpfui:Button>
-            <wpfui:Button
-                x:Name="OpenPackageButton"
-                Margin="8,4,0,4"
-                HorizontalAlignment="Center"
-                Appearance="Secondary"
-                Click="OpenPackageButton_Click"
-                Content="Open Measurement Package..."
-                ToolTip="Open a saved .mcm measurement package">
-                <wpfui:Button.Icon>
-                    <wpfui:SymbolIcon Symbol="Ruler24" />
-                </wpfui:Button.Icon>
-            </wpfui:Button>
-        </StackPanel>
+                VerticalAlignment="Bottom"
+                Orientation="Horizontal">
+                <wpfui:Button
+                    x:Name="OpenFileButton"
+                    Margin="8,4,8,4"
+                    Appearance="Primary"
+                    Click="OpenFileButton_Click"
+                    Content="Open Image..."
+                    Foreground="White"
+                    ToolTip="Open a new image file">
+                    <wpfui:Button.Icon>
+                        <wpfui:SymbolIcon Symbol="FolderOpen24" />
+                    </wpfui:Button.Icon>
+                </wpfui:Button>
+
+                <wpfui:Button
+                    x:Name="OpenPackageButton"
+                    Margin="8,4,8,4"
+                    Appearance="Secondary"
+                    Click="OpenPackageButton_Click"
+                    Content="Open project file..."
+                    ToolTip="Open a saved .mcm measurement package">
+                    <wpfui:Button.Icon>
+                        <wpfui:SymbolIcon Symbol="Ruler24" />
+                    </wpfui:Button.Icon>
+                </wpfui:Button>
+            </StackPanel>
+        </Grid>
     </Border>
 </UserControl>

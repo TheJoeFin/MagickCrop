@@ -1,4 +1,4 @@
-namespace MagickCrop.Models.MeasurementControls;
+namespace MagickCrop.Models;
 
 /// <summary>
 /// Metadata about a MagickCrop measurement package
@@ -24,4 +24,14 @@ public class PackageMetadata
     /// Notes or description about the measurements
     /// </summary>
     public string? Notes { get; set; }
+    
+    /// <summary>
+    /// Unique identifier for the project
+    /// </summary>
+    public string? ProjectId { get; set; }
+    
+    /// <summary>
+    /// Date the package was last modified
+    /// </summary>
+    public DateTime LastModified { get; set; } = DateTime.Now;
 }

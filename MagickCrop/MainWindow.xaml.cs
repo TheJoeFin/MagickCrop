@@ -11,6 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Windows.ApplicationModel;
 using Wpf.Ui;
@@ -34,7 +35,7 @@ public partial class MainWindow : FluentWindow
     private DraggingMode draggingMode = DraggingMode.None;
 
     private string openedFileName = string.Empty;
-    private List<UIElement> _polygonElements;
+    private readonly List<UIElement> _polygonElements;
 
     private readonly UndoRedo undoRedo = new();
     private AspectRatioItem? selectedAspectRatio;
@@ -42,6 +43,11 @@ public partial class MainWindow : FluentWindow
     private DistanceMeasurementControl? activeMeasureControl;
     private readonly ObservableCollection<AngleMeasurementControl> angleMeasurementTools = [];
     private AngleMeasurementControl? activeAngleMeasureControl;
+
+    private Services.RecentProjectsManager? recentProjectsManager;
+    private string? currentProjectId;
+    private System.Timers.Timer? autoSaveTimer;
+    private readonly int AutoSaveIntervalMs = (int)TimeSpan.FromSeconds(3).TotalMilliseconds;
 
     public MainWindow()
     {
@@ -72,6 +78,8 @@ public partial class MainWindow : FluentWindow
         AspectRatioComboBox.SelectedIndex = 0;
         selectedAspectRatio = AspectRatioComboBox.SelectedItem as AspectRatioItem;
         AspectRatioTransformPreview.RatioItem = selectedAspectRatio;
+
+        InitializeProjectManager();
     }
 
     private void DrawPolyLine()
@@ -473,6 +481,7 @@ public partial class MainWindow : FluentWindow
             return;
         }
 
+        RemoveMeasurementControls();
         wpfuiTitleBar.Title = $"Magick Crop & Measure: {openFileDialog.FileName}";
         await OpenImagePath(openFileDialog.FileName);
     }
@@ -501,6 +510,12 @@ public partial class MainWindow : FluentWindow
 
         BottomBorder.Visibility = Visibility.Visible;
         SetUiForCompletedTask();
+
+        // Create a new project ID for this image
+        currentProjectId = Guid.NewGuid().ToString();
+
+        // Trigger an autosave after loading a new image
+        _ = AutosaveCurrentState();
     }
 
     private void OpenFolderButton_Click(object sender, RoutedEventArgs e)
@@ -1177,7 +1192,7 @@ public partial class MainWindow : FluentWindow
         await dialog.ShowAsync();
     }
 
-    private void HideMeasurementControls()
+    private void RemoveMeasurementControls()
     {
         foreach (DistanceMeasurementControl measurementControl in measurementTools)
         {
@@ -1249,7 +1264,7 @@ public partial class MainWindow : FluentWindow
 
     private void CloseMeasurementButton_Click(object sender, RoutedEventArgs e)
     {
-        HideMeasurementControls();
+        RemoveMeasurementControls();
     }
 
     private void SaveMeasurementsToFile()
@@ -1294,7 +1309,7 @@ public partial class MainWindow : FluentWindow
             return;
 
         // Clear existing measurements
-        HideMeasurementControls();
+        RemoveMeasurementControls();
 
         // Load from file
         MeasurementCollection? collection = MeasurementCollection.LoadFromFile(openFileDialog.FileName);
@@ -1418,81 +1433,94 @@ public partial class MainWindow : FluentWindow
         }
     }
 
-    public async void LoadMeasurementsPackageFromFile()
+    public async Task<bool> LoadMeasurementsPackageFromFile()
     {
+        SetUiForLongTask();
+
         OpenFileDialog openFileDialog = new()
         {
-            Filter = "MagickCrop Measurement Files|*.mcm|All Files|*.*",
+            Filter = "Magick Crop Project Files|*.mcm|All Files|*.*",
             RestoreDirectory = true
         };
 
-        if (openFileDialog.ShowDialog() != true)
-            return;
-
-        SetUiForLongTask();
+        if (openFileDialog.ShowDialog() is not true)
+        {
+            SetUiForCompletedTask();
+            return false;
+        }
 
         string fileName = openFileDialog.FileName;
-
         await LoadMeasurementPackageAsync(fileName);
+
+        return true;
     }
 
     private async Task LoadMeasurementPackageAsync(string fileName)
     {
+        MagickCropMeasurementPackage? package = null;
         try
         {
-            // Load the package
-            MagickCropMeasurementPackage? package = await MagickCropMeasurementPackage.LoadFromFileAsync(fileName);
-            if (package == null || string.IsNullOrEmpty(package.ImagePath) || !File.Exists(package.ImagePath))
+            package = await MagickCropMeasurementPackage.LoadFromFileAsync(fileName);
+            if (package is null 
+                || string.IsNullOrEmpty(package.ImagePath) 
+                || !File.Exists(package.ImagePath))
             {
-                System.Windows.MessageBox.Show(
-                    "Failed to load measurement package.",
-                    "Error",
-                    System.Windows.MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                Wpf.Ui.Controls.MessageBox uiMessageBox = new()
+                {
+                    Title = "Error",
+                    Content = "Failed to load measurement package. The image file may be missing or corrupted.",
+                };
+                await uiMessageBox.ShowDialogAsync();
+                SetUiForCompletedTask();
                 return;
             }
 
             // Load the image
             await OpenImagePath(package.ImagePath);
-
-            // Clear existing measurements
-            HideMeasurementControls();
-
-            // Set global measurement properties
-            ScaleInput.Value = package.Measurements.GlobalScaleFactor;
-            MeasurementUnits.Text = package.Measurements.GlobalUnits;
-
-            // Add distance measurements
-            foreach (DistanceMeasurementControlDto dto in package.Measurements.DistanceMeasurements)
-            {
-                DistanceMeasurementControl control = new()
-                {
-                    ScaleFactor = dto.ScaleFactor,
-                    Units = dto.Units
-                };
-                control.FromDto(dto);
-                control.MeasurementPointMouseDown += MeasurementPoint_MouseDown;
-                control.SetRealWorldLengthRequested += MeasurementControl_SetRealWorldLengthRequested;
-                control.RemoveControlRequested += DistanceMeasurementControl_RemoveControlRequested;
-                measurementTools.Add(control);
-                ShapeCanvas.Children.Add(control);
-            }
-
-            // Add angle measurements
-            foreach (AngleMeasurementControlDto dto in package.Measurements.AngleMeasurements)
-            {
-                AngleMeasurementControl control = new();
-                control.FromDto(dto);
-                control.MeasurementPointMouseDown += AngleMeasurementPoint_MouseDown;
-                control.RemoveControlRequested += AngleMeasurementControl_RemoveControlRequested;
-                angleMeasurementTools.Add(control);
-                ShapeCanvas.Children.Add(control);
-            }
         }
         finally
         {
             SetUiForCompletedTask();
         }
+
+        // Clear existing measurements
+        RemoveMeasurementControls();
+
+        // Set global measurement properties
+        ScaleInput.Value = package.Measurements.GlobalScaleFactor;
+        MeasurementUnits.Text = package.Measurements.GlobalUnits;
+
+        // Add distance measurements
+        foreach (DistanceMeasurementControlDto dto in package.Measurements.DistanceMeasurements)
+        {
+            DistanceMeasurementControl control = new()
+            {
+                ScaleFactor = dto.ScaleFactor,
+                Units = dto.Units
+            };
+            control.FromDto(dto);
+            control.MeasurementPointMouseDown += MeasurementPoint_MouseDown;
+            control.SetRealWorldLengthRequested += MeasurementControl_SetRealWorldLengthRequested;
+            control.RemoveControlRequested += DistanceMeasurementControl_RemoveControlRequested;
+            measurementTools.Add(control);
+            ShapeCanvas.Children.Add(control);
+        }
+
+        // Add angle measurements
+        foreach (AngleMeasurementControlDto dto in package.Measurements.AngleMeasurements)
+        {
+            AngleMeasurementControl control = new();
+            control.FromDto(dto);
+            control.MeasurementPointMouseDown += AngleMeasurementPoint_MouseDown;
+            control.RemoveControlRequested += AngleMeasurementControl_RemoveControlRequested;
+            angleMeasurementTools.Add(control);
+            ShapeCanvas.Children.Add(control);
+        }
+
+        if (package?.Metadata?.ProjectId is not null)
+            currentProjectId = package.Metadata.ProjectId;
+        else
+            currentProjectId = Guid.NewGuid().ToString();
     }
 
     public async void LoadMeasurementsPackageFromFile(string filePath)
@@ -1511,5 +1539,82 @@ public partial class MainWindow : FluentWindow
     private void SavePackageButton_Click(object sender, RoutedEventArgs e)
     {
         SaveMeasurementsPackageToFile();
+    }
+
+    private void InitializeProjectManager()
+    {
+        recentProjectsManager = new Services.RecentProjectsManager();
+
+        // Setup autosave timer
+        autoSaveTimer = new System.Timers.Timer(AutoSaveIntervalMs);
+        autoSaveTimer.Elapsed += AutoSaveTimer_Elapsed;
+        autoSaveTimer.AutoReset = true;
+        autoSaveTimer.Start();
+
+        // Create a new project ID
+        currentProjectId = Guid.NewGuid().ToString();
+    }
+
+    private void AutoSaveTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        // Run on UI thread
+        Dispatcher.Invoke(async () =>
+        {
+            // Only autosave if we have an image and measurements that need saving
+            if (MainImage.Source != null && !string.IsNullOrEmpty(imagePath))
+            {
+                await AutosaveCurrentState();
+            }
+        });
+    }
+
+    private async Task AutosaveCurrentState()
+    {
+        if (recentProjectsManager == null || MainImage.Source == null || string.IsNullOrEmpty(imagePath))
+            return;
+
+        try
+        {
+            // Create a package with the current state
+            MagickCropMeasurementPackage package = new()
+            {
+                ImagePath = imagePath,
+                Metadata = new PackageMetadata
+                {
+                    OriginalFilename = openedFileName,
+                    ProjectId = currentProjectId,
+                    LastModified = DateTime.Now
+                },
+                Measurements = new MeasurementCollection
+                {
+                    GlobalScaleFactor = ScaleInput.Value ?? 1.0,
+                    GlobalUnits = MeasurementUnits.Text
+                }
+            };
+
+            foreach (DistanceMeasurementControl control in measurementTools)
+                package.Measurements.DistanceMeasurements.Add(control.ToDto());
+
+            foreach (AngleMeasurementControl control in angleMeasurementTools)
+                package.Measurements.AngleMeasurements.Add(control.ToDto());
+
+            await recentProjectsManager.AutosaveProject(package, MainImage.Source as BitmapSource);
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't show to user since this is automatic
+            Debug.WriteLine($"Error autosaving project: {ex.Message}");
+        }
+    }
+
+    protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+    {
+        // Stop the autosave timer
+        autoSaveTimer?.Stop();
+
+        // Save the current project state one last time
+        _ = AutosaveCurrentState();
+
+        base.OnClosing(e);
     }
 }
