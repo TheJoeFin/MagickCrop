@@ -63,7 +63,7 @@
                 </Style>
             </wpfui:TitleBar.Resources>
             <wpfui:TitleBar.Icon>
-                <wpfui:ImageIcon Source="/MagickCropLogo.ico" />
+                <wpfui:ImageIcon Source="/Iconv3.ico" />
             </wpfui:TitleBar.Icon>
         </wpfui:TitleBar>
 

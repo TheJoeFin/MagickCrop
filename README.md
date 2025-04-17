@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="128" align="center" src=Images\MagickCropLogo.png>
+  <img width="128" align="center" src=Images\Iconv3.png>
 </p>
 <h1 align="center">
   Magick Crop & Measure

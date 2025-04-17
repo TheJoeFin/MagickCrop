@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
-    <ApplicationIcon>MagickCropLogo.ico</ApplicationIcon>
+    <ApplicationIcon>Iconv3.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>arm64;x86;x64</Platforms>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
@@ -17,6 +17,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Iconv3.ico" />
+    <None Remove="Iconv3.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Iconv3.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Iconv3.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Images\LetterPaperTest.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
