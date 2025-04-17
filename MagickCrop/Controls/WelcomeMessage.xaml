@@ -60,51 +60,99 @@
             <!--  Content with Tabs for Intro/Recent Projects  -->
             <TabControl
                 Grid.Row="1"
+                Width="Auto"
+                MinHeight="300"
+                HorizontalAlignment="Stretch"
                 Background="Transparent"
                 BorderThickness="0">
+                <TabControl.Resources>
+                    <Style TargetType="TabPanel">
+                        <Setter Property="HorizontalAlignment" Value="Center" />
+                    </Style>
+                    <Style BasedOn="{StaticResource {x:Type TabItem}}" TargetType="TabItem">
+                        <Setter Property="MinWidth" Value="140" />
+                        <Setter Property="Padding" Value="20,8" />
+                        <Setter Property="HorizontalContentAlignment" Value="Center" />
+                        <Setter Property="VerticalContentAlignment" Value="Center" />
+                        <Setter Property="HeaderTemplate">
+                            <Setter.Value>
+                                <DataTemplate>
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        Text="{Binding}"
+                                        TextAlignment="Center" />
+                                </DataTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </TabControl.Resources>
+                <TabControl.ContentTemplate>
+                    <DataTemplate>
+                        <ContentPresenter Content="{Binding}">
+                            <ContentPresenter.Resources>
+                                <Style TargetType="FrameworkElement">
+                                    <Setter Property="Margin" Value="0,15,0,0" />
+                                </Style>
+                            </ContentPresenter.Resources>
+                        </ContentPresenter>
+                    </DataTemplate>
+                </TabControl.ContentTemplate>
+                <TabControl.ItemContainerStyle>
+                    <Style BasedOn="{StaticResource {x:Type TabItem}}" TargetType="TabItem">
+                        <Setter Property="Margin" Value="5,0" />
+                    </Style>
+                </TabControl.ItemContainerStyle>
                 <TabItem Header="Welcome">
-                    <StackPanel>
-                        <TextBlock
-                            Padding="0,0,0,12"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            d:Foreground="White"
-                            Foreground="{wpfui:ThemeResource TextFillColorPrimaryBrush}"
-                            LineHeight="24"
-                            TextWrapping="Wrap">
-                            Hello there! this is a simple tool that uses the Magick.NET library to fix images. Scenarios where this tool is useful:<LineBreak />
-                            ► Squaring up a photo of a paper on a table<LineBreak />
-                            ► Making a whiteboard photo look more presentable<LineBreak />
-                            ► Undoing distortion from camera angle<LineBreak />
-                            ► Measuring distances and angles on the newly rectilinear image<LineBreak />
-                            This tool works 100% locally and offline and is<Run /> <Hyperlink
-                                x:Name="SourceLink"
-                                Click="SourceLink_Click"
-                                Foreground="#1e9bfd">
-                                fully open source
-                            </Hyperlink>
-                            . Enjoy!<LineBreak />
-                            Scroll to Zoom, Click and drag to pan and move points.<LineBreak /><LineBreak />
-                            - Joe Finney<LineBreak /><Hyperlink
-                                Click="Hyperlink_Click"
-                                Foreground="#1e9bfd"
-                                NavigateUri="https://www.JoeFinApps.com"
-                                ToolTip="Learn more about the app developer of this app at JoeFinApps.com">
-                                more JoeFinApps...
-                            </Hyperlink>
-                        </TextBlock>
+                    <Grid
+                        MinHeight="200"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock
+                                Padding="0,0,0,12"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                d:Foreground="White"
+                                Foreground="{wpfui:ThemeResource TextFillColorPrimaryBrush}"
+                                LineHeight="24"
+                                TextWrapping="Wrap">
+                                Hello there! this is a simple tool that uses the Magick.NET library to fix images. Scenarios where this tool is useful:<LineBreak />
+                                ► Squaring up a photo of a paper on a table<LineBreak />
+                                ► Making a whiteboard photo look more presentable<LineBreak />
+                                ► Undoing distortion from camera angle<LineBreak />
+                                ► Measuring distances and angles on the newly rectilinear image<LineBreak />
+                                This tool works 100% locally and offline and is<Run /> <Hyperlink
+                                    x:Name="SourceLink"
+                                    Click="SourceLink_Click"
+                                    Foreground="#1e9bfd">
+                                    fully open source
+                                </Hyperlink>
+                                . Enjoy!<LineBreak />
+                                Scroll to Zoom, Click and drag to pan and move points.<LineBreak /><LineBreak />
+                                - Joe Finney<LineBreak /><Hyperlink
+                                    Click="Hyperlink_Click"
+                                    Foreground="#1e9bfd"
+                                    NavigateUri="https://www.JoeFinApps.com"
+                                    ToolTip="Learn more about the app developer of this app at JoeFinApps.com">
+                                    more JoeFinApps...
+                                </Hyperlink>
+                            </TextBlock>
 
-                        <wpfui:HyperlinkButton
-                            Name="AboutHyperbuttons"
-                            Click="AboutHyperbuttons_Click"
-                            Foreground="#1e9bfd">
-                            More about MagickCrop...
-                        </wpfui:HyperlinkButton>
-                    </StackPanel>
+                            <wpfui:HyperlinkButton
+                                Name="AboutHyperbuttons"
+                                Click="AboutHyperbuttons_Click"
+                                Foreground="#1e9bfd">
+                                More about MagickCrop...
+                            </wpfui:HyperlinkButton>
+                        </StackPanel>
+                    </Grid>
                 </TabItem>
 
                 <TabItem x:Name="RecentTab" Header="Recent Projects">
-                    <Grid>
+                    <Grid
+                        MinHeight="200"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
@@ -120,6 +168,7 @@
 
                         <ScrollViewer
                             Grid.Row="1"
+                            MaxHeight="400"
                             HorizontalScrollBarVisibility="Disabled"
                             VerticalScrollBarVisibility="Auto">
                             <ItemsControl x:Name="RecentProjectsList" HorizontalAlignment="Center">
