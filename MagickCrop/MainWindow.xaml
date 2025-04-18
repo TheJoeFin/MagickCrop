@@ -400,7 +400,16 @@
                                 </StackPanel>
                             </TabItem>
                         </TabControl>
-
+                        <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,0,5,0"
+                                VerticalAlignment="Center"
+                                Text="Show Contours:" />
+                            <wpfui:ToggleSwitch
+                                x:Name="ShowContours"
+                                Checked="ShowContours_Toggle"
+                                Unchecked="ShowContours_Toggle" />
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
                 <StackPanel

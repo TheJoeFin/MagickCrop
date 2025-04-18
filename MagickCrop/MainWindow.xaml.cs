@@ -2,6 +2,7 @@
 using MagickCrop.Controls;
 using MagickCrop.Models;
 using MagickCrop.Models.MeasurementControls;
+using MagickCrop.Services;
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -118,8 +119,45 @@ public partial class MainWindow : FluentWindow
         clickedElement = ellipse;
         draggingMode = DraggingMode.MoveElement;
         clickedPoint = e.GetPosition(ShapeCanvas);
+
+        // If contour detection is enabled, try to snap to a rectangle corner
+        if (ShowContours.IsChecked == true && !string.IsNullOrEmpty(imagePath))
+        {
+            try
+            {
+                // Get the position in the image coordinates
+                Point pointInImage = e.GetPosition(MainImage);
+
+                // Try to snap to a corner
+                Point? snappedPoint = OpenCvService.SnapToNearestRectangleCorner(imagePath, pointInImage);
+
+                if (snappedPoint.HasValue)
+                {
+                    // Convert the snapped point to canvas coordinates
+                    Point canvasPoint = MainImage.TranslatePoint(snappedPoint.Value, ShapeCanvas);
+
+                    // Update the ellipse position
+                    Canvas.SetTop(ellipse, canvasPoint.Y - (ellipse.Height / 2));
+                    Canvas.SetLeft(ellipse, canvasPoint.X - (ellipse.Width / 2));
+
+                    // Update the polyline
+                    if (lines is not null)
+                    {
+                        lines.Points[pointDraggingIndex] = canvasPoint;
+                        AspectRatioTransformPreview.SetAndScalePoints(lines.Points);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log exception but don't disrupt the user experience
+                Debug.WriteLine($"Error snapping to rectangle: {ex.Message}");
+            }
+        }
+
         CaptureMouse();
     }
+
 
     private void TopLeft_MouseMove(object sender, MouseEventArgs e)
     {
@@ -502,9 +540,31 @@ public partial class MainWindow : FluentWindow
             await bitmap.WriteAsync(tempFileName, MagickFormat.Jpeg);
         });
 
-        MagickImage bitmapImage = new(tempFileName);
+        // Process the image with OpenCV if contour detection is enabled
+        if (ShowContours.IsChecked == true)
+        {
+            try
+            {
+                SetUiForLongTask();
+                string contouredImagePath = await Task.Run(() => OpenCvService.ProcessImageWithContours(tempFileName));
+                imagePath = contouredImagePath;
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(
+                    $"Error detecting contours: {ex.Message}",
+                    "OpenCV Error",
+                    System.Windows.MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                imagePath = tempFileName;
+            }
+        }
+        else
+        {
+            imagePath = tempFileName;
+        }
 
-        imagePath = tempFileName;
+        MagickImage bitmapImage = new(imagePath);
         openedFileName = System.IO.Path.GetFileNameWithoutExtension(imageFilePath);
         MainImage.Source = bitmapImage.ToBitmapSource();
 
@@ -516,6 +576,58 @@ public partial class MainWindow : FluentWindow
 
         // Trigger an autosave after loading a new image
         _ = AutosaveCurrentState();
+    }
+
+    private async void ShowContours_Toggle(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath) || !(sender is Wpf.Ui.Controls.ToggleSwitch toggleSwitch))
+            return;
+
+        SetUiForLongTask();
+
+        try
+        {
+            if (toggleSwitch.IsChecked is true)
+            {
+                // Apply contour detection
+                string contouredImagePath = await Task.Run(() => OpenCvService.ProcessImageWithContours(imagePath));
+                MagickImage bitmapImage = new(contouredImagePath);
+                MainImage.Source = bitmapImage.ToBitmapSource();
+                imagePath = contouredImagePath;
+            }
+            else
+            {
+                // Reload the original image without contours
+                // This assumes we have cached the original somewhere or can regenerate it
+                // For simplicity, we'll reprocess from the original file if available
+                if (!string.IsNullOrWhiteSpace(openedFileName))
+                {
+                    string tempFileName = System.IO.Path.GetTempFileName();
+                    tempFileName = System.IO.Path.ChangeExtension(tempFileName, ".jpg");
+                    await Task.Run(async () =>
+                    {
+                        MagickImage bitmap = new(imagePath);
+                        await bitmap.WriteAsync(tempFileName, MagickFormat.Jpeg);
+                    });
+                    MagickImage bitmapImage = new(tempFileName);
+                    MainImage.Source = bitmapImage.ToBitmapSource();
+                    imagePath = tempFileName;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show(
+                $"Error processing image contours: {ex.Message}",
+                "OpenCV Error",
+                System.Windows.MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            toggleSwitch.IsChecked = false;
+        }
+        finally
+        {
+            SetUiForCompletedTask();
+        }
     }
 
     private void OpenFolderButton_Click(object sender, RoutedEventArgs e)
