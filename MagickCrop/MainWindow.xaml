@@ -635,6 +635,14 @@
             Grid.Row="1"
             Grid.ColumnSpan="2" />
 
+        <Button
+            x:Name="EnableTransformButton"
+            Margin="10"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            Click="PerspectiveCorrectionMenuItem_Click"
+            Content="Enable Transform" />
+
         <Grid.ContextMenu>
             <ContextMenu>
                 <MenuItem

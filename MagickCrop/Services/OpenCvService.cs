@@ -2,7 +2,6 @@ using OpenCvSharp;
 using System.IO;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-
 namespace MagickCrop.Services;
 
 public class OpenCvService
@@ -305,5 +304,56 @@ public class OpenCvService
         // Return the nearest corner if it is within a reasonable snapping distance
         const double maxSnappingDistance = 20.0; // Adjust as needed
         return minDistance <= maxSnappingDistance ? nearestCorner : null;
+    }
+
+    /// <summary>
+    /// Detects the largest rectangle in the image and returns it as a Rect object.
+    /// </summary>
+    /// <param name="imagePath">Path to the source image</param>
+    /// <returns>The largest rectangle as a Rect object, or null if no rectangle is found</returns>
+    public static Rect? DetectMainRectangle(string imagePath)
+    {
+        using Mat src = Cv2.ImRead(imagePath);
+        if (src.Empty())
+            throw new ArgumentException("Could not load image", nameof(imagePath));
+
+        // Convert to grayscale
+        using Mat gray = new();
+        Cv2.CvtColor(src, gray, ColorConversionCodes.BGR2GRAY);
+
+        // Apply blur to reduce noise
+        using Mat blurred = new();
+        Cv2.GaussianBlur(gray, blurred, new OpenCvSharp.Size(5, 5), 0);
+
+        // Apply Canny edge detection
+        using Mat edges = new();
+        Cv2.Canny(blurred, edges, 50, 150);
+
+        // Find contours
+        Cv2.FindContours(edges, out Point[][] contours, out _, RetrievalModes.List, ContourApproximationModes.ApproxSimple);
+
+        // Detect rectangles
+        List<Point[]> rectangles = DetectRectangles(contours);
+
+        // Find the largest rectangle by area
+        Point[]? largestRectangle = null;
+        double maxArea = 0;
+
+        foreach (Point[] rect in rectangles)
+        {
+            double area = Cv2.ContourArea(rect);
+            if (area > maxArea)
+            {
+                maxArea = area;
+                largestRectangle = rect;
+            }
+        }
+
+        if (largestRectangle == null)
+            return null;
+
+        // Convert the largest rectangle to a Rect object
+        OpenCvSharp.Rect boundingRect = Cv2.BoundingRect(largestRectangle);
+        return boundingRect;
     }
 }

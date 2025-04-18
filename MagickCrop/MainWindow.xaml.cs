@@ -1,5 +1,6 @@
 ﻿using ImageMagick;
 using MagickCrop.Controls;
+using MagickCrop.Extensions;
 using MagickCrop.Models;
 using MagickCrop.Models.MeasurementControls;
 using MagickCrop.Services;
@@ -49,6 +50,8 @@ public partial class MainWindow : FluentWindow
     private string? currentProjectId;
     private System.Timers.Timer? autoSaveTimer;
     private readonly int AutoSaveIntervalMs = (int)TimeSpan.FromSeconds(3).TotalMilliseconds;
+
+    private Rect? detectedRectangle; // Store the detected rectangle
 
     public MainWindow()
     {
@@ -540,29 +543,26 @@ public partial class MainWindow : FluentWindow
             await bitmap.WriteAsync(tempFileName, MagickFormat.Jpeg);
         });
 
-        // Process the image with OpenCV if contour detection is enabled
-        if (ShowContours.IsChecked == true)
+        // Detect the main rectangle in the image
+        try
         {
-            try
+            SetUiForLongTask();
+            detectedRectangle = OpenCvService.DetectMainRectangle(tempFileName).ToWindowsRect();
+            if (detectedRectangle.HasValue)
             {
-                SetUiForLongTask();
-                string contouredImagePath = await Task.Run(() => OpenCvService.ProcessImageWithContours(tempFileName));
-                imagePath = contouredImagePath;
-            }
-            catch (Exception ex)
-            {
-                System.Windows.MessageBox.Show(
-                    $"Error detecting contours: {ex.Message}",
-                    "OpenCV Error",
-                    System.Windows.MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-                imagePath = tempFileName;
+                DrawRectangleBorder(detectedRectangle.Value);
             }
         }
-        else
+        catch (Exception ex)
         {
-            imagePath = tempFileName;
+            System.Windows.MessageBox.Show(
+                $"Error detecting rectangle: {ex.Message}",
+                "OpenCV Error",
+                System.Windows.MessageBoxButton.OK,
+                MessageBoxImage.Error);
         }
+
+        imagePath = tempFileName;
 
         MagickImage bitmapImage = new(imagePath);
         openedFileName = System.IO.Path.GetFileNameWithoutExtension(imageFilePath);
@@ -576,6 +576,25 @@ public partial class MainWindow : FluentWindow
 
         // Trigger an autosave after loading a new image
         _ = AutosaveCurrentState();
+    }
+
+    private void DrawRectangleBorder(Rect rectangle)
+    {
+        // Remove any existing rectangle border
+        ShapeCanvas.Children.OfType<Rectangle>().ToList().ForEach(r => ShapeCanvas.Children.Remove(r));
+
+        // Draw the rectangle border
+        Rectangle border = new()
+        {
+            Stroke = Brushes.Red,
+            StrokeThickness = 2,
+            Width = rectangle.Width,
+            Height = rectangle.Height
+        };
+
+        Canvas.SetLeft(border, rectangle.X);
+        Canvas.SetTop(border, rectangle.Y);
+        ShapeCanvas.Children.Add(border);
     }
 
     private async void ShowContours_Toggle(object sender, RoutedEventArgs e)
@@ -1108,6 +1127,27 @@ public partial class MainWindow : FluentWindow
         HideResizeControls();
 
         TransformButtonPanel.Visibility = Visibility.Visible;
+
+        if (detectedRectangle.HasValue)
+        {
+            // Position the transform corners at the detected rectangle's corners
+            Point topLeft = new(detectedRectangle.Value.X, detectedRectangle.Value.Y);
+            Point topRight = new(detectedRectangle.Value.X + detectedRectangle.Value.Width, detectedRectangle.Value.Y);
+            Point bottomLeft = new(detectedRectangle.Value.X, detectedRectangle.Value.Y + detectedRectangle.Value.Height);
+            Point bottomRight = new(detectedRectangle.Value.X + detectedRectangle.Value.Width, detectedRectangle.Value.Y + detectedRectangle.Value.Height);
+
+            Canvas.SetLeft(TopLeft, topLeft.X);
+            Canvas.SetTop(TopLeft, topLeft.Y);
+
+            Canvas.SetLeft(TopRight, topRight.X);
+            Canvas.SetTop(TopRight, topRight.Y);
+
+            Canvas.SetLeft(BottomLeft, bottomLeft.X);
+            Canvas.SetTop(BottomLeft, bottomLeft.Y);
+
+            Canvas.SetLeft(BottomRight, bottomRight.X);
+            Canvas.SetTop(BottomRight, bottomRight.Y);
+        }
 
         foreach (UIElement element in _polygonElements)
             element.Visibility = Visibility.Visible;
