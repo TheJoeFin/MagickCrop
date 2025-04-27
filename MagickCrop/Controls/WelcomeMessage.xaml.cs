@@ -89,7 +89,7 @@ public partial class WelcomeMessage : UserControl
 
         if (result == Wpf.Ui.Controls.MessageBoxResult.Primary)
         {
-            _recentProjectsManager.RemoveProject(project.Id, false);
+            _recentProjectsManager.RemoveProject(project.Id, true);
 
             // Update the UI
             RelayCommand<RecentProjectInfo> projectClickCommand = new(OpenProject);

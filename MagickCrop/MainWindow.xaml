@@ -158,8 +158,9 @@
                     <StackPanel Width="200" Orientation="Vertical">
                         <wpfui:Button
                             x:Name="ReOpenFileButton"
-                            Width="160"
+                            Width="180"
                             Margin="0,0,0,8"
+                            HorizontalAlignment="Center"
                             Appearance="Transparent"
                             Click="OpenFileButton_Click"
                             Content="Open image..."
@@ -371,7 +372,7 @@
                                         <wpfui:NumberBox
                                             x:Name="ScaleInput"
                                             Width="150"
-                                            Minimum="0.01"
+                                            Minimum="0.0001"
                                             ToolTip="Set the scale of pixels to real-world units"
                                             ValueChanged="ScaleInput_ValueChanged"
                                             Value="1.0" />
@@ -406,11 +407,12 @@
                 <StackPanel
                     x:Name="CropButtonPanel"
                     Grid.Row="1"
+                    HorizontalAlignment="Center"
                     Orientation="Vertical"
                     Visibility="Collapsed">
                     <wpfui:Button
                         x:Name="ApplyCropButton"
-                        Width="160"
+                        Width="180"
                         Margin="0,8"
                         Appearance="Primary"
                         Click="ApplyCropButton_Click"
@@ -422,7 +424,7 @@
                     </wpfui:Button>
                     <wpfui:Button
                         x:Name="CancelCropButton"
-                        Width="160"
+                        Width="180"
                         Appearance="Danger"
                         Click="CancelCrop_Click"
                         Content="Cancel">
@@ -434,7 +436,7 @@
                 <StackPanel
                     x:Name="TransformButtonPanel"
                     Grid.Row="1"
-                    HorizontalAlignment="Stretch"
+                    HorizontalAlignment="Center"
                     d:Visibility="Visible"
                     Orientation="Vertical"
                     Visibility="Collapsed">
@@ -491,7 +493,7 @@
                         </wpfui:Flyout>
                         <ToggleButton
                             x:Name="EditToggleButton"
-                            Width="160"
+                            Width="180"
                             Margin="0,4"
                             HorizontalContentAlignment="Left">
                             <StackPanel Orientation="Horizontal">
@@ -502,7 +504,7 @@
                     </Grid>
                     <ComboBox
                         x:Name="AspectRatioComboBox"
-                        Width="160"
+                        Width="180"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         SelectionChanged="AspectRatioComboBox_SelectionChanged">
@@ -518,7 +520,7 @@
                     <local:AspectRatioTransform x:Name="AspectRatioTransformPreview" />
                     <wpfui:Button
                         x:Name="ApplyTransformButton"
-                        Width="160"
+                        Width="180"
                         Margin="0,6"
                         Appearance="Primary"
                         Click="ApplyButton_Click"
@@ -530,7 +532,7 @@
                     </wpfui:Button>
                     <wpfui:Button
                         x:Name="CancelTransformButton"
-                        Width="160"
+                        Width="180"
                         Appearance="Danger"
                         Click="CancelTransformButton_Click"
                         Content="Cancel">
@@ -542,11 +544,12 @@
                 <StackPanel
                     x:Name="ResizeButtonsPanel"
                     Grid.Row="1"
+                    HorizontalAlignment="Center"
                     Orientation="Vertical"
                     Visibility="Collapsed">
                     <wpfui:Button
                         x:Name="ApplyResizeButton"
-                        Width="160"
+                        Width="180"
                         Margin="0,6"
                         Appearance="Primary"
                         Click="ApplyResizeButton_Click"
@@ -562,7 +565,7 @@
                     </wpfui:Button>
                     <wpfui:Button
                         x:Name="CancelResizeButton"
-                        Width="160"
+                        Width="180"
                         Appearance="Danger"
                         Click="CancelResizeButton_Click"
                         Content="Cancel">
@@ -578,8 +581,9 @@
                     Orientation="Vertical">
                     <wpfui:Button
                         x:Name="SavePackageButton"
-                        Width="160"
+                        Width="180"
                         Margin="0,8,0,0"
+                        HorizontalAlignment="Center"
                         Click="SavePackageButton_Click"
                         Content="Save Package..."
                         ToolTip="Save image with measurements as a .mcm package">
@@ -589,8 +593,9 @@
                     </wpfui:Button>
                     <wpfui:Button
                         x:Name="Save"
-                        Width="160"
+                        Width="180"
                         Margin="0,8"
+                        HorizontalAlignment="Center"
                         Click="Save_Click"
                         Content="Save to File..."
                         ToolTip="Apply Transform, Save, and Preview file">
@@ -600,7 +605,8 @@
                     </wpfui:Button>
                     <wpfui:Button
                         x:Name="OpenFolderButton"
-                        Width="160"
+                        Width="180"
+                        HorizontalAlignment="Center"
                         Click="OpenFolderButton_Click"
                         Content="Open Folder"
                         IsEnabled="False"

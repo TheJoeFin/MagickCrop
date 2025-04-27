@@ -482,7 +482,7 @@ public partial class MainWindow : FluentWindow
         }
 
         RemoveMeasurementControls();
-        wpfuiTitleBar.Title = $"Magick Crop & Measure: {openFileDialog.FileName}";
+        wpfuiTitleBar.Title = $"Magick Crop & Measure: {System.IO.Path.GetFileName(openFileDialog.FileName)}";
         await OpenImagePath(openFileDialog.FileName);
     }
 
@@ -492,6 +492,7 @@ public partial class MainWindow : FluentWindow
         ImageGrid.Width = 700;
         MainImage.Stretch = Stretch.Uniform;
 
+        WelcomeMessageModal.Visibility = Visibility.Collapsed;
         string tempFileName = System.IO.Path.GetTempFileName();
         tempFileName = System.IO.Path.ChangeExtension(tempFileName, ".jpg");
         await Task.Run(async () =>
@@ -1529,11 +1530,6 @@ public partial class MainWindow : FluentWindow
         WelcomeMessageModal.Visibility = Visibility.Collapsed;
 
         await LoadMeasurementPackageAsync(filePath);
-    }
-
-    private void LoadMeasurementsMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        LoadMeasurementsPackageFromFile();
     }
 
     private void SavePackageButton_Click(object sender, RoutedEventArgs e)
