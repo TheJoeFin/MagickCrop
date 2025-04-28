@@ -49,15 +49,15 @@ public partial class MainWindow : FluentWindow
     private System.Timers.Timer? autoSaveTimer;
     private readonly int AutoSaveIntervalMs = (int)TimeSpan.FromSeconds(3).TotalMilliseconds;
 
-    private static readonly List<SaveOptionsDialog.FormatItem> _formats = new List<SaveOptionsDialog.FormatItem>
-    {
-        new SaveOptionsDialog.FormatItem { Name = "JPEG Image", Format = MagickFormat.Jpg, Extension = ".jpg", SupportsQuality = true },
-        new SaveOptionsDialog.FormatItem { Name = "PNG Image", Format = MagickFormat.Png, Extension = ".png", SupportsQuality = false },
-        new SaveOptionsDialog.FormatItem { Name = "BMP Image", Format = MagickFormat.Bmp, Extension = ".bmp", SupportsQuality = false },
-        new SaveOptionsDialog.FormatItem { Name = "TIFF Image", Format = MagickFormat.Tiff, Extension = ".tiff", SupportsQuality = false },
-        new SaveOptionsDialog.FormatItem { Name = "WebP Image", Format = MagickFormat.WebP, Extension = ".webp", SupportsQuality = true },
-        new SaveOptionsDialog.FormatItem { Name = "HEIC Image", Format = MagickFormat.Heic, Extension = ".heic", SupportsQuality = true }
-    };
+    private static readonly List<FormatItem> _formats =
+    [
+        new FormatItem { Name = "JPEG Image", Format = MagickFormat.Jpg, Extension = ".jpg", SupportsQuality = true },
+        new FormatItem { Name = "PNG Image", Format = MagickFormat.Png, Extension = ".png", SupportsQuality = false },
+        new FormatItem { Name = "BMP Image", Format = MagickFormat.Bmp, Extension = ".bmp", SupportsQuality = false },
+        new FormatItem { Name = "TIFF Image", Format = MagickFormat.Tiff, Extension = ".tiff", SupportsQuality = false },
+        new FormatItem { Name = "WebP Image", Format = MagickFormat.WebP, Extension = ".webp", SupportsQuality = true },
+        // new FormatItem { Name = "HEIC Image", Format = MagickFormat.Heic, Extension = ".heic", SupportsQuality = true }
+    ];
 
     public MainWindow()
     {
@@ -446,7 +446,7 @@ public partial class MainWindow : FluentWindow
                 return;
             }
 
-            SaveOptionsDialog.SaveOptions options = saveOptionsDialog.Options;
+            SaveOptions options = saveOptionsDialog.Options;
 
             // Configure save file dialog based on selected format
             SaveFileDialog saveFileDialog = new()
@@ -1325,102 +1325,16 @@ public partial class MainWindow : FluentWindow
         RemoveMeasurementControls();
     }
 
-    private void SaveMeasurementsToFile()
-    {
-        // Create the measurement collection
-        MeasurementCollection collection = new()
-        {
-            GlobalScaleFactor = ScaleInput.Value ?? 1.0,
-            GlobalUnits = MeasurementUnits.Text
-        };
-
-        foreach (DistanceMeasurementControl control in measurementTools)
-            collection.DistanceMeasurements.Add(control.ToDto());
-
-        foreach (AngleMeasurementControl control in angleMeasurementTools)
-            collection.AngleMeasurements.Add(control.ToDto());
-
-        // Show save file dialog
-        SaveFileDialog saveFileDialog = new()
-        {
-            Filter = "Measurement Files|*.measurements.json",
-            RestoreDirectory = true,
-            FileName = $"{openedFileName}_measurements.json"
-        };
-
-        if (saveFileDialog.ShowDialog() != true)
-            return;
-
-        // Save to the selected file
-        collection.SaveToFile(saveFileDialog.FileName);
-    }
-
-    private void LoadMeasurementsFromFile()
-    {
-        OpenFileDialog openFileDialog = new()
-        {
-            Filter = "Measurement Files|*.measurements.json|All Files|*.*",
-            RestoreDirectory = true
-        };
-
-        if (openFileDialog.ShowDialog() != true)
-            return;
-
-        // Clear existing measurements
-        RemoveMeasurementControls();
-
-        // Load from file
-        MeasurementCollection? collection = MeasurementCollection.LoadFromFile(openFileDialog.FileName);
-        if (collection == null)
-        {
-            System.Windows.MessageBox.Show(
-                "Failed to load measurements file.",
-                "Error",
-                System.Windows.MessageBoxButton.OK,
-                MessageBoxImage.Error);
-            return;
-        }
-
-        ScaleInput.Value = collection.GlobalScaleFactor;
-        MeasurementUnits.Text = collection.GlobalUnits;
-
-        // Add distance measurements
-        foreach (DistanceMeasurementControlDto dto in collection.DistanceMeasurements)
-        {
-            DistanceMeasurementControl control = new()
-            {
-                ScaleFactor = dto.ScaleFactor,
-                Units = dto.Units
-            };
-            control.FromDto(dto);
-            control.MeasurementPointMouseDown += MeasurementPoint_MouseDown;
-            control.SetRealWorldLengthRequested += MeasurementControl_SetRealWorldLengthRequested;
-            control.RemoveControlRequested += DistanceMeasurementControl_RemoveControlRequested;
-            measurementTools.Add(control);
-            ShapeCanvas.Children.Add(control);
-        }
-
-        // Add angle measurements
-        foreach (AngleMeasurementControlDto dto in collection.AngleMeasurements)
-        {
-            AngleMeasurementControl control = new();
-            control.FromDto(dto);
-            control.MeasurementPointMouseDown += AngleMeasurementPoint_MouseDown;
-            control.RemoveControlRequested += AngleMeasurementControl_RemoveControlRequested;
-            angleMeasurementTools.Add(control);
-            ShapeCanvas.Children.Add(control);
-        }
-    }
-
     private async void SaveMeasurementsPackageToFile()
     {
         if (string.IsNullOrWhiteSpace(imagePath))
         {
-            System.Windows.MessageBox.Show(
-                "No image loaded. Please open an image first.",
-                "Error",
-                System.Windows.MessageBoxButton.OK,
-                MessageBoxImage.Error);
+            Wpf.Ui.Controls.MessageBox uiMessageBox = new()
+            {
+                Title = "Error",
+                Content = "No image loaded. Please open an image first.",
+            };
+            await uiMessageBox.ShowDialogAsync();
             return;
         }
 
@@ -1468,21 +1382,14 @@ public partial class MainWindow : FluentWindow
             // Save to the selected file
             bool success = await package.SaveToFileAsync(saveFileDialog.FileName);
 
-            if (success)
+            if (!success)
             {
-                System.Windows.MessageBox.Show(
-                    "Measurements and image saved successfully.",
-                    "Success",
-                    System.Windows.MessageBoxButton.OK,
-                    MessageBoxImage.Information);
-            }
-            else
-            {
-                System.Windows.MessageBox.Show(
-                    "Failed to save the measurement package.",
-                    "Error",
-                    System.Windows.MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                Wpf.Ui.Controls.MessageBox uiMessageBox = new()
+                {
+                    Title = "Error",
+                    Content = "Failed to save the measurement package.",
+                };
+                await uiMessageBox.ShowDialogAsync();
             }
         }
         finally

@@ -1,4 +1,5 @@
 using ImageMagick;
+using MagickCrop.Models;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -6,31 +7,10 @@ namespace MagickCrop.Controls;
 
 public partial class SaveOptionsDialog : UserControl
 {
-    public class FormatItem
-    {
-        public string Name { get; set; }
-        public MagickFormat Format { get; set; }
-        public string Extension { get; set; }
-        public bool SupportsQuality { get; set; }
-
-        public override string ToString() => Name;
-    }
-
-    public class SaveOptions
-    {
-        public MagickFormat Format { get; set; }
-        public string Extension { get; set; }
-        public int Quality { get; set; }
-        public bool Resize { get; set; }
-        public int Width { get; set; }
-        public int Height { get; set; }
-        public bool MaintainAspectRatio { get; set; }
-    }
-
     private static readonly List<FormatItem> _formats =
     [
-        new FormatItem { Name = "JPEG Image", Format = MagickFormat.Jpg, Extension = ".jpg", SupportsQuality = true },
         new FormatItem { Name = "PNG Image", Format = MagickFormat.Png, Extension = ".png", SupportsQuality = false },
+        new FormatItem { Name = "JPEG Image", Format = MagickFormat.Jpg, Extension = ".jpg", SupportsQuality = true },
         new FormatItem { Name = "BMP Image", Format = MagickFormat.Bmp, Extension = ".bmp", SupportsQuality = false },
         new FormatItem { Name = "TIFF Image", Format = MagickFormat.Tiff, Extension = ".tiff", SupportsQuality = false },
         new FormatItem { Name = "WebP Image", Format = MagickFormat.WebP, Extension = ".webp", SupportsQuality = true },
@@ -64,9 +44,8 @@ public partial class SaveOptionsDialog : UserControl
         // Initialize options object
         Options = new SaveOptions
         {
-            Format = MagickFormat.Jpg,
-            Extension = ".jpg",
-            Quality = 90,
+            Format = MagickFormat.Png,
+            Extension = ".png",
             Resize = false,
             Width = (int)originalWidth,
             Height = (int)originalHeight,
@@ -146,10 +125,22 @@ public partial class SaveOptionsDialog : UserControl
         }
     }
 
-    private void SaveButton_Click(object sender, RoutedEventArgs e)
+    private async void SaveButton_Click(object sender, RoutedEventArgs e)
     {
         // Update final options
         Options.MaintainAspectRatio = MaintainAspectRatioCheckBox.IsChecked == true;
+
+        if (WidthBox.Value is 0 || HeightBox.Value is 0)
+        {
+            Wpf.Ui.Controls.MessageBox uiMessageBox = new()
+            {
+                Title = "Invalid Dimensions",
+                Content = "Width and Height must be greater than 0.",
+            };
+
+            await uiMessageBox.ShowDialogAsync();
+            return;
+        }
 
         Window.GetWindow(this).DialogResult = true;
         Window.GetWindow(this).Close();
