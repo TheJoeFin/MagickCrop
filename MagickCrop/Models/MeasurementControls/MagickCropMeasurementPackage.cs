@@ -12,17 +12,17 @@ public class MagickCropMeasurementPackage
     private const string MetadataFileName = "metadata.json";
     private const string MeasurementsFileName = "measurements.json";
     private const string ImageFileName = "image.jpg";
-    
+
     /// <summary>
     /// Metadata for the package
     /// </summary>
     public PackageMetadata Metadata { get; set; } = new();
-    
+
     /// <summary>
     /// Collection of measurement data
     /// </summary>
     public MeasurementCollection Measurements { get; set; } = new();
-    
+
     /// <summary>
     /// Path to the image file
     /// </summary>
@@ -99,7 +99,7 @@ public class MagickCropMeasurementPackage
 
         string tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
         string tempImagePath = string.Empty;
-            
+
         try
         {
             // Extract the archive
@@ -108,7 +108,7 @@ public class MagickCropMeasurementPackage
 
             // Create the package
             MagickCropMeasurementPackage package = new();
-                
+
             // Load metadata if available
             string metadataPath = Path.Combine(tempDir, MetadataFileName);
             if (File.Exists(metadataPath))

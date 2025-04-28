@@ -1,0 +1,89 @@
+<UserControl
+    x:Class="MagickCrop.Controls.SaveOptionsDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:wpfui="http://schemas.lepo.co/wpfui/2022/xaml"
+    mc:Ignorable="d"
+    d:DesignHeight="450"
+    d:DesignWidth="400">
+    
+    <Grid Background="{wpfui:ThemeResource ApplicationBackgroundBrush}" Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Format Selection -->
+        <TextBlock Grid.Row="0" Text="Save Format" Margin="0,0,0,5" FontWeight="SemiBold"/>
+        <ComboBox x:Name="FormatComboBox" Grid.Row="1" Margin="0,0,0,15" 
+                  SelectionChanged="FormatComboBox_SelectionChanged" HorizontalAlignment="Stretch"/>
+        
+        <!-- Quality Settings (for JPG) -->
+        <Grid x:Name="QualityGrid" Grid.Row="2" Visibility="Collapsed" Margin="0,0,0,15">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Quality" Margin="0,0,0,5" FontWeight="SemiBold"/>
+            <TextBlock x:Name="QualityValueText" Grid.Row="0" Grid.Column="1" Text="90%" Margin="0,0,0,5"/>
+            
+            <Slider x:Name="QualitySlider" Grid.Row="1" Grid.ColumnSpan="2"
+                    Minimum="1" Maximum="100" Value="90" 
+                    TickFrequency="10" TickPlacement="BottomRight"
+                    ValueChanged="QualitySlider_ValueChanged"/>
+        </Grid>
+        
+        <!-- Resize Options -->
+        <TextBlock Grid.Row="3" Text="Resize Options" Margin="0,0,0,5" FontWeight="SemiBold"/>
+        <Grid Grid.Row="4" Margin="0,0,0,15">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            
+            <CheckBox x:Name="ResizeCheckBox" Grid.Row="0" Grid.ColumnSpan="4" 
+                      Content="Resize image" Margin="0,0,0,10"
+                      Checked="ResizeCheckBox_CheckedChanged"
+                      Unchecked="ResizeCheckBox_CheckedChanged"/>
+            
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Width:" Margin="0,0,5,0" VerticalAlignment="Center"/>
+            <wpfui:NumberBox x:Name="WidthBox" Grid.Row="1" Grid.Column="1" Margin="0,0,10,0"
+                            Minimum="1" IsEnabled="False" Value="100"
+                            ValueChanged="WidthBox_ValueChanged"/>
+            
+            <TextBlock Grid.Row="1" Grid.Column="2" Text="Height:" Margin="0,0,5,0" VerticalAlignment="Center"/>
+            <wpfui:NumberBox x:Name="HeightBox" Grid.Row="1" Grid.Column="3"
+                            Minimum="1" IsEnabled="False" Value="100"/>
+            
+        </Grid>
+
+        <CheckBox x:Name="MaintainAspectRatioCheckBox" Grid.Row="5" 
+                  Content="Maintain aspect ratio" IsChecked="True" IsEnabled="False"/>
+        
+        <!-- Buttons -->
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+            <wpfui:Button x:Name="CancelButton" Content="Cancel" Appearance="Secondary" 
+                         Margin="0,0,10,0" Click="CancelButton_Click"/>
+            <wpfui:Button x:Name="SaveButton" Content="Save" Appearance="Primary" 
+                         Click="SaveButton_Click"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -38,8 +38,8 @@ public partial class DistanceMeasurementControl : UserControl
     public string Units
     {
         get { return units; }
-        set 
-        { 
+        set
+        {
             units = value;
             UpdatePositions();
         }
@@ -133,13 +133,13 @@ public partial class DistanceMeasurementControl : UserControl
         string distance = DistanceTextBlock.Text;
         Clipboard.SetText(distance);
     }
-    
+
     private void SetRealWorldLengthMenuItem_Click(object sender, RoutedEventArgs e)
     {
         double pixelDistance = CalculateDistance();
         SetRealWorldLengthRequested?.Invoke(this, pixelDistance);
     }
-    
+
     private void MeasurementButton_Click(object sender, RoutedEventArgs e)
     {
         // Show context menu when button is clicked
@@ -151,7 +151,7 @@ public partial class DistanceMeasurementControl : UserControl
             e.Handled = true;
         }
     }
-    
+
     private void RemoveMeasurementMenuItem_Click(object sender, RoutedEventArgs e)
     {
         // Trigger the removal event so the parent canvas can remove this control

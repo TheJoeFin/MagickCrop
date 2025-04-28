@@ -197,7 +197,7 @@ public partial class AngleMeasurementControl : UserControl
         string angle = AngleTextBlock.Text;
         Clipboard.SetText(angle);
     }
-    
+
     private void MeasurementButton_Click(object sender, RoutedEventArgs e)
     {
         // Show context menu when button is clicked
@@ -209,7 +209,7 @@ public partial class AngleMeasurementControl : UserControl
             e.Handled = true;
         }
     }
-    
+
     private void RemoveMeasurementMenuItem_Click(object sender, RoutedEventArgs e)
     {
         // Trigger the removal event so the parent canvas can remove this control

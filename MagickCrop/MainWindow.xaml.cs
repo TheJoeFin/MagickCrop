@@ -49,6 +49,16 @@ public partial class MainWindow : FluentWindow
     private System.Timers.Timer? autoSaveTimer;
     private readonly int AutoSaveIntervalMs = (int)TimeSpan.FromSeconds(3).TotalMilliseconds;
 
+    private static readonly List<SaveOptionsDialog.FormatItem> _formats = new List<SaveOptionsDialog.FormatItem>
+    {
+        new SaveOptionsDialog.FormatItem { Name = "JPEG Image", Format = MagickFormat.Jpg, Extension = ".jpg", SupportsQuality = true },
+        new SaveOptionsDialog.FormatItem { Name = "PNG Image", Format = MagickFormat.Png, Extension = ".png", SupportsQuality = false },
+        new SaveOptionsDialog.FormatItem { Name = "BMP Image", Format = MagickFormat.Bmp, Extension = ".bmp", SupportsQuality = false },
+        new SaveOptionsDialog.FormatItem { Name = "TIFF Image", Format = MagickFormat.Tiff, Extension = ".tiff", SupportsQuality = false },
+        new SaveOptionsDialog.FormatItem { Name = "WebP Image", Format = MagickFormat.WebP, Extension = ".webp", SupportsQuality = true },
+        new SaveOptionsDialog.FormatItem { Name = "HEIC Image", Format = MagickFormat.Heic, Extension = ".heic", SupportsQuality = true }
+    };
+
     public MainWindow()
     {
         ThemeService themeService = new();
@@ -401,38 +411,88 @@ public partial class MainWindow : FluentWindow
 
     private async void Save_Click(object sender, RoutedEventArgs e)
     {
-        SaveFileDialog saveFileDialog = new()
-        {
-            Filter = "Image Files|*.jpg;",
-            RestoreDirectory = true,
-            FileName = $"{openedFileName}_corrected.jpg",
-        };
-
-        if (saveFileDialog.ShowDialog() is not true || lines is null)
-        {
-            BottomPane.IsEnabled = true;
-            BottomPane.Cursor = null;
-            SetUiForCompletedTask();
+        if (string.IsNullOrEmpty(imagePath))
             return;
-        }
 
-        string correctedImageFileName = saveFileDialog.FileName;
-
-        if (string.IsNullOrWhiteSpace(imagePath) || string.IsNullOrWhiteSpace(correctedImageFileName))
-        {
-            SetUiForCompletedTask();
-            return;
-        }
-
-        MagickImage image = new(imagePath);
+        SetUiForLongTask();
 
         try
         {
-            await image.WriteAsync(correctedImageFileName);
+            // Get current image dimensions
+            MagickImage magickImage = new(imagePath);
+            double width = magickImage.Width;
+            double height = magickImage.Height;
+            magickImage.Dispose();
 
+            // Create and show save options dialog in a window
+            SaveOptionsDialog saveOptionsDialog = new(width, height);
+            Window dialogWindow = new()
+            {
+                Title = "Save Options",
+                Content = saveOptionsDialog,
+                Owner = this,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                SizeToContent = SizeToContent.WidthAndHeight,
+                ResizeMode = ResizeMode.NoResize
+            };
+
+            // Show the dialog window
+            bool? dialogResult = dialogWindow.ShowDialog();
+
+            // If dialog was cancelled or closed
+            if (dialogResult != true)
+            {
+                SetUiForCompletedTask();
+                return;
+            }
+
+            SaveOptionsDialog.SaveOptions options = saveOptionsDialog.Options;
+
+            // Configure save file dialog based on selected format
+            SaveFileDialog saveFileDialog = new()
+            {
+                Filter = SaveOptionsDialog.GetFileFilter(
+                            _formats.FirstOrDefault(f => f.Format == options.Format)
+                            ?? _formats[0]),
+                DefaultExt = options.Extension,
+                RestoreDirectory = true,
+                FileName = $"{openedFileName}_edited{options.Extension}",
+            };
+
+            if (saveFileDialog.ShowDialog() != true)
+            {
+                SetUiForCompletedTask();
+                return;
+            }
+
+            string correctedImageFileName = saveFileDialog.FileName;
+
+            // Load image and apply options
+            using MagickImage image = new(imagePath);
+
+            // Resize if requested
+            if (options.Resize)
+            {
+                MagickGeometry resizeGeometry = new((uint)options.Width, (uint)options.Height)
+                {
+                    IgnoreAspectRatio = !options.MaintainAspectRatio
+                };
+                image.Resize(resizeGeometry);
+            }
+
+            // Set quality for formats that support it
+            image.Quality = (uint)options.Quality;
+
+            // Save with the selected format
+            await image.WriteAsync(correctedImageFileName, options.Format);
+
+            // Show preview and enable open folder button
             OpenFolderButton.IsEnabled = true;
             SaveWindow saveWindow = new(correctedImageFileName);
             saveWindow.Show();
+
+            // Store the saved path for the open folder button
+            savedPath = correctedImageFileName;
         }
         catch (Exception ex)
         {
@@ -444,10 +504,7 @@ public partial class MainWindow : FluentWindow
         }
         finally
         {
-            savedPath = correctedImageFileName;
-
             SetUiForCompletedTask();
-            image.Dispose();
         }
     }
 
@@ -1462,8 +1519,8 @@ public partial class MainWindow : FluentWindow
         try
         {
             package = await MagickCropMeasurementPackage.LoadFromFileAsync(fileName);
-            if (package is null 
-                || string.IsNullOrEmpty(package.ImagePath) 
+            if (package is null
+                || string.IsNullOrEmpty(package.ImagePath)
                 || !File.Exists(package.ImagePath))
             {
                 Wpf.Ui.Controls.MessageBox uiMessageBox = new()

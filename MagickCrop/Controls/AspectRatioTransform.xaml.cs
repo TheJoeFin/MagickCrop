@@ -24,7 +24,7 @@ public partial class AspectRatioTransform : UserControl
         }
     }
 
-    private PointCollection _transformPoints = [new(-5, -5), new(- 7, 6), new(8, 6), new(5, -5)];
+    private PointCollection _transformPoints = [new(-5, -5), new(-7, 6), new(8, 6), new(5, -5)];
     public PointCollection TransformPoints
     {
         get

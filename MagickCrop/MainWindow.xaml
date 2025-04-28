@@ -597,7 +597,7 @@
                         Margin="0,8"
                         HorizontalAlignment="Center"
                         Click="Save_Click"
-                        Content="Save to File..."
+                        Content="Save image..."
                         ToolTip="Apply Transform, Save, and Preview file">
                         <wpfui:Button.Icon>
                             <wpfui:SymbolIcon Symbol="Save24" />
