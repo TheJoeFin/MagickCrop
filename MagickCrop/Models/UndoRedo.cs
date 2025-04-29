@@ -42,6 +42,12 @@ public class UndoRedo
         _undoStack.Push(item);
         return newPath;
     }
+
+    internal void Clear()
+    {
+        _undoStack.Clear();
+        _redoStack.Clear();
+    }
 }
 
 public abstract class UndoRedoItem

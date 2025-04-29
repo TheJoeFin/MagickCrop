@@ -48,7 +48,7 @@ public partial class MainWindow : FluentWindow
     private Services.RecentProjectsManager? recentProjectsManager;
     private string? currentProjectId;
     private System.Timers.Timer? autoSaveTimer;
-    private readonly int AutoSaveIntervalMs = (int)TimeSpan.FromSeconds(3).TotalMilliseconds;
+    private readonly int AutoSaveIntervalMs = (int)TimeSpan.FromSeconds(5).TotalMilliseconds;
 
     private static readonly List<FormatItem> _formats =
     [
@@ -91,6 +91,7 @@ public partial class MainWindow : FluentWindow
         AspectRatioTransformPreview.RatioItem = selectedAspectRatio;
 
         InitializeProjectManager();
+        UpdateOpenedFileNameText();
     }
 
     private void DrawPolyLine()
@@ -576,6 +577,9 @@ public partial class MainWindow : FluentWindow
 
         // Create a new project ID for this image
         currentProjectId = Guid.NewGuid().ToString();
+
+        // Update the ReOpenFileButton to show the current file name
+        UpdateOpenedFileNameText();
     }
 
     private void OpenFolderButton_Click(object sender, RoutedEventArgs e)
@@ -1490,6 +1494,8 @@ public partial class MainWindow : FluentWindow
             currentProjectId = package.Metadata.ProjectId;
         else
             currentProjectId = Guid.NewGuid().ToString();
+        
+        UpdateOpenedFileNameText();
     }
 
     public async void LoadMeasurementsPackageFromFile(string filePath)
@@ -1590,5 +1596,70 @@ public partial class MainWindow : FluentWindow
         AutosaveCurrentState();
 
         base.OnClosing(e);
+    }
+
+    private void UpdateOpenedFileNameText()
+    {
+        if (string.IsNullOrEmpty(openedFileName))
+        {
+            ReOpenFileText.Text = "Image/Project Name";
+            CloseFileIcon.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            ReOpenFileText.Text = openedFileName;
+
+            if (openedPackage is not null)
+                ReOpenFileText.Text = $" {openedPackage.Metadata.OriginalFilename}";
+            CloseFileIcon.Visibility = Visibility.Visible;
+        }
+    }
+
+    private void CloseFileIcon_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        e.Handled = true; // Prevent the click from bubbling to the button
+        ResetApplicationState();
+    }
+
+    private void ResetApplicationState()
+    {
+        // Stop the autosave timer
+        autoSaveTimer?.Stop();
+        AutosaveCurrentState();
+
+        // Clear the image
+        MainImage.Source = null;
+        imagePath = null;
+        openedFileName = string.Empty;
+        openedPackage = null;
+        savedPath = null;
+        
+        // Reset the title
+        wpfuiTitleBar.Title = "Magick Crop & Measure by TheJoeFin";
+        
+        // Reset UI elements
+        RemoveMeasurementControls();
+        HideTransformControls();
+        HideCroppingControls();
+        HideResizeControls();
+        BottomBorder.Visibility = Visibility.Collapsed;
+        WelcomeMessageModal.Visibility = Visibility.Visible;
+        OpenFolderButton.IsEnabled = false;
+        Save.IsEnabled = false;
+        
+        // Reset the canvas transform
+        if (ShapeCanvas.RenderTransform is MatrixTransform matTrans)
+        {
+            matTrans.Matrix = new Matrix();
+        }
+        
+        // Reset undo/redo
+        undoRedo.Clear();
+        
+        // Create a new project ID
+        currentProjectId = Guid.NewGuid().ToString();
+        
+        // Update the button state
+        UpdateOpenedFileNameText();
     }
 }

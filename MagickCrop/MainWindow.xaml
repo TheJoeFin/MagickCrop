@@ -156,19 +156,31 @@
                 </Grid.RowDefinitions>
                 <ScrollViewer>
                     <StackPanel Width="200" Orientation="Vertical">
-                        <wpfui:Button
-                            x:Name="ReOpenFileButton"
-                            Width="180"
-                            Margin="0,0,0,8"
-                            HorizontalAlignment="Center"
-                            Appearance="Transparent"
-                            Click="OpenFileButton_Click"
-                            Content="Open image..."
-                            ToolTip="Open a new image file">
-                            <wpfui:Button.Icon>
-                                <wpfui:SymbolIcon Symbol="FolderOpen24" />
-                            </wpfui:Button.Icon>
-                        </wpfui:Button>
+                        <Grid Width="160">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <wpfui:SymbolIcon
+                                Grid.Column="0"
+                                Margin="0,0,5,0"
+                                Symbol="Image24" />
+                            <TextBlock
+                                x:Name="ReOpenFileText"
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Text="Image File Name"
+                                TextTrimming="CharacterEllipsis" />
+                            <wpfui:SymbolIcon
+                                x:Name="CloseFileIcon"
+                                Grid.Column="2"
+                                Margin="5,0,0,0"
+                                MouseDown="CloseFileIcon_MouseDown"
+                                Symbol="Dismiss24"
+                                ToolTip="Click to close and show the welcome screen"
+                                Visibility="Collapsed" />
+                        </Grid>
                         <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                             <MenuItem
                                 x:Name="UndoMenuItem"

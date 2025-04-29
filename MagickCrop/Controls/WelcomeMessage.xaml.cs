@@ -64,7 +64,7 @@ public partial class WelcomeMessage : UserControl
         if (project == null) return;
 
         // Close the welcome screen
-        WelcomeBorder.Visibility = Visibility.Collapsed;
+        Visibility = Visibility.Collapsed;
 
         // Get the main window and open the project
         if (Window.GetWindow(this) is MainWindow mainWindow)
@@ -109,7 +109,7 @@ public partial class WelcomeMessage : UserControl
 
     private void OpenFileButton_Click(object sender, RoutedEventArgs e)
     {
-        WelcomeBorder.Visibility = Visibility.Collapsed;
+        Visibility = Visibility.Collapsed;
         PrimaryButtonEvent?.Invoke(sender, e);
     }
 
@@ -130,13 +130,13 @@ public partial class WelcomeMessage : UserControl
 
     private async void OpenPackageButton_Click(object sender, RoutedEventArgs e)
     {
-        WelcomeBorder.Visibility = Visibility.Collapsed;
+        Visibility = Visibility.Collapsed;
 
         bool opened = false;
         if (Window.GetWindow(this) is MainWindow mainWindow)
             opened = await mainWindow.LoadMeasurementsPackageFromFile();
 
         if (!opened)
-            WelcomeBorder.Visibility = Visibility.Visible;
+            Visibility = Visibility.Visible;
     }
 }
