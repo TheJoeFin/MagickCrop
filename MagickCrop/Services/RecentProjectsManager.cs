@@ -141,14 +141,14 @@ public class RecentProjectsManager
     /// <param name="package">The measurement package to save</param>
     /// <param name="imageSource">The current image source for thumbnail generation</param>
     /// <returns>The project info</returns>
-    public async Task<RecentProjectInfo?> AutosaveProject(MagickCropMeasurementPackage package, BitmapSource? imageSource)
+    public RecentProjectInfo? AutosaveProject(MagickCropMeasurementPackage package, BitmapSource? imageSource)
     {
         if (package is null || string.IsNullOrEmpty(package.ImagePath))
             return null;
 
         package.Metadata ??= new();
 
-        string projectId = package.Metadata?.ProjectId ?? Guid.NewGuid().ToString();
+        string projectId = package.Metadata.ProjectId ?? Guid.NewGuid().ToString();
         package.Metadata.ProjectId = projectId;
         package.Metadata.LastModified = DateTime.Now;
 
@@ -166,7 +166,7 @@ public class RecentProjectsManager
             thumbnailPath = CreateThumbnail(imageSource, projectId);
 
         // Save the package
-        bool saveSuccess = await package.SaveToFileAsync(packagePath);
+        bool saveSuccess = package.SaveToFileAsync(packagePath);
         if (!saveSuccess)
             return null;
 

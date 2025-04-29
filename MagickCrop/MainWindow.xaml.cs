@@ -35,6 +35,7 @@ public partial class MainWindow : FluentWindow
     private DraggingMode draggingMode = DraggingMode.None;
 
     private string openedFileName = string.Empty;
+    private MagickCropMeasurementPackage? openedPackage;
     private readonly List<UIElement> _polygonElements;
 
     private readonly UndoRedo undoRedo = new();
@@ -513,6 +514,7 @@ public partial class MainWindow : FluentWindow
         BottomPane.IsEnabled = false;
         BottomPane.Cursor = Cursors.Wait;
         IsWorkingBar.Visibility = Visibility.Visible;
+        autoSaveTimer?.Stop();
     }
 
     private void SetUiForCompletedTask()
@@ -520,6 +522,9 @@ public partial class MainWindow : FluentWindow
         IsWorkingBar.Visibility = Visibility.Collapsed;
         BottomPane.Cursor = null;
         BottomPane.IsEnabled = true;
+
+        autoSaveTimer?.Stop();
+        autoSaveTimer?.Start();
     }
 
     private async void OpenFileButton_Click(object sender, RoutedEventArgs e)
@@ -571,9 +576,6 @@ public partial class MainWindow : FluentWindow
 
         // Create a new project ID for this image
         currentProjectId = Guid.NewGuid().ToString();
-
-        // Trigger an autosave after loading a new image
-        _ = AutosaveCurrentState();
     }
 
     private void OpenFolderButton_Click(object sender, RoutedEventArgs e)
@@ -1380,7 +1382,7 @@ public partial class MainWindow : FluentWindow
         try
         {
             // Save to the selected file
-            bool success = await package.SaveToFileAsync(saveFileDialog.FileName);
+            bool success = package.SaveToFileAsync(saveFileDialog.FileName);
 
             if (!success)
             {
@@ -1425,7 +1427,7 @@ public partial class MainWindow : FluentWindow
         MagickCropMeasurementPackage? package = null;
         try
         {
-            package = await MagickCropMeasurementPackage.LoadFromFileAsync(fileName);
+            package = MagickCropMeasurementPackage.LoadFromFileAsync(fileName);
             if (package is null
                 || string.IsNullOrEmpty(package.ImagePath)
                 || !File.Exists(package.ImagePath))
@@ -1437,8 +1439,10 @@ public partial class MainWindow : FluentWindow
                 };
                 await uiMessageBox.ShowDialogAsync();
                 SetUiForCompletedTask();
+                WelcomeMessageModal.Visibility = Visibility.Visible;
                 return;
             }
+            openedPackage = package;
 
             // Load the image
             await OpenImagePath(package.ImagePath);
@@ -1509,7 +1513,6 @@ public partial class MainWindow : FluentWindow
         autoSaveTimer = new System.Timers.Timer(AutoSaveIntervalMs);
         autoSaveTimer.Elapsed += AutoSaveTimer_Elapsed;
         autoSaveTimer.AutoReset = true;
-        autoSaveTimer.Start();
 
         // Create a new project ID
         currentProjectId = Guid.NewGuid().ToString();
@@ -1517,34 +1520,45 @@ public partial class MainWindow : FluentWindow
 
     private void AutoSaveTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
     {
+        if (IsWorkingBar.Visibility == Visibility.Visible)
+            return; // Don't autosave if the UI is busy
+
         // Run on UI thread
-        Dispatcher.Invoke(async () =>
+        Dispatcher.Invoke(() =>
         {
             // Only autosave if we have an image and measurements that need saving
-            if (MainImage.Source != null && !string.IsNullOrEmpty(imagePath))
-            {
-                await AutosaveCurrentState();
-            }
+            if (MainImage.Source == null || string.IsNullOrEmpty(imagePath))
+                return;
+
+            AutosaveCurrentState();
         });
     }
 
-    private async Task AutosaveCurrentState()
+    private void AutosaveCurrentState()
     {
         if (recentProjectsManager == null || MainImage.Source == null || string.IsNullOrEmpty(imagePath))
             return;
 
         try
         {
+            PackageMetadata packageMetadata = new()
+            {
+                OriginalFilename = openedFileName,
+                ProjectId = currentProjectId,
+                LastModified = DateTime.Now
+            };
+
+            if (openedPackage is not null)
+            {
+                packageMetadata = openedPackage.Metadata;
+                packageMetadata.LastModified = DateTime.Now;
+            }
+
             // Create a package with the current state
             MagickCropMeasurementPackage package = new()
             {
                 ImagePath = imagePath,
-                Metadata = new PackageMetadata
-                {
-                    OriginalFilename = openedFileName,
-                    ProjectId = currentProjectId,
-                    LastModified = DateTime.Now
-                },
+                Metadata = packageMetadata,
                 Measurements = new MeasurementCollection
                 {
                     GlobalScaleFactor = ScaleInput.Value ?? 1.0,
@@ -1558,7 +1572,7 @@ public partial class MainWindow : FluentWindow
             foreach (AngleMeasurementControl control in angleMeasurementTools)
                 package.Measurements.AngleMeasurements.Add(control.ToDto());
 
-            await recentProjectsManager.AutosaveProject(package, MainImage.Source as BitmapSource);
+            recentProjectsManager.AutosaveProject(package, MainImage.Source as BitmapSource);
         }
         catch (Exception ex)
         {
@@ -1573,7 +1587,7 @@ public partial class MainWindow : FluentWindow
         autoSaveTimer?.Stop();
 
         // Save the current project state one last time
-        _ = AutosaveCurrentState();
+        AutosaveCurrentState();
 
         base.OnClosing(e);
     }

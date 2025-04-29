@@ -33,7 +33,7 @@ public class MagickCropMeasurementPackage
     /// </summary>
     /// <param name="packagePath">Path to save the package to</param>
     /// <returns>True if successful, false otherwise</returns>
-    public async Task<bool> SaveToFileAsync(string packagePath)
+    public bool SaveToFileAsync(string packagePath)
     {
         if (string.IsNullOrEmpty(ImagePath) || !File.Exists(ImagePath))
             return false;
@@ -41,7 +41,7 @@ public class MagickCropMeasurementPackage
         try
         {
             // Create a temporary directory for package contents
-            string tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            string tempDir = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(Path.GetRandomFileName()));
             Directory.CreateDirectory(tempDir);
 
             try
@@ -92,7 +92,7 @@ public class MagickCropMeasurementPackage
     /// </summary>
     /// <param name="packagePath">Path to the .mcm package file</param>
     /// <returns>A MagickCropMeasurementPackage object or null if loading fails</returns>
-    public static async Task<MagickCropMeasurementPackage?> LoadFromFileAsync(string packagePath)
+    public static MagickCropMeasurementPackage? LoadFromFileAsync(string packagePath)
     {
         if (!File.Exists(packagePath))
             return null;
@@ -129,7 +129,7 @@ public class MagickCropMeasurementPackage
             if (File.Exists(packageImagePath))
             {
                 tempImagePath = Path.GetTempFileName();
-                tempImagePath = Path.ChangeExtension(tempImagePath, ".jpg");
+                    tempImagePath = Path.ChangeExtension(tempImagePath, ".jpg");
                 File.Copy(packageImagePath, tempImagePath, true);
                 package.ImagePath = tempImagePath;
             }
