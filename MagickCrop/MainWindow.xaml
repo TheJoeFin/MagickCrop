@@ -95,6 +95,12 @@
                         x:Name="MainImage"
                         MouseDown="ShapeCanvas_MouseDown"
                         Stretch="Uniform" />
+                    <InkCanvas
+                        x:Name="DrawingCanvas"
+                        Background="Transparent"
+                        IsEnabled="False"
+                        IsHitTestVisible="False"
+                        StrokeCollected="DrawingCanvas_StrokeCollected" />
                     <ResizeGrip
                         x:Name="ImageResizeGrip"
                         Grid.Row="1"
@@ -401,6 +407,15 @@
                                         </MenuItem.Icon>
                                     </MenuItem>
 
+                                    <MenuItem
+                                        Name="ToggleDrawingMenuItem"
+                                        Click="ToggleDrawingMenuItem_Click"
+                                        Header="Toggle Drawing Mode">
+                                        <MenuItem.Icon>
+                                            <wpfui:SymbolIcon Symbol="DrawText24" />
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+
                                     <StackPanel
                                         x:Name="MeasurementButtonPanel"
                                         Grid.Row="1"
@@ -423,6 +438,38 @@
                                             AcceptsTab="False"
                                             Text="Pixels"
                                             TextChanged="MeasurementUnits_TextChanged" />
+
+                                        <StackPanel x:Name="DrawingOptionsPanel" Visibility="Collapsed">
+                                            <Label Content="Drawing Color:" />
+                                            <ComboBox
+                                                x:Name="StrokeColorComboBox"
+                                                Width="150"
+                                                SelectionChanged="StrokeColorComboBox_SelectionChanged">
+                                                <ComboBoxItem
+                                                    Content="Blue"
+                                                    Foreground="Blue"
+                                                    IsSelected="True" />
+                                                <ComboBoxItem Content="Red" Foreground="Red" />
+                                                <ComboBoxItem Content="Green" Foreground="Green" />
+                                                <ComboBoxItem Content="Yellow" Foreground="Gold" />
+                                                <ComboBoxItem Content="White" Foreground="White" />
+                                            </ComboBox>
+
+                                            <Label Margin="0,8,0,0" Content="Stroke Thickness:" />
+                                            <Slider
+                                                x:Name="StrokeThicknessSlider"
+                                                Width="150"
+                                                Maximum="10"
+                                                Minimum="1"
+                                                ValueChanged="StrokeThicknessSlider_ValueChanged"
+                                                Value="2" />
+
+                                            <Button
+                                                x:Name="ClearDrawingsButton"
+                                                Margin="0,16,0,0"
+                                                Click="ClearDrawingsButton_Click"
+                                                Content="Clear All Drawings" />
+                                        </StackPanel>
 
                                         <wpfui:HyperlinkButton
                                             x:Name="CloseMeasurementButton"

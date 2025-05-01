@@ -9,6 +9,7 @@ using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Ink;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -65,8 +66,11 @@ public partial class MainWindow : FluentWindow
         // new FormatItem { Name = "HEIC Image", Format = MagickFormat.Heic, Extension = ".heic", SupportsQuality = true }
     ];
 
-    private readonly ObservableCollection<Line> verticalLines = new();
-    private readonly ObservableCollection<Line> horizontalLines = new();
+    private readonly ObservableCollection<Line> verticalLines = [];
+    private readonly ObservableCollection<Line> horizontalLines = [];
+
+    private bool isDrawingMode = false;
+    private Dictionary<Stroke, StrokeInfo> strokeMeasurements = [];
 
     public MainWindow()
     {
@@ -637,7 +641,7 @@ public partial class MainWindow : FluentWindow
         MeasureTabItem.IsSelected = true;
         TransformTabItem.IsEnabled = false;
         EditImageTabItem.IsEnabled = false;
-        
+
         CropButtonPanel.Visibility = Visibility.Collapsed;
         TransformButtonPanel.Visibility = Visibility.Collapsed;
         ResizeButtonsPanel.Visibility = Visibility.Collapsed;
@@ -1451,6 +1455,9 @@ public partial class MainWindow : FluentWindow
         double newScale = ScaleInput.Value ?? 1.0;
         foreach (DistanceMeasurementControl tool in measurementTools)
             tool.ScaleFactor = newScale;
+
+        // Update stroke measurements
+        UpdateStrokeMeasurements();
     }
 
     private void MeasurementUnits_TextChanged(object sender, TextChangedEventArgs e)
@@ -1460,11 +1467,44 @@ public partial class MainWindow : FluentWindow
 
         foreach (DistanceMeasurementControl tool in measurementTools)
             tool.Units = textBox.Text;
+
+        // Update stroke measurements
+        UpdateStrokeMeasurements();
+    }
+
+    private void UpdateStrokeMeasurements()
+    {
+        if (MeasurementUnits is null) return;
+
+        double scaleFactor = ScaleInput.Value ?? 1.0;
+        string units = MeasurementUnits.Text;
+
+        Dictionary<Stroke, StrokeInfo> updatedMeasurements = [];
+
+        foreach (KeyValuePair<Stroke, StrokeInfo> entry in strokeMeasurements)
+        {
+            Stroke stroke = entry.Key;
+            StrokeInfo info = entry.Value;
+
+            // Update the scaled length with new scale factor
+            info.ScaledLength = info.PixelLength * scaleFactor;
+            info.Units = units;
+
+            updatedMeasurements[stroke] = info;
+        }
+
+        strokeMeasurements = updatedMeasurements;
     }
 
     private void CloseMeasurementButton_Click(object sender, RoutedEventArgs e)
     {
         RemoveMeasurementControls();
+        ClearAllStrokesAndLengths();
+        isDrawingMode = false;
+        DrawingCanvas.IsEnabled = false;
+        DrawingOptionsPanel.Visibility = Visibility.Collapsed;
+        ToggleDrawingMenuItem.Header = "Enable Drawing Mode";
+        MainGrid.Cursor = null;
     }
 
     private async void SaveMeasurementsPackageToFile()
@@ -1666,7 +1706,7 @@ public partial class MainWindow : FluentWindow
             currentProjectId = package.Metadata.ProjectId;
         else
             currentProjectId = Guid.NewGuid().ToString();
-        
+
         UpdateOpenedFileNameText();
     }
 
@@ -1811,10 +1851,10 @@ public partial class MainWindow : FluentWindow
         openedFileName = string.Empty;
         openedPackage = null;
         savedPath = null;
-        
+
         // Reset the title
         wpfuiTitleBar.Title = "Magick Crop & Measure by TheJoeFin";
-        
+
         // Reset UI elements
         RemoveMeasurementControls();
         HideTransformControls();
@@ -1824,19 +1864,19 @@ public partial class MainWindow : FluentWindow
         WelcomeMessageModal.Visibility = Visibility.Visible;
         OpenFolderButton.IsEnabled = false;
         Save.IsEnabled = false;
-        
+
         // Reset the canvas transform
         if (ShapeCanvas.RenderTransform is MatrixTransform matTrans)
         {
             matTrans.Matrix = new Matrix();
         }
-        
+
         // Reset undo/redo
         undoRedo.Clear();
-        
+
         // Create a new project ID
         currentProjectId = Guid.NewGuid().ToString();
-        
+
         // Update the button state
         UpdateOpenedFileNameText();
     }
@@ -1847,7 +1887,7 @@ public partial class MainWindow : FluentWindow
         lineControl.RemoveControlRequested += VerticalLineControl_RemoveControlRequested;
         verticalLineControls.Add(lineControl);
         ShapeCanvas.Children.Add(lineControl);
-        
+
         // Initialize with reasonable positions based on the canvas size
         lineControl.Initialize(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight);
     }
@@ -1867,7 +1907,7 @@ public partial class MainWindow : FluentWindow
         lineControl.RemoveControlRequested += HorizontalLineControl_RemoveControlRequested;
         horizontalLineControls.Add(lineControl);
         ShapeCanvas.Children.Add(lineControl);
-        
+
         // Initialize with reasonable positions based on the canvas size
         lineControl.Initialize(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight);
     }
@@ -1887,7 +1927,7 @@ public partial class MainWindow : FluentWindow
         {
             control.Resize(e.NewSize.Height);
         }
-        
+
         foreach (HorizontalLineControl control in horizontalLineControls)
         {
             control.Resize(e.NewSize.Width);
@@ -1902,5 +1942,139 @@ public partial class MainWindow : FluentWindow
     private void VerticalLineMenuItem_Click(object sender, RoutedEventArgs e)
     {
         AddVerticalLine();
+    }
+
+    private void ToggleDrawingMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        isDrawingMode = !isDrawingMode;
+        DrawingCanvas.IsEnabled = isDrawingMode;
+
+        // Update UI to show drawing is enabled/disabled
+        if (isDrawingMode)
+        {
+            DrawingOptionsPanel.Visibility = Visibility.Visible;
+            ToggleDrawingMenuItem.Header = "Disable Drawing Mode";
+            DrawingCanvas.IsHitTestVisible = true;
+            MainGrid.Cursor = Cursors.Pen;
+        }
+        else
+        {
+            DrawingOptionsPanel.Visibility = Visibility.Collapsed;
+            ToggleDrawingMenuItem.Header = "Enable Drawing Mode";
+            DrawingCanvas.IsHitTestVisible = false;
+            MainGrid.Cursor = null;
+        }
+    }
+
+    private void DrawingCanvas_StrokeCollected(object sender, InkCanvasStrokeCollectedEventArgs e)
+    {
+        Stroke stroke = e.Stroke;
+
+        double pixelLength = CalculateStrokeLength(stroke);
+
+        // Calculate scaled length based on current scale factor and units
+        double scaleFactor = ScaleInput.Value ?? 1.0;
+        double scaledLength = pixelLength * scaleFactor;
+        string units = MeasurementUnits.Text;
+
+        StrokeInfo strokeInfo = new()
+        {
+            PixelLength = pixelLength,
+            ScaledLength = scaledLength,
+            Units = units
+        };
+
+        strokeMeasurements[stroke] = strokeInfo;
+        DrawingCanvas.Strokes.Remove(stroke);
+        DrawingCanvas.Strokes.Add(stroke);
+
+        ShowStrokeMeasurement(stroke, strokeInfo);
+    }
+
+    private void ShowStrokeMeasurement(Stroke stroke, StrokeInfo strokeInfo)
+    {
+        StrokeLengthDisplay lengthDisplay = new(strokeInfo, stroke, DrawingCanvas, ShapeCanvas);
+        lengthDisplay.SetRealWorldLengthRequested += MeasurementControl_SetRealWorldLengthRequested;
+
+        Point endPoint = stroke.StylusPoints.Last().ToPoint();
+        Canvas.SetLeft(lengthDisplay, endPoint.X + 10);
+        Canvas.SetTop(lengthDisplay, endPoint.Y - 30);
+        ShapeCanvas.Children.Add(lengthDisplay);
+    }
+
+    private static double CalculateStrokeLength(Stroke stroke)
+    {
+        double length = 0;
+        StylusPointCollection points = stroke.StylusPoints;
+
+        for (int i = 1; i < points.Count; i++)
+        {
+            Point p1 = points[i - 1].ToPoint();
+            Point p2 = points[i].ToPoint();
+
+            // Calculate distance between consecutive points
+            double segmentLength = Math.Sqrt(
+                Math.Pow(p2.X - p1.X, 2) +
+                Math.Pow(p2.Y - p1.Y, 2));
+
+            length += segmentLength;
+        }
+
+        return length;
+    }
+
+    private void StrokeColorComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (DrawingCanvas == null) return;
+
+        ComboBoxItem selectedItem = (ComboBoxItem)StrokeColorComboBox.SelectedItem;
+        string colorName = selectedItem.Content.ToString() ?? "Blue";
+
+        Color selectedColor = Colors.Blue; // Default
+
+        switch (colorName)
+        {
+            case "Red":
+                selectedColor = Colors.Red;
+                break;
+            case "Green":
+                selectedColor = Colors.Green;
+                break;
+            case "Yellow":
+                selectedColor = Colors.Gold;
+                break;
+            case "White":
+                selectedColor = Colors.White;
+                break;
+        }
+
+        DrawingAttributes drawingAttributes = DrawingCanvas.DefaultDrawingAttributes;
+        drawingAttributes.Color = selectedColor;
+        DrawingCanvas.DefaultDrawingAttributes = drawingAttributes;
+    }
+
+    private void StrokeThicknessSlider_ValueChanged(object sender, RoutedEventArgs e)
+    {
+        if (DrawingCanvas == null) return;
+
+        DrawingAttributes drawingAttributes = DrawingCanvas.DefaultDrawingAttributes;
+        drawingAttributes.Width = StrokeThicknessSlider.Value;
+        drawingAttributes.Height = StrokeThicknessSlider.Value;
+        DrawingCanvas.DefaultDrawingAttributes = drawingAttributes;
+    }
+
+    private void ClearDrawingsButton_Click(object sender, RoutedEventArgs e)
+    {
+        ClearAllStrokesAndLengths();
+    }
+
+    private void ClearAllStrokesAndLengths()
+    {
+        DrawingCanvas.Strokes.Clear();
+        strokeMeasurements.Clear();
+
+        List<StrokeLengthDisplay> strokeLengthDisplays = ShapeCanvas.Children.OfType<StrokeLengthDisplay>().ToList();
+        foreach (StrokeLengthDisplay? display in strokeLengthDisplays)
+            ShapeCanvas.Children.Remove(display);
     }
 }
