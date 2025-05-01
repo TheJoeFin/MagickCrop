@@ -12,11 +12,13 @@
     Width="1000"
     Height="800"
     AllowDrop="True"
-    Background="Gray"
+    AllowsTransparency="True"
     DataContext="{Binding RelativeSource={RelativeSource Self}}"
+    ExtendsContentIntoTitleBar="True"
     MouseMove="TopLeft_MouseMove"
     PreviewDragOver="FluentWindow_PreviewDragOver"
     PreviewDrop="FluentWindow_PreviewDrop"
+    WindowStyle="None"
     mc:Ignorable="d">
     <Window.Resources>
         <Style TargetType="Ellipse">
@@ -55,6 +57,7 @@
             Title="Magick Crop &amp; Measure by TheJoeFin"
             Grid.ColumnSpan="2"
             Height="32"
+            Background="{wpfui:ThemeResource ApplicationBackgroundBrush}"
             Foreground="{wpfui:ThemeResource TextFillColorPrimaryBrush}">
             <wpfui:TitleBar.Resources>
                 <Style BasedOn="{StaticResource {x:Type wpfui:TitleBarButton}}" TargetType="wpfui:TitleBarButton">
@@ -68,6 +71,7 @@
         </wpfui:TitleBar>
 
         <Grid
+            x:Name="MainGrid"
             Grid.Row="1"
             Grid.Column="0"
             Background="Gray"
@@ -137,6 +141,8 @@
         <c:WelcomeMessage
             x:Name="WelcomeMessageModal"
             Grid.Row="1"
+            OverlayButtonEvent="OverlayButton_Click"
+            PasteButtonEvent="PasteButton_Click"
             PrimaryButtonEvent="OpenFileButton_Click" />
 
         <Border
@@ -163,6 +169,7 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <wpfui:SymbolIcon
+                                x:Name="ImageIconOpenedName"
                                 Grid.Column="0"
                                 Margin="0,0,5,0"
                                 Symbol="Image24" />
@@ -181,7 +188,10 @@
                                 ToolTip="Click to close and show the welcome screen"
                                 Visibility="Collapsed" />
                         </Grid>
-                        <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                        <StackPanel
+                            x:Name="UndoRedoPanel"
+                            HorizontalAlignment="Center"
+                            Orientation="Horizontal">
                             <MenuItem
                                 x:Name="UndoMenuItem"
                                 Click="UndoMenuItem_Click"
@@ -209,7 +219,7 @@
                         </StackPanel>
                         <TextBlock Text="Tools" />
                         <TabControl ItemContainerStyle="{StaticResource NarrowTabHeaderStyle}">
-                            <TabItem>
+                            <TabItem x:Name="TransformTabItem">
                                 <TabItem.Header>
                                     <wpfui:SymbolIcon Symbol="Crop24" ToolTip="Crop and transform" />
                                 </TabItem.Header>
@@ -281,7 +291,7 @@
                                     </MenuItem>
                                 </StackPanel>
                             </TabItem>
-                            <TabItem>
+                            <TabItem x:Name="EditImageTabItem">
                                 <TabItem.Header>
                                     <wpfui:SymbolIcon Symbol="ImageEdit24" ToolTip="Adjust image appearance" />
                                 </TabItem.Header>
@@ -353,7 +363,7 @@
                                     </MenuItem>
                                 </StackPanel>
                             </TabItem>
-                            <TabItem>
+                            <TabItem x:Name="MeasureTabItem">
                                 <TabItem.Header>
                                     <wpfui:SymbolIcon Symbol="Ruler24" ToolTip="Measure distance and angle" />
                                 </TabItem.Header>

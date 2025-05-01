@@ -29,6 +29,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
             </Grid.RowDefinitions>
 
             <!--  Welcome Header  -->
@@ -221,9 +222,40 @@
                     Content="Open project file..."
                     ToolTip="Open a saved .mcm measurement package">
                     <wpfui:Button.Icon>
-                        <wpfui:SymbolIcon Symbol="Ruler24" />
+                        <wpfui:SymbolIcon Symbol="Box24" />
                     </wpfui:Button.Icon>
                 </wpfui:Button>
+
+            </StackPanel>
+            <StackPanel
+                Grid.Row="3"
+                HorizontalAlignment="Center"
+                Orientation="Horizontal">
+                <wpfui:HyperlinkButton
+                    x:Name="PasteButton"
+                    Margin="8,4,8,4"
+                    Appearance="Secondary"
+                    Click="PasteButton_Click"
+                    Content="Paste"
+                    ToolTip="Try to open a image from the clipboard">
+                    <wpfui:HyperlinkButton.Icon>
+                        <wpfui:SymbolIcon Symbol="ClipboardPaste24" />
+                    </wpfui:HyperlinkButton.Icon>
+                </wpfui:HyperlinkButton>
+
+
+                <wpfui:HyperlinkButton
+                    x:Name="OverlayModeButton"
+                    Margin="8,4,8,4"
+                    Appearance="Secondary"
+                    Click="OverlayModeButton_Click"
+                    Content="Overlay mode"
+                    ToolTip="Make the window transparent so measurments tools can be used on the underlying content">
+                    <wpfui:HyperlinkButton.Icon>
+                        <wpfui:SymbolIcon Symbol="Ruler24" />
+                    </wpfui:HyperlinkButton.Icon>
+                </wpfui:HyperlinkButton>
+
             </StackPanel>
         </Grid>
     </Border>

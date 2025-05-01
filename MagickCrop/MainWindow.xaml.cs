@@ -13,10 +13,12 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.Windows.Shell;
 using Windows.ApplicationModel;
 using Wpf.Ui;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
+using Wpf.Ui.Interop;
 
 namespace MagickCrop;
 
@@ -553,6 +555,118 @@ public partial class MainWindow : FluentWindow
         RemoveMeasurementControls();
         wpfuiTitleBar.Title = $"Magick Crop & Measure: {System.IO.Path.GetFileName(openFileDialog.FileName)}";
         await OpenImagePath(openFileDialog.FileName);
+    }
+
+    private async void PasteButton_Click(object sender, RoutedEventArgs e)
+    {
+        // Check if clipboard contains image data
+        if (!Clipboard.ContainsImage())
+        {
+            Wpf.Ui.Controls.MessageBox uiMessageBox = new()
+            {
+                Title = "Paste Error",
+                Content = "No image found in clipboard. Copy an image first.",
+            };
+            await uiMessageBox.ShowDialogAsync();
+            SetUiForCompletedTask();
+            WelcomeMessageModal.Visibility = Visibility.Visible;
+            return;
+        }
+
+        SetUiForLongTask();
+        try
+        {
+            WelcomeMessageModal.Visibility = Visibility.Collapsed;
+            BitmapSource clipboardImage = Clipboard.GetImage();
+
+            if (clipboardImage is null)
+            {
+                Wpf.Ui.Controls.MessageBox uiMessageBox = new()
+                {
+                    Title = "Paste Error",
+                    Content = "Could not retrieve a valid image from the clipboard.",
+                };
+                await uiMessageBox.ShowDialogAsync();
+                return;
+            }
+
+            // Create a temporary file for the image
+            string tempFileName = System.IO.Path.GetTempFileName();
+            tempFileName = System.IO.Path.ChangeExtension(tempFileName, ".jpg");
+
+            // Save the clipboard image to the temporary file
+            using FileStream stream = new(tempFileName, FileMode.Create);
+
+            JpegBitmapEncoder encoder = new();
+            encoder.Frames.Add(BitmapFrame.Create(clipboardImage));
+            encoder.Save(stream);
+
+            // Reset any current measurements
+            RemoveMeasurementControls();
+            openedFileName = "Pasted_Image_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
+
+            // Open the image in the application
+            await OpenImagePath(tempFileName);
+
+            // Update UI
+            BottomBorder.Visibility = Visibility.Visible;
+        }
+        catch (Exception ex)
+        {
+            Wpf.Ui.Controls.MessageBox uiMessageBox = new()
+            {
+                Title = "Error",
+                Content = $"Error pasting image: {ex.Message}",
+            };
+            await uiMessageBox.ShowDialogAsync();
+        }
+        finally
+        {
+            SetUiForCompletedTask();
+        }
+    }
+
+    private void OverlayButton_Click(object sender, RoutedEventArgs e)
+    {
+        WelcomeMessageModal.Visibility = Visibility.Collapsed;
+        BottomBorder.Visibility = Visibility.Visible;
+        MainGrid.Background = new SolidColorBrush(Colors.Transparent);
+        Background = new SolidColorBrush(Colors.Transparent);
+        Topmost = true;
+
+        MeasureTabItem.IsSelected = true;
+        TransformTabItem.IsEnabled = false;
+        EditImageTabItem.IsEnabled = false;
+        
+        CropButtonPanel.Visibility = Visibility.Collapsed;
+        TransformButtonPanel.Visibility = Visibility.Collapsed;
+        ResizeButtonsPanel.Visibility = Visibility.Collapsed;
+        SaveAndOpenDestFolderPanel.Visibility = Visibility.Collapsed;
+        UndoRedoPanel.Visibility = Visibility.Collapsed;
+
+        autoSaveTimer?.Stop();
+
+        ImageIconOpenedName.Symbol = SymbolRegular.Ruler24;
+        ReOpenFileText.Text = "Overlay Mode";
+    }
+
+    protected override void OnExtendsContentIntoTitleBarChanged(bool oldValue, bool newValue)
+    {
+        SetCurrentValue(WindowStyleProperty, WindowStyle); // CHANGE THIS
+
+        WindowChrome.SetWindowChrome(
+            this,
+            new WindowChrome
+            {
+                CaptionHeight = 0,
+                CornerRadius = default,
+                GlassFrameThickness = new Thickness(-1),
+                ResizeBorderThickness = ResizeMode == ResizeMode.NoResize ? default : new Thickness(4),
+                UseAeroCaptionButtons = false,
+            }
+        );
+
+        _ = UnsafeNativeMethods.RemoveWindowTitlebarContents(this);
     }
 
     private async Task OpenImagePath(string imageFilePath)
