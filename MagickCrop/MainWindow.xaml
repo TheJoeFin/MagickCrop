@@ -374,6 +374,22 @@
                                             <wpfui:SymbolIcon Symbol="DataPie24" />
                                         </MenuItem.Icon>
                                     </MenuItem>
+                                    <MenuItem
+                                        Name="HorizontalLineMenuItem"
+                                        Click="HorizontalLineMenuItem_Click"
+                                        Header="Add Horizontal Line">
+                                        <MenuItem.Icon>
+                                            <wpfui:SymbolIcon Symbol="SplitHorizontal24" />
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem
+                                        Name="VerticalLineMenuItem"
+                                        Click="VerticalLineMenuItem_Click"
+                                        Header="Add Vertical Line">
+                                        <MenuItem.Icon>
+                                            <wpfui:SymbolIcon Symbol="SplitVertical24" />
+                                        </MenuItem.Icon>
+                                    </MenuItem>
 
                                     <StackPanel
                                         x:Name="MeasurementButtonPanel"

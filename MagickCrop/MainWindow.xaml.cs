@@ -60,6 +60,9 @@ public partial class MainWindow : FluentWindow
         // new FormatItem { Name = "HEIC Image", Format = MagickFormat.Heic, Extension = ".heic", SupportsQuality = true }
     ];
 
+    private readonly ObservableCollection<Line> verticalLines = new();
+    private readonly ObservableCollection<Line> horizontalLines = new();
+
     public MainWindow()
     {
         ThemeService themeService = new();
@@ -1661,5 +1664,114 @@ public partial class MainWindow : FluentWindow
         
         // Update the button state
         UpdateOpenedFileNameText();
+    }
+
+    private void AddVerticalLine()
+    {
+        Line verticalLine = new()
+        {
+            X1 = ShapeCanvas.ActualWidth / 2,
+            Y1 = 0,
+            X2 = ShapeCanvas.ActualWidth / 2,
+            Y2 = ShapeCanvas.ActualHeight,
+            Stroke = Brushes.Purple,
+            StrokeThickness = 1,
+            Cursor = Cursors.SizeWE
+        };
+
+        verticalLine.MouseDown += Line_MouseDown;
+        verticalLine.MouseMove += Line_MouseMove;
+        verticalLine.MouseUp += Line_MouseUp;
+
+        verticalLines.Add(verticalLine);
+        ShapeCanvas.Children.Add(verticalLine);
+    }
+
+    private void AddHorizontalLine()
+    {
+        Line horizontalLine = new()
+        {
+            X1 = 0,
+            Y1 = ShapeCanvas.ActualHeight / 2,
+            X2 = ShapeCanvas.ActualWidth,
+            Y2 = ShapeCanvas.ActualHeight / 2,
+            Stroke = Brushes.Purple,
+            StrokeThickness = 1,
+            Cursor = Cursors.SizeNS
+        };
+
+        horizontalLine.MouseDown += Line_MouseDown;
+        horizontalLine.MouseMove += Line_MouseMove;
+        horizontalLine.MouseUp += Line_MouseUp;
+
+        horizontalLines.Add(horizontalLine);
+        ShapeCanvas.Children.Add(horizontalLine);
+    }
+
+    private bool isDraggingLine = false;
+    private Point initialMousePosition;
+
+    private void Line_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is Line line)
+        {
+            isDraggingLine = true;
+            initialMousePosition = e.GetPosition(ShapeCanvas);
+            line.CaptureMouse();
+        }
+    }
+
+    private void Line_MouseMove(object sender, MouseEventArgs e)
+    {
+        if (isDraggingLine && sender is Line line)
+        {
+            Point currentMousePosition = e.GetPosition(ShapeCanvas);
+            double deltaX = currentMousePosition.X - initialMousePosition.X;
+            double deltaY = currentMousePosition.Y - initialMousePosition.Y;
+
+            if (verticalLines.Contains(line))
+            {
+                line.X1 += deltaX;
+                line.X2 += deltaX;
+            }
+            else if (horizontalLines.Contains(line))
+            {
+                line.Y1 += deltaY;
+                line.Y2 += deltaY;
+            }
+
+            initialMousePosition = currentMousePosition;
+        }
+    }
+
+    private void Line_MouseUp(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is Line line)
+        {
+            isDraggingLine = false;
+            line.ReleaseMouseCapture();
+        }
+    }
+
+    private void RemoveVerticalLine(Line line)
+    {
+        verticalLines.Remove(line);
+        ShapeCanvas.Children.Remove(line);
+    }
+
+    private void RemoveHorizontalLine(Line line)
+    {
+        horizontalLines.Remove(line);
+        ShapeCanvas.Children.Remove(line);
+    }
+
+    private void HorizontalLineMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        AddHorizontalLine();
+    }
+
+    private void VerticalLineMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        AddVerticalLine();
     }
 }
