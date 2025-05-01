@@ -53,6 +53,9 @@ public partial class WelcomeMessage : UserControl
 
         if (_recentProjectsManager.RecentProjects.Count > 0)
             RecentTab.IsSelected = true;
+
+        if (!Clipboard.ContainsImage())
+            PasteButton.Visibility = Visibility.Collapsed;
     }
 
     private void UpdateRecentProjectsList(ICommand projectClickCommand, ICommand projectDeleteCommand)
