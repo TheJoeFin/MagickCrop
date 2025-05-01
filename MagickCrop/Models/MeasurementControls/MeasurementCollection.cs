@@ -24,6 +24,16 @@ public class MeasurementCollection
     public List<AngleMeasurementControlDto> AngleMeasurements { get; set; } = [];
 
     /// <summary>
+    /// Collection of vertical line control data
+    /// </summary>
+    public List<VerticalLineControlDto> VerticalLines { get; set; } = [];
+
+    /// <summary>
+    /// Collection of horizontal line control data
+    /// </summary>
+    public List<HorizontalLineControlDto> HorizontalLines { get; set; } = [];
+
+    /// <summary>
     /// Global scale factor applied to all distance measurements
     /// </summary>
     public double GlobalScaleFactor { get; set; } = 1.0;

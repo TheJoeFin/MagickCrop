@@ -45,6 +45,9 @@ public partial class MainWindow : FluentWindow
     private readonly ObservableCollection<AngleMeasurementControl> angleMeasurementTools = [];
     private AngleMeasurementControl? activeAngleMeasureControl;
 
+    private readonly ObservableCollection<VerticalLineControl> verticalLineControls = [];
+    private readonly ObservableCollection<HorizontalLineControl> horizontalLineControls = [];
+
     private Services.RecentProjectsManager? recentProjectsManager;
     private string? currentProjectId;
     private System.Timers.Timer? autoSaveTimer;
@@ -1280,6 +1283,22 @@ public partial class MainWindow : FluentWindow
 
         angleMeasurementTools.Clear();
 
+        foreach (VerticalLineControl lineControl in verticalLineControls)
+        {
+            lineControl.RemoveControlRequested -= VerticalLineControl_RemoveControlRequested;
+            ShapeCanvas.Children.Remove(lineControl);
+        }
+
+        verticalLineControls.Clear();
+
+        foreach (HorizontalLineControl lineControl in horizontalLineControls)
+        {
+            lineControl.RemoveControlRequested -= HorizontalLineControl_RemoveControlRequested;
+            ShapeCanvas.Children.Remove(lineControl);
+        }
+
+        horizontalLineControls.Clear();
+
         draggingMode = DraggingMode.None;
     }
 
@@ -1371,6 +1390,16 @@ public partial class MainWindow : FluentWindow
         foreach (AngleMeasurementControl control in angleMeasurementTools)
         {
             package.Measurements.AngleMeasurements.Add(control.ToDto());
+        }
+
+        foreach (VerticalLineControl control in verticalLineControls)
+        {
+            package.Measurements.VerticalLines.Add(control.ToDto());
+        }
+
+        foreach (HorizontalLineControl control in horizontalLineControls)
+        {
+            package.Measurements.HorizontalLines.Add(control.ToDto());
         }
 
         // Show save file dialog
@@ -1493,6 +1522,32 @@ public partial class MainWindow : FluentWindow
             ShapeCanvas.Children.Add(control);
         }
 
+        // Add vertical line controls
+        foreach (VerticalLineControlDto dto in package.Measurements.VerticalLines)
+        {
+            VerticalLineControl control = new();
+            control.FromDto(dto);
+            control.RemoveControlRequested += VerticalLineControl_RemoveControlRequested;
+            verticalLineControls.Add(control);
+            ShapeCanvas.Children.Add(control);
+
+            // Make sure the line spans the full height of the canvas
+            control.Resize(ShapeCanvas.ActualHeight);
+        }
+
+        // Add horizontal line controls
+        foreach (HorizontalLineControlDto dto in package.Measurements.HorizontalLines)
+        {
+            HorizontalLineControl control = new();
+            control.FromDto(dto);
+            control.RemoveControlRequested += HorizontalLineControl_RemoveControlRequested;
+            horizontalLineControls.Add(control);
+            ShapeCanvas.Children.Add(control);
+
+            // Make sure the line spans the full width of the canvas
+            control.Resize(ShapeCanvas.ActualWidth);
+        }
+
         if (package?.Metadata?.ProjectId is not null)
             currentProjectId = package.Metadata.ProjectId;
         else
@@ -1581,6 +1636,12 @@ public partial class MainWindow : FluentWindow
             foreach (AngleMeasurementControl control in angleMeasurementTools)
                 package.Measurements.AngleMeasurements.Add(control.ToDto());
 
+            foreach (VerticalLineControl control in verticalLineControls)
+                package.Measurements.VerticalLines.Add(control.ToDto());
+
+            foreach (HorizontalLineControl control in horizontalLineControls)
+                package.Measurements.HorizontalLines.Add(control.ToDto());
+
             recentProjectsManager.AutosaveProject(package, MainImage.Source as BitmapSource);
         }
         catch (Exception ex)
@@ -1668,101 +1729,55 @@ public partial class MainWindow : FluentWindow
 
     private void AddVerticalLine()
     {
-        Line verticalLine = new()
+        VerticalLineControl lineControl = new();
+        lineControl.RemoveControlRequested += VerticalLineControl_RemoveControlRequested;
+        verticalLineControls.Add(lineControl);
+        ShapeCanvas.Children.Add(lineControl);
+        
+        // Initialize with reasonable positions based on the canvas size
+        lineControl.Initialize(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight);
+    }
+
+    private void VerticalLineControl_RemoveControlRequested(object sender, EventArgs e)
+    {
+        if (sender is VerticalLineControl control)
         {
-            X1 = ShapeCanvas.ActualWidth / 2,
-            Y1 = 0,
-            X2 = ShapeCanvas.ActualWidth / 2,
-            Y2 = ShapeCanvas.ActualHeight,
-            Stroke = Brushes.Purple,
-            StrokeThickness = 1,
-            Cursor = Cursors.SizeWE
-        };
-
-        verticalLine.MouseDown += Line_MouseDown;
-        verticalLine.MouseMove += Line_MouseMove;
-        verticalLine.MouseUp += Line_MouseUp;
-
-        verticalLines.Add(verticalLine);
-        ShapeCanvas.Children.Add(verticalLine);
+            ShapeCanvas.Children.Remove(control);
+            verticalLineControls.Remove(control);
+        }
     }
 
     private void AddHorizontalLine()
     {
-        Line horizontalLine = new()
-        {
-            X1 = 0,
-            Y1 = ShapeCanvas.ActualHeight / 2,
-            X2 = ShapeCanvas.ActualWidth,
-            Y2 = ShapeCanvas.ActualHeight / 2,
-            Stroke = Brushes.Purple,
-            StrokeThickness = 1,
-            Cursor = Cursors.SizeNS
-        };
-
-        horizontalLine.MouseDown += Line_MouseDown;
-        horizontalLine.MouseMove += Line_MouseMove;
-        horizontalLine.MouseUp += Line_MouseUp;
-
-        horizontalLines.Add(horizontalLine);
-        ShapeCanvas.Children.Add(horizontalLine);
+        HorizontalLineControl lineControl = new();
+        lineControl.RemoveControlRequested += HorizontalLineControl_RemoveControlRequested;
+        horizontalLineControls.Add(lineControl);
+        ShapeCanvas.Children.Add(lineControl);
+        
+        // Initialize with reasonable positions based on the canvas size
+        lineControl.Initialize(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight);
     }
 
-    private bool isDraggingLine = false;
-    private Point initialMousePosition;
-
-    private void Line_MouseDown(object sender, MouseButtonEventArgs e)
+    private void HorizontalLineControl_RemoveControlRequested(object sender, EventArgs e)
     {
-        if (sender is Line line)
+        if (sender is HorizontalLineControl control)
         {
-            isDraggingLine = true;
-            initialMousePosition = e.GetPosition(ShapeCanvas);
-            line.CaptureMouse();
+            ShapeCanvas.Children.Remove(control);
+            horizontalLineControls.Remove(control);
         }
     }
 
-    private void Line_MouseMove(object sender, MouseEventArgs e)
+    private void ShapeCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        if (isDraggingLine && sender is Line line)
+        foreach (VerticalLineControl control in verticalLineControls)
         {
-            Point currentMousePosition = e.GetPosition(ShapeCanvas);
-            double deltaX = currentMousePosition.X - initialMousePosition.X;
-            double deltaY = currentMousePosition.Y - initialMousePosition.Y;
-
-            if (verticalLines.Contains(line))
-            {
-                line.X1 += deltaX;
-                line.X2 += deltaX;
-            }
-            else if (horizontalLines.Contains(line))
-            {
-                line.Y1 += deltaY;
-                line.Y2 += deltaY;
-            }
-
-            initialMousePosition = currentMousePosition;
+            control.Resize(e.NewSize.Height);
         }
-    }
-
-    private void Line_MouseUp(object sender, MouseButtonEventArgs e)
-    {
-        if (sender is Line line)
+        
+        foreach (HorizontalLineControl control in horizontalLineControls)
         {
-            isDraggingLine = false;
-            line.ReleaseMouseCapture();
+            control.Resize(e.NewSize.Width);
         }
-    }
-
-    private void RemoveVerticalLine(Line line)
-    {
-        verticalLines.Remove(line);
-        ShapeCanvas.Children.Remove(line);
-    }
-
-    private void RemoveHorizontalLine(Line line)
-    {
-        horizontalLines.Remove(line);
-        ShapeCanvas.Children.Remove(line);
     }
 
     private void HorizontalLineMenuItem_Click(object sender, RoutedEventArgs e)
