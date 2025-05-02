@@ -51,6 +51,7 @@ public partial class StrokeLengthDisplay : UserControl
     {
         _parentCanvas.Children.Remove(this);
         _inkCanvas.Strokes.Remove(_stroke);
+        RemoveControlRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private void MeasurementButton_Click(object sender, RoutedEventArgs e)

@@ -1739,6 +1739,7 @@ public partial class MainWindow : FluentWindow
             DrawingCanvas.Strokes.Add(stroke);
 
             StrokeLengthDisplay lengthDisplay = new(infoDto.ToStrokeInfo(), stroke, DrawingCanvas, ShapeCanvas);
+            lengthDisplay.RemoveControlRequested += LengthDisplay_RemoveControlRequested;
             Canvas.SetTop(lengthDisplay, infoDto.DisplayPositionY);
             Canvas.SetLeft(lengthDisplay, infoDto.DisplayPositionX);
             ShapeCanvas.Children.Add(lengthDisplay);
@@ -2062,11 +2063,21 @@ public partial class MainWindow : FluentWindow
     {
         StrokeLengthDisplay lengthDisplay = new(strokeInfo, stroke, DrawingCanvas, ShapeCanvas);
         lengthDisplay.SetRealWorldLengthRequested += MeasurementControl_SetRealWorldLengthRequested;
+        lengthDisplay.RemoveControlRequested += LengthDisplay_RemoveControlRequested;
 
         Point endPoint = stroke.StylusPoints.Last().ToPoint();
         Canvas.SetLeft(lengthDisplay, endPoint.X + 10);
         Canvas.SetTop(lengthDisplay, endPoint.Y - 30);
         ShapeCanvas.Children.Add(lengthDisplay);
+    }
+
+    private void LengthDisplay_RemoveControlRequested(object sender, EventArgs e)
+    {
+        if (sender is StrokeLengthDisplay control)
+        {
+            ShapeCanvas.Children.Remove(control);
+            strokeMeasurements.Remove(control.GetStroke());
+        }
     }
 
     private static double CalculateStrokeLength(Stroke stroke)
