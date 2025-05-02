@@ -1417,6 +1417,7 @@ public partial class MainWindow : FluentWindow
 
         horizontalLineControls.Clear();
 
+        ClearAllStrokesAndLengths();
         draggingMode = DraggingMode.None;
     }
 
@@ -1507,7 +1508,7 @@ public partial class MainWindow : FluentWindow
         MainGrid.Cursor = null;
     }
 
-    private async void SaveMeasurementsPackageToFile()
+    private void SaveMeasurementsPackageToFile()
     {
         if (string.IsNullOrWhiteSpace(imagePath))
         {
@@ -1516,7 +1517,7 @@ public partial class MainWindow : FluentWindow
                 Title = "Error",
                 Content = "No image loaded. Please open an image first.",
             };
-            await uiMessageBox.ShowDialogAsync();
+            uiMessageBox.ShowDialogAsync();
             return;
         }
 
@@ -1556,6 +1557,29 @@ public partial class MainWindow : FluentWindow
             package.Measurements.HorizontalLines.Add(control.ToDto());
         }
 
+        // Save ink strokes and their stroke length displays
+        foreach (KeyValuePair<Stroke, StrokeInfo> entry in strokeMeasurements)
+        {
+            Stroke stroke = entry.Key;
+            StrokeInfo info = entry.Value;
+
+            // Find the corresponding display control
+            StrokeLengthDisplay? display = ShapeCanvas.Children.OfType<StrokeLengthDisplay>()
+                .FirstOrDefault(d => d.GetStroke() == stroke);
+
+            double displayX = 0;
+            double displayY = 0;
+
+            if (display is not null)
+            {
+                displayX = Canvas.GetLeft(display);
+                displayY = Canvas.GetTop(display);
+            }
+
+            package.Measurements.InkStrokes.Add(StrokeDto.ConvertStrokeToDto(stroke));
+            package.Measurements.StrokeInfos.Add(StrokeInfoDto.FromStrokeInfo(info, displayX, displayY));
+        }
+
         // Show save file dialog
         SaveFileDialog saveFileDialog = new()
         {
@@ -1581,7 +1605,7 @@ public partial class MainWindow : FluentWindow
                     Title = "Error",
                     Content = "Failed to save the measurement package.",
                 };
-                await uiMessageBox.ShowDialogAsync();
+                uiMessageBox.ShowDialogAsync();
             }
         }
         finally
@@ -1702,6 +1726,26 @@ public partial class MainWindow : FluentWindow
             control.Resize(ShapeCanvas.ActualWidth);
         }
 
+        ClearAllStrokesAndLengths();
+
+        for (int i = 0; i < package.Measurements.InkStrokes.Count; i++)
+        {
+            if (i >= package.Measurements.StrokeInfos.Count) break;
+
+            StrokeDto strokeDto = package.Measurements.InkStrokes[i];
+            StrokeInfoDto infoDto = package.Measurements.StrokeInfos[i];
+
+            Stroke stroke = StrokeDto.ConvertDtoToStroke(strokeDto);
+            DrawingCanvas.Strokes.Add(stroke);
+
+            StrokeLengthDisplay lengthDisplay = new(infoDto.ToStrokeInfo(), stroke, DrawingCanvas, ShapeCanvas);
+            Canvas.SetTop(lengthDisplay, infoDto.DisplayPositionY);
+            Canvas.SetLeft(lengthDisplay, infoDto.DisplayPositionX);
+            ShapeCanvas.Children.Add(lengthDisplay);
+
+            strokeMeasurements.Add(stroke, infoDto.ToStrokeInfo());
+        }
+
         if (package?.Metadata?.ProjectId is not null)
             currentProjectId = package.Metadata.ProjectId;
         else
@@ -1795,6 +1839,29 @@ public partial class MainWindow : FluentWindow
 
             foreach (HorizontalLineControl control in horizontalLineControls)
                 package.Measurements.HorizontalLines.Add(control.ToDto());
+
+            // Save ink strokes and their stroke length displays
+            foreach (KeyValuePair<Stroke, StrokeInfo> entry in strokeMeasurements)
+            {
+                Stroke stroke = entry.Key;
+                StrokeInfo info = entry.Value;
+
+                // Find the corresponding display control
+                StrokeLengthDisplay? display = ShapeCanvas.Children.OfType<StrokeLengthDisplay>()
+                    .FirstOrDefault(d => d.GetStroke() == stroke);
+
+                double displayX = 0;
+                double displayY = 0;
+
+                if (display is not null)
+                {
+                    displayX = Canvas.GetLeft(display);
+                    displayY = Canvas.GetTop(display);
+                }
+
+                package.Measurements.InkStrokes.Add(StrokeDto.ConvertStrokeToDto(stroke));
+                package.Measurements.StrokeInfos.Add(StrokeInfoDto.FromStrokeInfo(info, displayX, displayY));
+            }
 
             recentProjectsManager.AutosaveProject(package, MainImage.Source as BitmapSource);
         }

@@ -15,6 +15,9 @@ public partial class StrokeLengthDisplay : UserControl
     public delegate void SetRealWorldLengthRequestedEventHandler(object sender, double pixelDistance);
     public event SetRealWorldLengthRequestedEventHandler? SetRealWorldLengthRequested;
 
+    public delegate void RemoveControlRequestedEventHandler(object sender, EventArgs e);
+    public event RemoveControlRequestedEventHandler? RemoveControlRequested;
+
     public StrokeLengthDisplay(StrokeInfo info, Stroke stroke, InkCanvas inkCanvas, Canvas parentCanvas)
     {
         InitializeComponent();
@@ -24,8 +27,14 @@ public partial class StrokeLengthDisplay : UserControl
         _inkCanvas = inkCanvas;
         _parentCanvas = parentCanvas;
 
-        DistanceTextBlock.Text = $"Stroke length {info.ScaledLength:F2} {info.Units}";
+        DistanceTextBlock.Text = $"{info.ScaledLength:F2} {info.Units}";
     }
+
+    /// <summary>
+    /// Get the stroke associated with this display
+    /// </summary>
+    /// <returns>The associated stroke</returns>
+    public Stroke GetStroke() => _stroke;
 
     private void CopyMeasurementMenuItem_Click(object sender, RoutedEventArgs e)
     {
