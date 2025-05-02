@@ -107,7 +107,7 @@
                         Grid.Column="1"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Bottom"
-                        Background="Blue"
+                        Background="#0066FF"
                         Cursor="SizeAll"
                         IsManipulationEnabled="True"
                         MouseDown="ImageResizeGrip_MouseDown"
@@ -440,21 +440,6 @@
                                             TextChanged="MeasurementUnits_TextChanged" />
 
                                         <StackPanel x:Name="DrawingOptionsPanel" Visibility="Collapsed">
-                                            <Label Content="Drawing Color:" />
-                                            <ComboBox
-                                                x:Name="StrokeColorComboBox"
-                                                Width="150"
-                                                SelectionChanged="StrokeColorComboBox_SelectionChanged">
-                                                <ComboBoxItem
-                                                    Content="Blue"
-                                                    Foreground="Blue"
-                                                    IsSelected="True" />
-                                                <ComboBoxItem Content="Red" Foreground="Red" />
-                                                <ComboBoxItem Content="Green" Foreground="Green" />
-                                                <ComboBoxItem Content="Yellow" Foreground="Gold" />
-                                                <ComboBoxItem Content="White" Foreground="White" />
-                                            </ComboBox>
-
                                             <Label Margin="0,8,0,0" Content="Stroke Thickness:" />
                                             <Slider
                                                 x:Name="StrokeThicknessSlider"
@@ -464,11 +449,11 @@
                                                 ValueChanged="StrokeThicknessSlider_ValueChanged"
                                                 Value="2" />
 
-                                            <Button
+                                            <!--<Button
                                                 x:Name="ClearDrawingsButton"
                                                 Margin="0,16,0,0"
                                                 Click="ClearDrawingsButton_Click"
-                                                Content="Clear All Drawings" />
+                                                Content="Clear All Drawings" />-->
                                         </StackPanel>
 
                                         <wpfui:HyperlinkButton

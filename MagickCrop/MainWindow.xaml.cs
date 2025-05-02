@@ -1752,6 +1752,7 @@ public partial class MainWindow : FluentWindow
         else
             currentProjectId = Guid.NewGuid().ToString();
 
+        MeasureTabItem.IsSelected = true;
         UpdateOpenedFileNameText();
     }
 
@@ -2099,36 +2100,6 @@ public partial class MainWindow : FluentWindow
         }
 
         return length;
-    }
-
-    private void StrokeColorComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (DrawingCanvas == null) return;
-
-        ComboBoxItem selectedItem = (ComboBoxItem)StrokeColorComboBox.SelectedItem;
-        string colorName = selectedItem.Content.ToString() ?? "Blue";
-
-        Color selectedColor = Colors.Blue; // Default
-
-        switch (colorName)
-        {
-            case "Red":
-                selectedColor = Colors.Red;
-                break;
-            case "Green":
-                selectedColor = Colors.Green;
-                break;
-            case "Yellow":
-                selectedColor = Colors.Gold;
-                break;
-            case "White":
-                selectedColor = Colors.White;
-                break;
-        }
-
-        DrawingAttributes drawingAttributes = DrawingCanvas.DefaultDrawingAttributes;
-        drawingAttributes.Color = selectedColor;
-        DrawingCanvas.DefaultDrawingAttributes = drawingAttributes;
     }
 
     private void StrokeThicknessSlider_ValueChanged(object sender, RoutedEventArgs e)
