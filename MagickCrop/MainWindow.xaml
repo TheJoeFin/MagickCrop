@@ -374,95 +374,69 @@
                                     <wpfui:SymbolIcon Symbol="Ruler24" ToolTip="Measure distance and angle" />
                                 </TabItem.Header>
                                 <StackPanel Orientation="Vertical">
-                                    <GroupBox Padding="12,0,0,0" Header="Measurement Tools">
-                                        <StackPanel>
-                                            <RadioButton
-                                                x:Name="PanRadio"
+                                    <GroupBox Padding="0,12" Header="Measurement Tools">
+                                        <StackPanel x:Name="MeasureToolsPanel" HorizontalAlignment="Center">
+                                            <ToggleButton
+                                                x:Name="MeasureDistanceToggle"
+                                                Width="150"
                                                 Margin="0,4"
-                                                Content="Pan"
-                                                GroupName="MeasurementTools"
-                                                IsChecked="True">
-                                                <RadioButton.ContentTemplate>
-                                                    <DataTemplate>
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="ArrowMove24" />
-                                                            <TextBlock VerticalAlignment="Center" Text="Pan" />
-                                                        </StackPanel>
-                                                    </DataTemplate>
-                                                </RadioButton.ContentTemplate>
-                                            </RadioButton>
-                                            <RadioButton
-                                                x:Name="MeasureDistanceRadio"
+                                                Checked="ToolSelector_Checked">
+                                                <ToggleButton.Content>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="Ruler24" />
+                                                        <TextBlock VerticalAlignment="Center" Text="Add Distance" />
+                                                    </StackPanel>
+                                                </ToggleButton.Content>
+                                            </ToggleButton>
+                                            <ToggleButton
+                                                x:Name="MeasureAngleToggle"
+                                                Width="150"
                                                 Margin="0,4"
-                                                Content="Distance"
-                                                GroupName="MeasurementTools">
-                                                <RadioButton.ContentTemplate>
-                                                    <DataTemplate>
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="Ruler24" />
-                                                            <TextBlock VerticalAlignment="Center" Text="Distance" />
-                                                        </StackPanel>
-                                                    </DataTemplate>
-                                                </RadioButton.ContentTemplate>
-                                            </RadioButton>
-                                            <RadioButton
-                                                x:Name="MeasureAngleRadio"
-                                                Margin="0,4"
-                                                Content="Angle"
-                                                GroupName="MeasurementTools">
-                                                <RadioButton.ContentTemplate>
-                                                    <DataTemplate>
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="DataPie24" />
-                                                            <TextBlock VerticalAlignment="Center" Text="Angle" />
-                                                        </StackPanel>
-                                                    </DataTemplate>
-                                                </RadioButton.ContentTemplate>
-                                            </RadioButton>
-                                            <RadioButton
+                                                Checked="ToolSelector_Checked">
+                                                <ToggleButton.Content>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="DataPie24" />
+                                                        <TextBlock VerticalAlignment="Center" Text="Add Angle" />
+                                                    </StackPanel>
+                                                </ToggleButton.Content>
+                                            </ToggleButton>
+                                            <ToggleButton
                                                 x:Name="HorizontalLineRadio"
+                                                Width="150"
                                                 Margin="0,4"
-                                                Content="Horizontal Line"
-                                                GroupName="MeasurementTools">
-                                                <RadioButton.ContentTemplate>
-                                                    <DataTemplate>
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="SplitHorizontal24" />
-                                                            <TextBlock VerticalAlignment="Center" Text="Horizontal Line" />
-                                                        </StackPanel>
-                                                    </DataTemplate>
-                                                </RadioButton.ContentTemplate>
-                                            </RadioButton>
-                                            <RadioButton
-                                                x:Name="VerticalLineRadio"
+                                                Checked="ToolSelector_Checked">
+                                                <ToggleButton.Content>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="SplitHorizontal24" />
+                                                        <TextBlock VerticalAlignment="Center" Text="Horizontal Line" />
+                                                    </StackPanel>
+                                                </ToggleButton.Content>
+                                            </ToggleButton>
+                                            <ToggleButton
+                                                x:Name="VerticalLineToggle"
+                                                Width="150"
                                                 Margin="0,4"
-                                                Content="Vertical Line"
-                                                GroupName="MeasurementTools">
-                                                <RadioButton.ContentTemplate>
-                                                    <DataTemplate>
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="SplitVertical24" />
-                                                            <TextBlock VerticalAlignment="Center" Text="Vertical Line" />
-                                                        </StackPanel>
-                                                    </DataTemplate>
-                                                </RadioButton.ContentTemplate>
-                                            </RadioButton>
-                                            <RadioButton
-                                                x:Name="DrawingLinesRadio"
+                                                Checked="ToolSelector_Checked">
+                                                <ToggleButton.Content>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="SplitVertical24" />
+                                                        <TextBlock VerticalAlignment="Center" Text="Vertical Line" />
+                                                    </StackPanel>
+                                                </ToggleButton.Content>
+                                            </ToggleButton>
+                                            <ToggleButton
+                                                x:Name="DrawingLinesToggle"
+                                                Width="150"
                                                 Margin="0,4"
                                                 Checked="DrawingLinesRadio_Checked"
-                                                Content="Draw Line"
-                                                GroupName="MeasurementTools"
                                                 Unchecked="DrawingLinesRadio_Unchecked">
-                                                <RadioButton.ContentTemplate>
-                                                    <DataTemplate>
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="Pen24" />
-                                                            <TextBlock VerticalAlignment="Center" Text="Draw a Line" />
-                                                        </StackPanel>
-                                                    </DataTemplate>
-                                                </RadioButton.ContentTemplate>
-                                            </RadioButton>
+                                                <ToggleButton.Content>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="Pen24" />
+                                                        <TextBlock VerticalAlignment="Center" Text="Draw a Line" />
+                                                    </StackPanel>
+                                                </ToggleButton.Content>
+                                            </ToggleButton>
                                         </StackPanel>
                                     </GroupBox>
 

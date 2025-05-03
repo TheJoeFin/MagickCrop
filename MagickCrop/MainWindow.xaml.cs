@@ -10,6 +10,7 @@ using System.Net;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Ink;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -757,7 +758,7 @@ public partial class MainWindow : FluentWindow
 
         if (Mouse.MiddleButton == MouseButtonState.Pressed
             || (Mouse.LeftButton == MouseButtonState.Pressed && !isCreatingMeasurement)
-            || PanRadio.IsChecked is true)
+            || !IsAnyToolSelected())
         {
             clickedPoint = e.GetPosition(ShapeCanvas);
             draggingMode = DraggingMode.Panning;
@@ -770,9 +771,8 @@ public partial class MainWindow : FluentWindow
         measurementStartPoint = clickedPoint;
         isCreatingMeasurement = true;
 
-        if (MeasureDistanceRadio.IsChecked is true)
+        if (MeasureDistanceToggle.IsChecked is true)
         {
-
             double scale = ScaleInput.Value ?? 1.0;
             DistanceMeasurementControl measurementControl = new()
             {
@@ -789,8 +789,8 @@ public partial class MainWindow : FluentWindow
             measurementControl.MovePoint(0, clickedPoint);
             measurementControl.StartDraggingPoint(1);
         }
-        else if (MeasureAngleRadio.IsChecked is true
-        || DrawingLinesRadio.IsChecked is true)
+        else if (MeasureAngleToggle.IsChecked is true
+        || DrawingLinesToggle.IsChecked is true)
         {
             measurementStartPoint = clickedPoint;
             isCreatingMeasurement = true;
@@ -803,7 +803,7 @@ public partial class MainWindow : FluentWindow
         {
             AddHorizontalLineAtPosition(clickedPoint.Y);
         }
-        else if (VerticalLineRadio.IsChecked is true)
+        else if (VerticalLineToggle.IsChecked is true)
         {
             AddVerticalLineAtPosition(clickedPoint.X);
         }
@@ -2189,16 +2189,11 @@ public partial class MainWindow : FluentWindow
 
     private void CreateMeasurementFromDrag(Point startPoint, Point endPoint)
     {
-        if (PanRadio.IsChecked == true)
-        {
-            // Pan mode, do nothing
-            return;
-        }
-        else if (MeasureDistanceRadio.IsChecked == true)
+        if (MeasureDistanceToggle.IsChecked == true)
         {
             CreateDistanceMeasurement(startPoint, endPoint);
         }
-        else if (MeasureAngleRadio.IsChecked == true)
+        else if (MeasureAngleToggle.IsChecked == true)
         {
             // For angle measurement, we need three points
             // We'll create a right angle with the drag defining two points
@@ -2272,6 +2267,10 @@ public partial class MainWindow : FluentWindow
 
         DrawingOptionsPanel.Visibility = Visibility.Visible;
         DrawingCanvas.IsHitTestVisible = true;
+
+        if (sender is ToggleButton toggleButton)
+            UncheckAllBut(toggleButton);
+
         MainGrid.Cursor = Cursors.Pen;
     }
 
@@ -2283,5 +2282,35 @@ public partial class MainWindow : FluentWindow
         DrawingOptionsPanel.Visibility = Visibility.Collapsed;
         DrawingCanvas.IsHitTestVisible = false;
         MainGrid.Cursor = null;
+    }
+
+    private void ToolSelector_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not ToggleButton toggleButton)
+            return;
+
+        UncheckAllBut(toggleButton);
+    }
+
+    private bool IsAnyToolSelected()
+    {
+        List<ToggleButton> toolToggleButtons = [.. MeasureToolsPanel.Children.OfType<ToggleButton>()];
+
+        foreach (ToggleButton button in toolToggleButtons)
+            if (button.IsChecked == true)
+                return true;
+
+        return false;
+    }
+
+    private void UncheckAllBut(ToggleButton toggleButton)
+    {
+        List<ToggleButton> toolToggleButtons = [.. MeasureToolsPanel.Children.OfType<ToggleButton>()];
+
+        MainGrid.Cursor = Cursors.Cross;
+
+        foreach (ToggleButton button in toolToggleButtons)
+            if (button != toggleButton)
+                button.IsChecked = false;
     }
 }
