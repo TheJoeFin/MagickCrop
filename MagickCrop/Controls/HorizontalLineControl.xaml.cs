@@ -20,16 +20,15 @@ public partial class HorizontalLineControl : UserControl
         InitializeComponent();
     }
 
-    public void Initialize(double canvasWidth, double canvasHeight)
+    public void Initialize(double canvasWidth, double canvasHeight, double yPosition = 40)
     {
-        // Default position - center of canvas
-        double yPosition = canvasHeight / 2;
-
         // Set line points
         HorizontalLine.X1 = 0;
         HorizontalLine.Y1 = yPosition;
         HorizontalLine.X2 = canvasWidth;
         HorizontalLine.Y2 = yPosition;
+
+        Canvas.SetTop(this, yPosition);
     }
 
     public void Resize(double canvasWidth)
@@ -45,6 +44,10 @@ public partial class HorizontalLineControl : UserControl
             initialMousePosition = e.GetPosition(LineCanvas);
             HorizontalLine.CaptureMouse();
             e.Handled = true;
+        }
+        else if (e.RightButton == MouseButtonState.Pressed && this.ContextMenu is ContextMenu contextMenu)
+        {
+            contextMenu.IsOpen = true;
         }
     }
 
@@ -87,6 +90,10 @@ public partial class HorizontalLineControl : UserControl
         // }
         // 
         // colorDialog.Content = colorPicker;
+        if (Application.Current.MainWindow is not MainWindow mainWindow)
+            return;
+
+        colorDialog.DialogHost = mainWindow.Presenter;
 
         // Show dialog
         ContentDialogResult result = await colorDialog.ShowAsync();
@@ -117,6 +124,9 @@ public partial class HorizontalLineControl : UserControl
 
         thicknessDialog.Content = thicknessSlider;
 
+        if (Application.Current.MainWindow is not MainWindow mainWindow)
+            return;
+        thicknessDialog.DialogHost = mainWindow.Presenter;
         // Show dialog
         ContentDialogResult result = await thicknessDialog.ShowAsync();
         if (result == ContentDialogResult.Primary && thicknessSlider.Value.HasValue)

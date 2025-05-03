@@ -20,16 +20,15 @@ public partial class VerticalLineControl : UserControl
         InitializeComponent();
     }
 
-    public void Initialize(double canvasWidth, double canvasHeight)
+    public void Initialize(double canvasWidth, double canvasHeight, double xPosition = 40)
     {
-        // Default position - center of canvas
-        double xPosition = canvasWidth / 2;
-
         // Set line points
         VerticalLine.X1 = xPosition;
         VerticalLine.Y1 = 0;
         VerticalLine.X2 = xPosition;
         VerticalLine.Y2 = canvasHeight;
+
+        Canvas.SetLeft(this, xPosition);
     }
 
     public void Resize(double canvasHeight)
@@ -45,6 +44,10 @@ public partial class VerticalLineControl : UserControl
             initialMousePosition = e.GetPosition(LineCanvas);
             VerticalLine.CaptureMouse();
             e.Handled = true;
+        }
+        else if (e.RightButton == MouseButtonState.Pressed && this.ContextMenu is ContextMenu contextMenu)
+        {
+            contextMenu.IsOpen = true;
         }
     }
 
@@ -89,7 +92,11 @@ public partial class VerticalLineControl : UserControl
         // colorDialog.Content = colorPicker;
 
         // Show dialog
-        var result = await colorDialog.ShowAsync();
+        if (Application.Current.MainWindow is not MainWindow mainWindow)
+            return;
+
+        colorDialog.DialogHost = mainWindow.Presenter;
+        ContentDialogResult result = await colorDialog.ShowAsync();
         if (result == ContentDialogResult.Primary)
         {
             // VerticalLine.Stroke = new SolidColorBrush(colorPicker.Color);
@@ -116,6 +123,10 @@ public partial class VerticalLineControl : UserControl
         };
 
         thicknessDialog.Content = thicknessSlider;
+
+        if (Application.Current.MainWindow is not MainWindow mainWindow)
+            return;
+        thicknessDialog.DialogHost = mainWindow.Presenter;
 
         // Show dialog
         ContentDialogResult result = await thicknessDialog.ShowAsync();

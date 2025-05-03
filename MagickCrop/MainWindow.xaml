@@ -81,7 +81,7 @@
                 <Canvas.RenderTransform>
                     <MatrixTransform />
                 </Canvas.RenderTransform>
-                <Grid x:Name="ImageGrid" Width="700">
+                <Grid x:Name="ImageGrid">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="auto" />
@@ -374,47 +374,103 @@
                                     <wpfui:SymbolIcon Symbol="Ruler24" ToolTip="Measure distance and angle" />
                                 </TabItem.Header>
                                 <StackPanel Orientation="Vertical">
-                                    <MenuItem
-                                        Name="MeasureDistanceMenuItem"
-                                        Click="MeasureDistanceMenuItem_Click"
-                                        Header="Add Distance Measure">
-                                        <MenuItem.Icon>
-                                            <wpfui:SymbolIcon Symbol="Ruler24" />
-                                        </MenuItem.Icon>
-                                    </MenuItem>
-                                    <MenuItem
-                                        Name="MeasureAngleMenuItem"
-                                        Click="MeasureAngleMenuItem_Click"
-                                        Header="Add Angle Measure">
-                                        <MenuItem.Icon>
-                                            <wpfui:SymbolIcon Symbol="DataPie24" />
-                                        </MenuItem.Icon>
-                                    </MenuItem>
-                                    <MenuItem
-                                        Name="HorizontalLineMenuItem"
-                                        Click="HorizontalLineMenuItem_Click"
-                                        Header="Add Horizontal Line">
-                                        <MenuItem.Icon>
-                                            <wpfui:SymbolIcon Symbol="SplitHorizontal24" />
-                                        </MenuItem.Icon>
-                                    </MenuItem>
-                                    <MenuItem
-                                        Name="VerticalLineMenuItem"
-                                        Click="VerticalLineMenuItem_Click"
-                                        Header="Add Vertical Line">
-                                        <MenuItem.Icon>
-                                            <wpfui:SymbolIcon Symbol="SplitVertical24" />
-                                        </MenuItem.Icon>
-                                    </MenuItem>
+                                    <GroupBox Padding="12,0,0,0" Header="Measurement Tools">
+                                        <StackPanel>
+                                            <RadioButton
+                                                x:Name="PanRadio"
+                                                Margin="0,4"
+                                                Content="Pan"
+                                                GroupName="MeasurementTools"
+                                                IsChecked="True">
+                                                <RadioButton.ContentTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="ArrowMove24" />
+                                                            <TextBlock VerticalAlignment="Center" Text="Pan" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </RadioButton.ContentTemplate>
+                                            </RadioButton>
+                                            <RadioButton
+                                                x:Name="MeasureDistanceRadio"
+                                                Margin="0,4"
+                                                Content="Distance"
+                                                GroupName="MeasurementTools">
+                                                <RadioButton.ContentTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="Ruler24" />
+                                                            <TextBlock VerticalAlignment="Center" Text="Distance" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </RadioButton.ContentTemplate>
+                                            </RadioButton>
+                                            <RadioButton
+                                                x:Name="MeasureAngleRadio"
+                                                Margin="0,4"
+                                                Content="Angle"
+                                                GroupName="MeasurementTools">
+                                                <RadioButton.ContentTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="DataPie24" />
+                                                            <TextBlock VerticalAlignment="Center" Text="Angle" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </RadioButton.ContentTemplate>
+                                            </RadioButton>
+                                            <RadioButton
+                                                x:Name="HorizontalLineRadio"
+                                                Margin="0,4"
+                                                Content="Horizontal Line"
+                                                GroupName="MeasurementTools">
+                                                <RadioButton.ContentTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="SplitHorizontal24" />
+                                                            <TextBlock VerticalAlignment="Center" Text="Horizontal Line" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </RadioButton.ContentTemplate>
+                                            </RadioButton>
+                                            <RadioButton
+                                                x:Name="VerticalLineRadio"
+                                                Margin="0,4"
+                                                Content="Vertical Line"
+                                                GroupName="MeasurementTools">
+                                                <RadioButton.ContentTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="SplitVertical24" />
+                                                            <TextBlock VerticalAlignment="Center" Text="Vertical Line" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </RadioButton.ContentTemplate>
+                                            </RadioButton>
+                                            <RadioButton
+                                                x:Name="DrawingLinesRadio"
+                                                Margin="0,4"
+                                                Checked="DrawingLinesRadio_Checked"
+                                                Content="Draw Line"
+                                                GroupName="MeasurementTools"
+                                                Unchecked="DrawingLinesRadio_Unchecked">
+                                                <RadioButton.ContentTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="Pen24" />
+                                                            <TextBlock VerticalAlignment="Center" Text="Draw a Line" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </RadioButton.ContentTemplate>
+                                            </RadioButton>
+                                        </StackPanel>
+                                    </GroupBox>
 
-                                    <MenuItem
-                                        Name="ToggleDrawingMenuItem"
-                                        Click="ToggleDrawingMenuItem_Click"
-                                        Header="Toggle Drawing Mode">
-                                        <MenuItem.Icon>
-                                            <wpfui:SymbolIcon Symbol="DrawText24" />
-                                        </MenuItem.Icon>
-                                    </MenuItem>
+                                    <TextBlock
+                                        Margin="0,8"
+                                        FontStyle="Italic"
+                                        Text="Click and drag on the image to create measurements"
+                                        TextWrapping="Wrap" />
 
                                     <StackPanel
                                         x:Name="MeasurementButtonPanel"
@@ -448,12 +504,6 @@
                                                 Minimum="1"
                                                 ValueChanged="StrokeThicknessSlider_ValueChanged"
                                                 Value="2" />
-
-                                            <!--<Button
-                                                x:Name="ClearDrawingsButton"
-                                                Margin="0,16,0,0"
-                                                Click="ClearDrawingsButton_Click"
-                                                Content="Clear All Drawings" />-->
                                         </StackPanel>
 
                                         <wpfui:HyperlinkButton

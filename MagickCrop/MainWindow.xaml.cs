@@ -72,6 +72,9 @@ public partial class MainWindow : FluentWindow
     private bool isDrawingMode = false;
     private Dictionary<Stroke, StrokeInfo> strokeMeasurements = [];
 
+    private Point measurementStartPoint;
+    private bool isCreatingMeasurement = false;
+
     public MainWindow()
     {
         ThemeService themeService = new();
@@ -104,6 +107,8 @@ public partial class MainWindow : FluentWindow
 
         InitializeProjectManager();
         UpdateOpenedFileNameText();
+
+        ShapeCanvas.MouseUp += ShapeCanvas_MouseUp;
     }
 
     private void DrawPolyLine()
@@ -213,6 +218,11 @@ public partial class MainWindow : FluentWindow
         Canvas.SetLeft(clickedElement, movingPoint.X - (clickedElement.Width / 2));
 
         MovePolyline(movingPoint);
+
+        if (draggingMode == DraggingMode.CreatingMeasurement && isCreatingMeasurement)
+        {
+            e.Handled = true;
+        }
     }
 
     private void ResizeImage(MouseEventArgs e)
@@ -742,10 +752,59 @@ public partial class MainWindow : FluentWindow
 
     private void ShapeCanvas_MouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (Mouse.MiddleButton == MouseButtonState.Pressed || Mouse.LeftButton == MouseButtonState.Pressed)
+        clickedPoint = e.GetPosition(ShapeCanvas);
+
+        if (Mouse.MiddleButton == MouseButtonState.Pressed
+            || (Mouse.LeftButton == MouseButtonState.Pressed && !isCreatingMeasurement)
+            || PanRadio.IsChecked is true)
         {
             clickedPoint = e.GetPosition(ShapeCanvas);
             draggingMode = DraggingMode.Panning;
+        }
+
+        // Check if we're in the measure tab and starting a measurement
+        if (Mouse.LeftButton != MouseButtonState.Pressed)
+            return;
+
+        if (MeasureDistanceRadio.IsChecked is true
+        || MeasureAngleRadio.IsChecked is true
+        || DrawingLinesRadio.IsChecked is true)
+        {
+            measurementStartPoint = clickedPoint;
+            isCreatingMeasurement = true;
+            draggingMode = DraggingMode.CreatingMeasurement;
+
+            ShapeCanvas.CaptureMouse();
+            e.Handled = true;
+        }
+        else if (HorizontalLineRadio.IsChecked is true)
+        {
+            AddHorizontalLineAtPosition(clickedPoint.Y * scaleFactor);
+        }
+        else if (VerticalLineRadio.IsChecked is true)
+        {
+            AddVerticalLineAtPosition(clickedPoint.Y);
+        }
+    }
+
+    private void ShapeCanvas_MouseUp(object sender, MouseButtonEventArgs e)
+    {
+        if (isCreatingMeasurement && draggingMode == DraggingMode.CreatingMeasurement)
+        {
+            Point endPoint = e.GetPosition(ShapeCanvas);
+
+            // Only create a measurement if there was some actual dragging (to avoid accidental clicks)
+            if (Math.Abs(endPoint.X - measurementStartPoint.X) > 5 ||
+                Math.Abs(endPoint.Y - measurementStartPoint.Y) > 5)
+            {
+                CreateMeasurementFromDrag(measurementStartPoint, endPoint);
+            }
+
+            // Reset state
+            isCreatingMeasurement = false;
+            draggingMode = DraggingMode.None;
+            ShapeCanvas.ReleaseMouseCapture();
+            e.Handled = true;
         }
     }
 
@@ -1504,7 +1563,6 @@ public partial class MainWindow : FluentWindow
         isDrawingMode = false;
         DrawingCanvas.IsEnabled = false;
         DrawingOptionsPanel.Visibility = Visibility.Collapsed;
-        ToggleDrawingMenuItem.Header = "Enable Drawing Mode";
         MainGrid.Cursor = null;
     }
 
@@ -2013,28 +2071,6 @@ public partial class MainWindow : FluentWindow
         AddVerticalLine();
     }
 
-    private void ToggleDrawingMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        isDrawingMode = !isDrawingMode;
-        DrawingCanvas.IsEnabled = isDrawingMode;
-
-        // Update UI to show drawing is enabled/disabled
-        if (isDrawingMode)
-        {
-            DrawingOptionsPanel.Visibility = Visibility.Visible;
-            ToggleDrawingMenuItem.Header = "Disable Drawing Mode";
-            DrawingCanvas.IsHitTestVisible = true;
-            MainGrid.Cursor = Cursors.Pen;
-        }
-        else
-        {
-            DrawingOptionsPanel.Visibility = Visibility.Collapsed;
-            ToggleDrawingMenuItem.Header = "Enable Drawing Mode";
-            DrawingCanvas.IsHitTestVisible = false;
-            MainGrid.Cursor = null;
-        }
-    }
-
     private void DrawingCanvas_StrokeCollected(object sender, InkCanvasStrokeCollectedEventArgs e)
     {
         Stroke stroke = e.Stroke;
@@ -2109,6 +2145,7 @@ public partial class MainWindow : FluentWindow
         DrawingAttributes drawingAttributes = DrawingCanvas.DefaultDrawingAttributes;
         drawingAttributes.Width = StrokeThicknessSlider.Value;
         drawingAttributes.Height = StrokeThicknessSlider.Value;
+        drawingAttributes.Color = Color.FromArgb(255, 0, 102, 255);
         DrawingCanvas.DefaultDrawingAttributes = drawingAttributes;
     }
 
@@ -2125,5 +2162,105 @@ public partial class MainWindow : FluentWindow
         List<StrokeLengthDisplay> strokeLengthDisplays = ShapeCanvas.Children.OfType<StrokeLengthDisplay>().ToList();
         foreach (StrokeLengthDisplay? display in strokeLengthDisplays)
             ShapeCanvas.Children.Remove(display);
+    }
+
+    private void CreateMeasurementFromDrag(Point startPoint, Point endPoint)
+    {
+        if (PanRadio.IsChecked == true)
+        {
+            // Pan mode, do nothing
+            return;
+        }
+        else if (MeasureDistanceRadio.IsChecked == true)
+        {
+            CreateDistanceMeasurement(startPoint, endPoint);
+        }
+        else if (MeasureAngleRadio.IsChecked == true)
+        {
+            // For angle measurement, we need three points
+            // We'll create a right angle with the drag defining two points
+            Point midPoint = new(
+                startPoint.X,
+                endPoint.Y
+            );
+            CreateAngleMeasurement(startPoint, midPoint, endPoint);
+        }
+    }
+
+    private void CreateDistanceMeasurement(Point startPoint, Point endPoint)
+    {
+        double scale = ScaleInput.Value ?? 1.0;
+        DistanceMeasurementControl measurementControl = new()
+        {
+            ScaleFactor = scale,
+            Units = MeasurementUnits.Text
+        };
+        measurementControl.MeasurementPointMouseDown += MeasurementPoint_MouseDown;
+        measurementControl.SetRealWorldLengthRequested += MeasurementControl_SetRealWorldLengthRequested;
+        measurementControl.RemoveControlRequested += DistanceMeasurementControl_RemoveControlRequested;
+        measurementTools.Add(measurementControl);
+        ShapeCanvas.Children.Add(measurementControl);
+
+        // Set the start and end positions of the measurement
+        measurementControl.MovePoint(0, startPoint);
+        measurementControl.MovePoint(1, endPoint);
+    }
+
+    private void CreateAngleMeasurement(Point point1, Point vertex, Point point3)
+    {
+        AngleMeasurementControl measurementControl = new();
+        measurementControl.MeasurementPointMouseDown += AngleMeasurementPoint_MouseDown;
+        measurementControl.RemoveControlRequested += AngleMeasurementControl_RemoveControlRequested;
+        angleMeasurementTools.Add(measurementControl);
+        ShapeCanvas.Children.Add(measurementControl);
+
+        // Set the three points of the angle
+        measurementControl.MovePoint(0, point1);
+        measurementControl.MovePoint(1, vertex);
+        measurementControl.MovePoint(2, point3);
+    }
+
+    private void AddVerticalLineAtPosition(double xPosition)
+    {
+        VerticalLineControl lineControl = new();
+        lineControl.RemoveControlRequested += VerticalLineControl_RemoveControlRequested;
+        verticalLineControls.Add(lineControl);
+        ShapeCanvas.Children.Add(lineControl);
+
+        // Initialize at the specific X position
+        lineControl.Initialize(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight, xPosition);
+        //lineControl.SetPosition(xPosition);
+    }
+
+    private void AddHorizontalLineAtPosition(double yPosition)
+    {
+        HorizontalLineControl lineControl = new();
+        lineControl.RemoveControlRequested += HorizontalLineControl_RemoveControlRequested;
+        horizontalLineControls.Add(lineControl);
+        ShapeCanvas.Children.Add(lineControl);
+
+        // Initialize at the specific Y position
+        lineControl.Initialize(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight, yPosition);
+        //lineControl.SetPosition(yPosition);
+    }
+
+    private void DrawingLinesRadio_Checked(object sender, RoutedEventArgs e)
+    {
+        isDrawingMode = true;
+        DrawingCanvas.IsEnabled = isDrawingMode;
+
+        DrawingOptionsPanel.Visibility = Visibility.Visible;
+        DrawingCanvas.IsHitTestVisible = true;
+        MainGrid.Cursor = Cursors.Pen;
+    }
+
+    private void DrawingLinesRadio_Unchecked(object sender, RoutedEventArgs e)
+    {
+        isDrawingMode = true;
+        DrawingCanvas.IsEnabled = isDrawingMode;
+
+        DrawingOptionsPanel.Visibility = Visibility.Collapsed;
+        DrawingCanvas.IsHitTestVisible = false;
+        MainGrid.Cursor = null;
     }
 }
