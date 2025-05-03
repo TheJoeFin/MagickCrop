@@ -27,8 +27,6 @@ public partial class HorizontalLineControl : UserControl
         HorizontalLine.Y1 = yPosition;
         HorizontalLine.X2 = canvasWidth;
         HorizontalLine.Y2 = yPosition;
-
-        Canvas.SetTop(this, yPosition);
     }
 
     public void Resize(double canvasWidth)

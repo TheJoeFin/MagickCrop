@@ -779,11 +779,11 @@ public partial class MainWindow : FluentWindow
         }
         else if (HorizontalLineRadio.IsChecked is true)
         {
-            AddHorizontalLineAtPosition(clickedPoint.Y * scaleFactor);
+            AddHorizontalLineAtPosition(clickedPoint.Y);
         }
         else if (VerticalLineRadio.IsChecked is true)
         {
-            AddVerticalLineAtPosition(clickedPoint.Y);
+            AddVerticalLineAtPosition(clickedPoint.X);
         }
     }
 
@@ -2229,7 +2229,6 @@ public partial class MainWindow : FluentWindow
 
         // Initialize at the specific X position
         lineControl.Initialize(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight, xPosition);
-        //lineControl.SetPosition(xPosition);
     }
 
     private void AddHorizontalLineAtPosition(double yPosition)
@@ -2241,7 +2240,6 @@ public partial class MainWindow : FluentWindow
 
         // Initialize at the specific Y position
         lineControl.Initialize(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight, yPosition);
-        //lineControl.SetPosition(yPosition);
     }
 
     private void DrawingLinesRadio_Checked(object sender, RoutedEventArgs e)

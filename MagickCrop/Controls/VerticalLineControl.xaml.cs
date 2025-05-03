@@ -27,8 +27,6 @@ public partial class VerticalLineControl : UserControl
         VerticalLine.Y1 = 0;
         VerticalLine.X2 = xPosition;
         VerticalLine.Y2 = canvasHeight;
-
-        Canvas.SetLeft(this, xPosition);
     }
 
     public void Resize(double canvasHeight)
