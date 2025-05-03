@@ -6,6 +6,7 @@ using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
@@ -766,8 +767,29 @@ public partial class MainWindow : FluentWindow
         if (Mouse.LeftButton != MouseButtonState.Pressed)
             return;
 
-        if (MeasureDistanceRadio.IsChecked is true
-        || MeasureAngleRadio.IsChecked is true
+        measurementStartPoint = clickedPoint;
+        isCreatingMeasurement = true;
+
+        if (MeasureDistanceRadio.IsChecked is true)
+        {
+
+            double scale = ScaleInput.Value ?? 1.0;
+            DistanceMeasurementControl measurementControl = new()
+            {
+                ScaleFactor = scale,
+                Units = MeasurementUnits.Text
+            };
+            measurementControl.MeasurementPointMouseDown += MeasurementPoint_MouseDown;
+            measurementControl.SetRealWorldLengthRequested += MeasurementControl_SetRealWorldLengthRequested;
+            measurementControl.RemoveControlRequested += DistanceMeasurementControl_RemoveControlRequested;
+            measurementTools.Add(measurementControl);
+            ShapeCanvas.Children.Add(measurementControl);
+
+            // Set the start and end positions of the measurement
+            measurementControl.MovePoint(0, clickedPoint);
+            measurementControl.StartDraggingPoint(1);
+        }
+        else if (MeasureAngleRadio.IsChecked is true
         || DrawingLinesRadio.IsChecked is true)
         {
             measurementStartPoint = clickedPoint;
@@ -1480,7 +1502,7 @@ public partial class MainWindow : FluentWindow
         draggingMode = DraggingMode.None;
     }
 
-    private void MeasurementPoint_MouseDown(object sender, MouseButtonEventArgs e)
+    private void MeasurementPoint_MouseDown(object sender, MouseButtonEventArgs? e)
     {
         if (sender is Ellipse senderEllipse
             && senderEllipse.Parent is Canvas measureCanvas
@@ -1490,7 +1512,8 @@ public partial class MainWindow : FluentWindow
             activeMeasureControl = measureControl;
 
             draggingMode = DraggingMode.MeasureDistance;
-            clickedPoint = e.GetPosition(ShapeCanvas);
+            if (e is not null)
+                clickedPoint = e.GetPosition(ShapeCanvas);
             CaptureMouse();
         }
     }

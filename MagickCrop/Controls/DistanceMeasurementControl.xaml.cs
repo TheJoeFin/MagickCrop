@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -105,6 +106,13 @@ public partial class DistanceMeasurementControl : UserControl
         clickedPoint = e.GetPosition(MeasurementCanvas);
 
         MeasurementPointMouseDown?.Invoke(sender, e);
+    }
+
+    public void StartDraggingPoint(int pointIndex)
+    {
+        pointDraggingIndex = pointIndex;
+        clickedElement = pointIndex == 0 ? StartPoint : EndPoint;
+        MeasurementPointMouseDown?.Invoke(clickedElement, null);
     }
 
     public void MovePoint(int pointIndex, Point newPosition)
