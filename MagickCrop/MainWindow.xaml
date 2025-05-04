@@ -77,7 +77,7 @@
                 <Canvas.RenderTransform>
                     <MatrixTransform />
                 </Canvas.RenderTransform>
-                <Grid x:Name="ImageGrid" Width="700">
+                <Grid x:Name="ImageGrid">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="auto" />

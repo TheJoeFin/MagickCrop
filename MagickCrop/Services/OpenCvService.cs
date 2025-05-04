@@ -356,4 +356,164 @@ public class OpenCvService
         OpenCvSharp.Rect boundingRect = Cv2.BoundingRect(largestRectangle);
         return boundingRect;
     }
+
+    /// <summary>
+    /// Detects corners in an image using Harris corner detection and returns them grouped by clusters
+    /// </summary>
+    /// <param name="imagePath">Path to the source image</param>
+    /// <returns>List of corner points grouped into clusters, sorted by cluster size (largest first)</returns>
+    public static List<System.Windows.Point[]> DetectCornersWithHarris(string imagePath)
+    {
+        using Mat src = Cv2.ImRead(imagePath);
+        
+        if (src.Empty())
+            throw new ArgumentException("Could not load image", nameof(imagePath));
+
+        // Convert to grayscale
+        using Mat gray = new();
+        Cv2.CvtColor(src, gray, ColorConversionCodes.BGR2GRAY);
+
+        // Apply blur to reduce noise
+        using Mat blurred = new();
+        Cv2.GaussianBlur(gray, blurred, new Size(5, 5), 0);
+
+        // Apply Harris corner detection
+        using Mat dst = new();
+        using Mat normalizedDst = new();
+
+        // Harris corner parameters
+        int blockSize = 6;      // Neighborhood size
+        int apertureSize = 11;   // Aperture parameter for Sobel operator
+        double k = 0.04;        // Harris detector free parameter
+
+        Cv2.CornerHarris(blurred, dst, blockSize, apertureSize, k);
+
+        // Normalize the result for display and thresholding
+        Cv2.Normalize(dst, normalizedDst, 0, 255, NormTypes.MinMax);
+        Cv2.ConvertScaleAbs(normalizedDst, normalizedDst);
+
+        // Threshold for corner detection
+        double threshold = 150; // Adjust as needed for sensitivity
+        List<Point> cornerPoints = [];
+
+        // Find corners above threshold
+        for (int y = 0; y < normalizedDst.Rows; y++)
+        {
+            for (int x = 0; x < normalizedDst.Cols; x++)
+            {
+                if (normalizedDst.At<byte>(y, x) > threshold)
+                {
+                    cornerPoints.Add(new Point(x, y));
+                }
+            }
+        }
+
+        // find the best four corners
+        if (cornerPoints.Count < 4)
+            throw new Exception("Not enough corners detected. Please adjust the threshold.");
+        // Sort corners by their strength (Harris response)
+        cornerPoints = cornerPoints
+            .OrderByDescending(p => normalizedDst.At<byte>(p.Y, p.X))
+            .Take(80)
+            .ToList();
+
+        if (cornerPoints.Count > 100)
+            throw new Exception("Too many corners detected. Please adjust the threshold.");
+
+        // Apply non-maximum suppression to keep only the strongest corners
+        // List<Point> filteredCorners = ApplyNonMaximumSuppression(cornerPoints, normalizedDst, 10);
+
+        // Cluster corners to identify significant corner groups (like rectangles)
+        List<List<Point>> cornerClusters = ClusterCorners(cornerPoints, 100); // 100px neighborhood for clustering
+
+        // Convert OpenCV points to WPF points and sort clusters by size (largest first)
+        return cornerClusters
+            .Select(cluster => cluster.Select(p => new System.Windows.Point(p.X, p.Y)).ToArray())
+            .OrderByDescending(cluster => cluster.Length)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Applies non-maximum suppression to keep only the strongest corner points in a local area
+    /// </summary>
+    private static List<Point> ApplyNonMaximumSuppression(List<Point> corners, Mat cornerStrengths, int radius)
+    {
+        List<Point> result = new();
+
+        foreach (Point corner in corners)
+        {
+            bool isLocalMaximum = true;
+            byte currentStrength = cornerStrengths.At<byte>(corner.Y, corner.X);
+
+            // Check neighborhood
+            int startX = Math.Max(0, corner.X - radius);
+            int endX = Math.Min(cornerStrengths.Cols - 1, corner.X + radius);
+            int startY = Math.Max(0, corner.Y - radius);
+            int endY = Math.Min(cornerStrengths.Rows - 1, corner.Y + radius);
+
+            for (int y = startY; y <= endY && isLocalMaximum; y++)
+            {
+                for (int x = startX; x <= endX; x++)
+                {
+                    // Skip the corner itself
+                    if (x == corner.X && y == corner.Y)
+                        continue;
+
+                    // If a stronger corner exists in the neighborhood, this is not a local maximum
+                    if (cornerStrengths.At<byte>(y, x) > currentStrength)
+                    {
+                        isLocalMaximum = false;
+                        break;
+                    }
+                }
+            }
+
+            if (isLocalMaximum)
+                result.Add(corner);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Clusters corner points that are close to each other
+    /// </summary>
+    private static List<List<Point>> ClusterCorners(List<Point> corners, double maxDistance)
+    {
+        List<List<Point>> clusters = new();
+        List<Point> unassignedPoints = new(corners);
+
+        while (unassignedPoints.Count > 0)
+        {
+            // Start a new cluster with the first unassigned point
+            Point seedPoint = unassignedPoints[0];
+            List<Point> currentCluster = new() { seedPoint };
+            unassignedPoints.RemoveAt(0);
+
+            // Find all points that belong to this cluster
+            int index = 0;
+            while (index < currentCluster.Count)
+            {
+                Point current = currentCluster[index];
+
+                for (int i = unassignedPoints.Count - 1; i >= 0; i--)
+                {
+                    Point candidate = unassignedPoints[i];
+                    double distance = Math.Sqrt(Math.Pow(candidate.X - current.X, 2) + Math.Pow(candidate.Y - current.Y, 2));
+
+                    if (distance <= maxDistance)
+                    {
+                        currentCluster.Add(candidate);
+                        unassignedPoints.RemoveAt(i);
+                    }
+                }
+
+                index++;
+            }
+
+            clusters.Add(currentCluster);
+        }
+
+        return clusters;
+    }
 }

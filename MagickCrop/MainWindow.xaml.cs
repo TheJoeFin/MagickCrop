@@ -1,6 +1,5 @@
 ﻿using ImageMagick;
 using MagickCrop.Controls;
-using MagickCrop.Extensions;
 using MagickCrop.Models;
 using MagickCrop.Models.MeasurementControls;
 using MagickCrop.Services;
@@ -8,6 +7,7 @@ using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
@@ -46,12 +46,15 @@ public partial class MainWindow : FluentWindow
     private readonly ObservableCollection<AngleMeasurementControl> angleMeasurementTools = [];
     private AngleMeasurementControl? activeAngleMeasureControl;
 
-    private Services.RecentProjectsManager? recentProjectsManager;
+    private RecentProjectsManager? recentProjectsManager;
     private string? currentProjectId;
     private System.Timers.Timer? autoSaveTimer;
     private readonly int AutoSaveIntervalMs = (int)TimeSpan.FromSeconds(3).TotalMilliseconds;
 
     private Rect? detectedRectangle; // Store the detected rectangle
+
+    // Store detected OpenCV points for snapping
+    private List<Point> _opencvDetectedPoints = new();
 
     public MainWindow()
     {
@@ -64,6 +67,7 @@ public partial class MainWindow : FluentWindow
         InitializeComponent();
         DrawPolyLine();
         _polygonElements = [lines, TopLeft, TopRight, BottomRight, BottomLeft];
+        ShapeCanvas.RenderTransform = new MatrixTransform();
 
         foreach (UIElement element in _polygonElements)
             element.Visibility = Visibility.Collapsed;
@@ -184,6 +188,8 @@ public partial class MainWindow : FluentWindow
             clickedElement = null;
             ReleaseMouseCapture();
             draggingMode = DraggingMode.None;
+            _canvasOffsetX = 0.0;
+            _canvasOffsetY = 0.0;
 
             return;
         }
@@ -201,6 +207,33 @@ public partial class MainWindow : FluentWindow
         }
 
         Point movingPoint = e.GetPosition(ShapeCanvas);
+
+        // --- SNAP TO OPENCV POINTS IF ENABLED ---
+        if (draggingMode == DraggingMode.MoveElement && clickedElement is not null)
+        {
+            // Only snap if ShowContours is checked and we have detected points
+            if (ShowContours.IsChecked == true && _opencvDetectedPoints.Count > 0)
+            {
+                // Find the nearest detected point within a threshold (e.g., 20 pixels)
+                const double snapThreshold = 20.0;
+                var nearest = _opencvDetectedPoints
+                    .Select(p => new { Point = p, Dist = (p - movingPoint).Length })
+                    .OrderBy(x => x.Dist)
+                    .FirstOrDefault();
+
+                if (nearest != null && nearest.Dist < snapThreshold)
+                {
+                    movingPoint = nearest.Point;
+                }
+            }
+
+            Canvas.SetTop(clickedElement, movingPoint.Y - (clickedElement.Height / 2));
+            Canvas.SetLeft(clickedElement, movingPoint.X - (clickedElement.Width / 2));
+
+            MovePolyline(movingPoint);
+            return;
+        }
+
         if (draggingMode == DraggingMode.MeasureDistance && activeMeasureControl is not null)
         {
             int pointIndex = activeMeasureControl.GetActivePointIndex();
@@ -243,22 +276,6 @@ public partial class MainWindow : FluentWindow
         ImageGrid.Width = oldGridSize.Width + deltaX;
         ImageGrid.Height = oldGridSize.Height + deltaY;
 
-        e.Handled = true;
-    }
-
-    private void PanCanvas(MouseEventArgs e)
-    {
-        Mouse.SetCursor(Cursors.SizeAll);
-        Point currentPoint = e.GetPosition(ShapeCanvas);
-        double deltaX = currentPoint.X - clickedPoint.X;
-        double deltaY = currentPoint.Y - clickedPoint.Y;
-
-        if (ShapeCanvas.RenderTransform is not MatrixTransform matTrans)
-            return;
-
-        Matrix mat = matTrans.Matrix;
-        mat.Translate(deltaX / scaleFactor, deltaY / scaleFactor);
-        matTrans.Matrix = mat;
         e.Handled = true;
     }
 
@@ -530,7 +547,6 @@ public partial class MainWindow : FluentWindow
     private async Task OpenImagePath(string imageFilePath)
     {
         Save.IsEnabled = true;
-        ImageGrid.Width = 700;
         MainImage.Stretch = Stretch.Uniform;
 
         string tempFileName = System.IO.Path.GetTempFileName();
@@ -544,23 +560,7 @@ public partial class MainWindow : FluentWindow
         });
 
         // Detect the main rectangle in the image
-        try
-        {
-            SetUiForLongTask();
-            detectedRectangle = OpenCvService.DetectMainRectangle(tempFileName).ToWindowsRect();
-            if (detectedRectangle.HasValue)
-            {
-                DrawRectangleBorder(detectedRectangle.Value);
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Windows.MessageBox.Show(
-                $"Error detecting rectangle: {ex.Message}",
-                "OpenCV Error",
-                System.Windows.MessageBoxButton.OK,
-                MessageBoxImage.Error);
-        }
+        SetUiForLongTask();
 
         imagePath = tempFileName;
 
@@ -571,6 +571,9 @@ public partial class MainWindow : FluentWindow
         BottomBorder.Visibility = Visibility.Visible;
         SetUiForCompletedTask();
 
+        // Clear OpenCV detected points when loading a new image
+        _opencvDetectedPoints.Clear();
+
         // Create a new project ID for this image
         currentProjectId = Guid.NewGuid().ToString();
 
@@ -578,74 +581,152 @@ public partial class MainWindow : FluentWindow
         _ = AutosaveCurrentState();
     }
 
-    private void DrawRectangleBorder(Rect rectangle)
-    {
-        // Remove any existing rectangle border
-        ShapeCanvas.Children.OfType<Rectangle>().ToList().ForEach(r => ShapeCanvas.Children.Remove(r));
-
-        // Draw the rectangle border
-        Rectangle border = new()
-        {
-            Stroke = Brushes.Red,
-            StrokeThickness = 2,
-            Width = rectangle.Width,
-            Height = rectangle.Height
-        };
-
-        Canvas.SetLeft(border, rectangle.X);
-        Canvas.SetTop(border, rectangle.Y);
-        ShapeCanvas.Children.Add(border);
-    }
-
     private async void ShowContours_Toggle(object sender, RoutedEventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(imagePath) || !(sender is Wpf.Ui.Controls.ToggleSwitch toggleSwitch))
+        if (string.IsNullOrWhiteSpace(imagePath) 
+            || sender is not ToggleSwitch toggleSwitch
+            || toggleSwitch.IsChecked is not true)
+        {
+            _opencvDetectedPoints.Clear();
             return;
+        }
 
         SetUiForLongTask();
 
-        try
+        // Apply Harris corner detection to find significant corners  
+        List<Point[]> cornerClusters = await Task.Run(() => OpenCvService.DetectCornersWithHarris(imagePath));
+
+        // Flatten all clusters into a single list of points for snapping
+
+        // average the clusters into a single point
+        _opencvDetectedPoints = [.. cornerClusters.Select(cluster => new Point(cluster.Average(p => p.X), cluster.Average(p => p.Y)))];
+
+        // scale the point positions to fit within the ImageGrid bounds
+        MagickImage magickImage = new(imagePath);
+        double scaleX = ImageGrid.ActualWidth / magickImage.Width;
+        double scaleY = ImageGrid.ActualHeight / magickImage.Height;
+
+        List<Point> temp = [.. _opencvDetectedPoints];
+        _opencvDetectedPoints.Clear();
+
+        foreach (Point point1 in temp)
         {
-            if (toggleSwitch.IsChecked is true)
+            Point newPoint = new()
             {
-                // Apply contour detection
-                string contouredImagePath = await Task.Run(() => OpenCvService.ProcessImageWithContours(imagePath));
-                MagickImage bitmapImage = new(contouredImagePath);
-                MainImage.Source = bitmapImage.ToBitmapSource();
-                imagePath = contouredImagePath;
+                X = point1.X * scaleX,
+                Y = point1.Y * scaleY
+            };
+            _opencvDetectedPoints.Add(newPoint);
+        }
+
+        // for each corner cluster point put an ellipse on the ShapeCanvas  
+        foreach (Point point in _opencvDetectedPoints)
+        {
+            Ellipse ellipse = new()
+            {
+                Width = 3,
+                Height = 3,
+                Fill = Brushes.Red,
+                StrokeThickness = 1,
+                Stroke = Brushes.Black,
+                Opacity = 0.3,
+            };
+            Canvas.SetLeft(ellipse, point.X - (ellipse.Width / 2));
+            Canvas.SetTop(ellipse, point.Y - (ellipse.Height / 2));
+            ShapeCanvas.Children.Add(ellipse);
+        }
+
+        // If we have at least one cluster with enough points, use them for the polygon  
+        if (cornerClusters.Count > 0 && cornerClusters[0].Length >= 4)
+        {
+            // Get the largest cluster (it's already sorted)  
+            Point[] largestCluster = cornerClusters[0];
+
+            // Take the most significant 4 points for the polygon  
+            // If there are more than 4, we need a strategy to select the best 4 corners  
+            Point[] selectedCorners;
+
+            if (largestCluster.Length > 4)
+            {
+                // Find the 4 points that form the largest quadrilateral  
+                selectedCorners = FindOutermostPoints(largestCluster);
             }
             else
             {
-                // Reload the original image without contours
-                // This assumes we have cached the original somewhere or can regenerate it
-                // For simplicity, we'll reprocess from the original file if available
-                if (!string.IsNullOrWhiteSpace(openedFileName))
-                {
-                    string tempFileName = System.IO.Path.GetTempFileName();
-                    tempFileName = System.IO.Path.ChangeExtension(tempFileName, ".jpg");
-                    await Task.Run(async () =>
-                    {
-                        MagickImage bitmap = new(imagePath);
-                        await bitmap.WriteAsync(tempFileName, MagickFormat.Jpeg);
-                    });
-                    MagickImage bitmapImage = new(tempFileName);
-                    MainImage.Source = bitmapImage.ToBitmapSource();
-                    imagePath = tempFileName;
-                }
+                // Use all points if there are exactly 4  
+                selectedCorners = largestCluster;
             }
+
+            // Make sure corners form a convex quadrilateral in the correct order  
+            //selectedCorners = OrderRectanglePoints(selectedCorners);  
+
+            // Update the polygon corners on the UI  
+            // UpdatePolygonCorners(selectedCorners);
         }
-        catch (Exception ex)
+
+        SetUiForCompletedTask();
+    }
+
+    /// <summary>
+    /// Find the four points that form the largest quadrilateral (the outermost points)
+    /// </summary>
+    private Point[] FindOutermostPoints(Point[] points)
+    {
+        // Find the points with min/max X and Y coordinates
+        double minX = points.Min(p => p.X);
+        double maxX = points.Max(p => p.X);
+        double minY = points.Min(p => p.Y);
+        double maxY = points.Max(p => p.Y);
+
+        // Find the points closest to each corner of the bounding box
+        Point topLeft = points.OrderBy(p => Math.Sqrt(Math.Pow(p.X - minX, 2) + Math.Pow(p.Y - minY, 2))).First();
+        Point topRight = points.OrderBy(p => Math.Sqrt(Math.Pow(p.X - maxX, 2) + Math.Pow(p.Y - minY, 2))).First();
+        Point bottomLeft = points.OrderBy(p => Math.Sqrt(Math.Pow(p.X - minX, 2) + Math.Pow(p.Y - maxY, 2))).First();
+        Point bottomRight = points.OrderBy(p => Math.Sqrt(Math.Pow(p.X - maxX, 2) + Math.Pow(p.Y - maxY, 2))).First();
+
+        return [topLeft, topRight, bottomRight, bottomLeft];
+    }
+
+    /// <summary>
+    /// Updates the polygon corners on the UI canvas
+    /// </summary>
+    private void UpdatePolygonCorners(Point[] corners)
+    {
+        if (corners.Length != 4)
+            return;
+
+        // Update the positions of the corner ellipses
+        Canvas.SetLeft(TopLeft, corners[0].X - (TopLeft.Width / 2));
+        Canvas.SetTop(TopLeft, corners[0].Y - (TopLeft.Height / 2));
+
+        Canvas.SetLeft(TopRight, corners[1].X - (TopRight.Width / 2));
+        Canvas.SetTop(TopRight, corners[1].Y - (TopRight.Height / 2));
+
+        Canvas.SetLeft(BottomRight, corners[2].X - (BottomRight.Width / 2));
+        Canvas.SetTop(BottomRight, corners[2].Y - (BottomRight.Height / 2));
+
+        Canvas.SetLeft(BottomLeft, corners[3].X - (BottomLeft.Width / 2));
+        Canvas.SetTop(BottomLeft, corners[3].Y - (BottomLeft.Height / 2));
+
+        // Update the polyline
+        if (lines != null)
         {
-            System.Windows.MessageBox.Show(
-                $"Error processing image contours: {ex.Message}",
-                "OpenCV Error",
-                System.Windows.MessageBoxButton.OK,
-                MessageBoxImage.Error);
-            toggleSwitch.IsChecked = false;
+            lines.Points.Clear();
+            foreach (Point corner in corners)
+            {
+                lines.Points.Add(corner);
+            }
+            // Close the polygon by adding the first point again
+            lines.Points.Add(corners[0]);
+
+            // Update the aspect ratio preview if needed
+            AspectRatioTransformPreview.SetAndScalePoints(lines.Points);
         }
-        finally
+
+        // Make all polygon elements visible
+        foreach (UIElement element in _polygonElements)
         {
-            SetUiForCompletedTask();
+            element.Visibility = Visibility.Visible;
         }
     }
 
@@ -668,18 +749,51 @@ public partial class MainWindow : FluentWindow
         return pi.GetValue(obj, null);
     }
 
+    private double _canvasScale = 1.0;
+    private double _canvasOffsetX = 0.0;
+    private double _canvasOffsetY = 0.0;
+
     private void ShapeCanvas_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
+        double zoomFactor = e.Delta > 0 ? 1.1 : 1.0 / 1.1;
+        Point pos = e.GetPosition(ShapeCanvas);
+
+        // Adjust translation so the mouse stays in place after zooming:
+        _canvasOffsetX = pos.X - (zoomFactor * (pos.X - _canvasOffsetX));
+        _canvasOffsetY = pos.Y - (zoomFactor * (pos.Y - _canvasOffsetY));
+
+        // Accumulate overall scale:
+        _canvasScale *= zoomFactor;
+
+        UpdateCanvasTransform();
+        e.Handled = true;
+    }
+
+    private void UpdateCanvasTransform()
+    {
         if (ShapeCanvas.RenderTransform is not MatrixTransform matTrans)
+        {
             return;
-
-        Point pos1 = e.GetPosition(ShapeCanvas);
-
-        scaleFactor = e.Delta > 0 ? 1.1 : 1 / 1.1;
-
-        Matrix mat = matTrans.Matrix;
-        mat.ScaleAt(scaleFactor, scaleFactor, pos1.X, pos1.Y);
+        }
+        Matrix mat = new();
+        mat.Scale(_canvasScale, _canvasScale);
+        mat.Translate(_canvasOffsetX, _canvasOffsetY);
         matTrans.Matrix = mat;
+    }
+
+    private void PanCanvas(MouseEventArgs e)
+    {
+        Mouse.SetCursor(Cursors.SizeAll);
+        Point currentPoint = e.GetPosition(ImageGrid);
+
+        double maxPanSize = Math.Max(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight) / 4;
+        double deltaX = Math.Clamp(currentPoint.X - clickedPoint.X, -maxPanSize, maxPanSize);
+        double deltaY = Math.Clamp(currentPoint.Y - clickedPoint.Y, -maxPanSize, maxPanSize);
+
+        _canvasOffsetX += deltaX;
+        _canvasOffsetY += deltaY;
+
+        UpdateCanvasTransform();
         e.Handled = true;
     }
 
@@ -803,7 +917,8 @@ public partial class MainWindow : FluentWindow
         SetUiForLongTask();
 
         MagickImage magickImage = new(imagePath);
-        await Task.Run(() => magickImage.WhiteBalance());
+        await Task.Run(() => magickImage.Blur(20, 10));
+        await Task.Run(() => magickImage.Edge(2.0));
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await magickImage.WriteAsync(tempFileName);
@@ -1613,8 +1728,8 @@ public partial class MainWindow : FluentWindow
         try
         {
             package = await MagickCropMeasurementPackage.LoadFromFileAsync(fileName);
-            if (package is null 
-                || string.IsNullOrEmpty(package.ImagePath) 
+            if (package is null
+                || string.IsNullOrEmpty(package.ImagePath)
                 || !File.Exists(package.ImagePath))
             {
                 Wpf.Ui.Controls.MessageBox uiMessageBox = new()
@@ -1695,7 +1810,7 @@ public partial class MainWindow : FluentWindow
 
     private void InitializeProjectManager()
     {
-        recentProjectsManager = new Services.RecentProjectsManager();
+        recentProjectsManager = new RecentProjectsManager();
 
         // Setup autosave timer
         autoSaveTimer = new System.Timers.Timer(AutoSaveIntervalMs);
