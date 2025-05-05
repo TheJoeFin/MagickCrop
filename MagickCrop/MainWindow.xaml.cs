@@ -35,6 +35,7 @@ public partial class MainWindow : FluentWindow
     private Polygon? lines;
     private string? imagePath;
     private string? savedPath;
+    private readonly int ImageWidthConst = 700;
 
     private double scaleFactor = 1;
     private DraggingMode draggingMode = DraggingMode.None;
@@ -684,7 +685,7 @@ public partial class MainWindow : FluentWindow
     private async Task OpenImagePath(string imageFilePath)
     {
         Save.IsEnabled = true;
-        ImageGrid.Width = 700;
+        ImageGrid.Width = ImageWidthConst;
         MainImage.Stretch = Stretch.Uniform;
 
         WelcomeMessageModal.Visibility = Visibility.Collapsed;
@@ -1091,6 +1092,52 @@ public partial class MainWindow : FluentWindow
 
         MagickImage magickImage = new(imagePath);
         await Task.Run(() => magickImage.AutoGamma());
+
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await magickImage.WriteAsync(tempFileName);
+
+        MagickImageUndoRedoItem undoRedoItem = new(MainImage, imagePath, tempFileName);
+        undoRedo.AddUndo(undoRedoItem);
+
+        imagePath = tempFileName;
+
+        MainImage.Source = magickImage.ToBitmapSource();
+
+        SetUiForCompletedTask();
+    }
+
+    private async void BlurMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+            return;
+
+        SetUiForLongTask();
+
+        MagickImage magickImage = new(imagePath);
+        await Task.Run(() => magickImage.Blur(20, 10));
+
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await magickImage.WriteAsync(tempFileName);
+
+        MagickImageUndoRedoItem undoRedoItem = new(MainImage, imagePath, tempFileName);
+        undoRedo.AddUndo(undoRedoItem);
+
+        imagePath = tempFileName;
+
+        MainImage.Source = magickImage.ToBitmapSource();
+
+        SetUiForCompletedTask();
+    }
+
+    private async void FindEdgesMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+            return;
+
+        SetUiForLongTask();
+
+        MagickImage magickImage = new(imagePath);
+        await Task.Run(() => magickImage.CannyEdge());
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await magickImage.WriteAsync(tempFileName);
@@ -1792,6 +1839,10 @@ public partial class MainWindow : FluentWindow
             ShapeCanvas.Children.Add(control);
         }
 
+        MagickImage image = new(package.ImagePath);
+        double aspectRatio = (double)image.Width / image.Height;
+        double imageHeight = ImageWidthConst / aspectRatio;
+
         // Add vertical line controls
         foreach (VerticalLineControlDto dto in package.Measurements.VerticalLines)
         {
@@ -1802,7 +1853,7 @@ public partial class MainWindow : FluentWindow
             ShapeCanvas.Children.Add(control);
 
             // Make sure the line spans the full height of the canvas
-            control.Resize(ShapeCanvas.ActualHeight);
+            control.Resize(imageHeight);
         }
 
         // Add horizontal line controls
@@ -1815,7 +1866,7 @@ public partial class MainWindow : FluentWindow
             ShapeCanvas.Children.Add(control);
 
             // Make sure the line spans the full width of the canvas
-            control.Resize(ShapeCanvas.ActualWidth);
+            control.Resize(ImageWidthConst);
         }
 
         ClearAllStrokesAndLengths();
@@ -2257,7 +2308,7 @@ public partial class MainWindow : FluentWindow
         ShapeCanvas.Children.Add(lineControl);
 
         // Initialize at the specific X position
-        lineControl.Initialize(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight, xPosition);
+        lineControl.Initialize(MainImage.ActualHeight, MainImage.ActualHeight, xPosition);
     }
 
     private void AddHorizontalLineAtPosition(double yPosition)
@@ -2268,7 +2319,7 @@ public partial class MainWindow : FluentWindow
         ShapeCanvas.Children.Add(lineControl);
 
         // Initialize at the specific Y position
-        lineControl.Initialize(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight, yPosition);
+        lineControl.Initialize(MainImage.ActualWidth, MainImage.ActualWidth, yPosition);
     }
 
     private void DrawingLinesRadio_Checked(object sender, RoutedEventArgs e)
@@ -2322,11 +2373,6 @@ public partial class MainWindow : FluentWindow
         foreach (ToggleButton button in toolToggleButtons)
             if (button != toggleButton)
                 button.IsChecked = false;
-    }
-
-    private void MeasureDistanceToggle_Unchecked(object sender, RoutedEventArgs e)
-    {
-
     }
 
     private void ToolSelector_Clicked(object sender, RoutedEventArgs e)

@@ -370,6 +370,23 @@
                                             <wpfui:SymbolIcon Symbol="AddSubtractCircle24" />
                                         </MenuItem.Icon>
                                     </MenuItem>
+                                    <Separator />
+                                    <MenuItem
+                                        Name="BlurMenuItem"
+                                        Click="BlurMenuItem_Click"
+                                        Header="Gaussian Blur">
+                                        <MenuItem.Icon>
+                                            <wpfui:SymbolIcon Symbol="Blur24" />
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem
+                                        Name="FindEdgesMenuItem"
+                                        Click="FindEdgesMenuItem_Click"
+                                        Header="Find Edges">
+                                        <MenuItem.Icon>
+                                            <wpfui:SymbolIcon Symbol="Triangle24" />
+                                        </MenuItem.Icon>
+                                    </MenuItem>
                                 </StackPanel>
                             </TabItem>
                             <TabItem x:Name="MeasureTabItem">
@@ -382,8 +399,9 @@
                                             <ToggleButton
                                                 x:Name="MeasureDistanceToggle"
                                                 Width="150"
-                                                Margin="0,4" Click="ToolSelector_Clicked"
-                                                Checked="ToolSelector_Checked">
+                                                Margin="0,4"
+                                                Checked="ToolSelector_Checked"
+                                                Click="ToolSelector_Clicked">
                                                 <ToggleButton.Content>
                                                     <StackPanel Orientation="Horizontal">
                                                         <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="Ruler24" />
@@ -395,7 +413,8 @@
                                                 x:Name="MeasureAngleToggle"
                                                 Width="150"
                                                 Margin="0,4"
-                                                Checked="ToolSelector_Checked">
+                                                Checked="ToolSelector_Checked"
+                                                Click="ToolSelector_Clicked">
                                                 <ToggleButton.Content>
                                                     <StackPanel Orientation="Horizontal">
                                                         <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="DataPie24" />
@@ -407,7 +426,8 @@
                                                 x:Name="HorizontalLineRadio"
                                                 Width="150"
                                                 Margin="0,4"
-                                                Checked="ToolSelector_Checked">
+                                                Checked="ToolSelector_Checked"
+                                                Click="ToolSelector_Clicked">
                                                 <ToggleButton.Content>
                                                     <StackPanel Orientation="Horizontal">
                                                         <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="SplitHorizontal24" />
@@ -419,7 +439,8 @@
                                                 x:Name="VerticalLineToggle"
                                                 Width="150"
                                                 Margin="0,4"
-                                                Checked="ToolSelector_Checked">
+                                                Checked="ToolSelector_Checked"
+                                                Click="ToolSelector_Clicked">
                                                 <ToggleButton.Content>
                                                     <StackPanel Orientation="Horizontal">
                                                         <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="SplitVertical24" />
@@ -432,6 +453,7 @@
                                                 Width="150"
                                                 Margin="0,4"
                                                 Checked="DrawingLinesRadio_Checked"
+                                                Click="ToolSelector_Clicked"
                                                 Unchecked="DrawingLinesRadio_Unchecked">
                                                 <ToggleButton.Content>
                                                     <StackPanel Orientation="Horizontal">

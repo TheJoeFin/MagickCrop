@@ -9,7 +9,7 @@
     mc:Ignorable="d">
     <UserControl.ContextMenu>
         <ContextMenu>
-            <MenuItem Click="ChangeColorMenuItem_Click" Header="Change Color" />
+            <!--<MenuItem Click="ChangeColorMenuItem_Click" Header="Change Color" />-->
             <MenuItem Click="ChangeThicknessMenuItem_Click" Header="Change Thickness" />
             <Separator />
             <MenuItem Click="RemoveLineMenuItem_Click" Header="Remove Line" />
