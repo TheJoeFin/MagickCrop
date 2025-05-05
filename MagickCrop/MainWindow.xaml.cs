@@ -645,6 +645,7 @@ public partial class MainWindow : FluentWindow
         BottomBorder.Visibility = Visibility.Visible;
         MainGrid.Background = new SolidColorBrush(Colors.Transparent);
         Background = new SolidColorBrush(Colors.Transparent);
+        ShapeCanvas.Background = new SolidColorBrush(Color.FromArgb(10, 255, 255, 255));
         Topmost = true;
 
         MeasureTabItem.IsSelected = true;
@@ -919,7 +920,14 @@ public partial class MainWindow : FluentWindow
 
     private void ResetMenuItem_Click(object sender, RoutedEventArgs e)
     {
-        
+        canvasScale.ScaleX = 1;
+        canvasScale.ScaleY = 1;
+
+        canvasScale.CenterX = 0;
+        canvasScale.CenterY = 0;
+
+        canvasTranslate.X = 0;
+        canvasTranslate.Y = 0;
     }
 
     private async void AutoContrastMenuItem_Click(object sender, RoutedEventArgs e)

@@ -250,7 +250,8 @@
                     Appearance="Secondary"
                     Click="OverlayModeButton_Click"
                     Content="Overlay mode"
-                    ToolTip="Make the window transparent so measurments tools can be used on the underlying content">
+                    ToolTip="Make the window transparent so measurments tools can be used on the underlying content"
+                    Visibility="Collapsed">
                     <wpfui:HyperlinkButton.Icon>
                         <wpfui:SymbolIcon Symbol="Ruler24" />
                     </wpfui:HyperlinkButton.Icon>
