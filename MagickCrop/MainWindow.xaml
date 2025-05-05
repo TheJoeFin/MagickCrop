@@ -15,6 +15,7 @@
     Background="Gray"
     DataContext="{Binding RelativeSource={RelativeSource Self}}"
     MouseMove="TopLeft_MouseMove"
+    MouseUp="FluentWindow_MouseUp"
     PreviewDragOver="FluentWindow_PreviewDragOver"
     PreviewDrop="FluentWindow_PreviewDrop"
     mc:Ignorable="d">
@@ -73,9 +74,15 @@
             Background="Gray"
             ClipToBounds="True"
             PreviewMouseWheel="ShapeCanvas_PreviewMouseWheel">
-            <Canvas x:Name="ShapeCanvas" Margin="50,50,0,0">
+            <Canvas
+                x:Name="ShapeCanvas"
+                Margin="50,50,0,0"
+                MouseDown="ShapeCanvas_MouseDown">
                 <Canvas.RenderTransform>
-                    <MatrixTransform />
+                    <TransformGroup>
+                        <ScaleTransform x:Name="canvasScale" ScaleX="1" ScaleY="1" />
+                        <TranslateTransform x:Name="canvasTranslate" X="0" Y="0" />
+                    </TransformGroup>
                 </Canvas.RenderTransform>
                 <Grid x:Name="ImageGrid">
                     <Grid.ColumnDefinitions>
@@ -87,10 +94,7 @@
                         <RowDefinition Height="*" />
                         <RowDefinition Height="auto" />
                     </Grid.RowDefinitions>
-                    <Image
-                        x:Name="MainImage"
-                        MouseDown="ShapeCanvas_MouseDown"
-                        Stretch="Uniform" />
+                    <Image x:Name="MainImage" Stretch="Uniform" />
                     <ResizeGrip
                         x:Name="ImageResizeGrip"
                         Grid.Row="1"
@@ -100,7 +104,6 @@
                         Background="Blue"
                         Cursor="SizeAll"
                         IsManipulationEnabled="True"
-                        MouseDown="ImageResizeGrip_MouseDown"
                         ToolTip="Resize handle"
                         Visibility="Hidden" />
                 </Grid>
@@ -109,25 +112,21 @@
                     x:Name="TopLeft"
                     Canvas.Left="100"
                     Canvas.Top="100"
-                    MouseDown="TopLeft_MouseDown"
                     Tag="0" />
                 <Ellipse
                     x:Name="TopRight"
                     Canvas.Left="700"
                     Canvas.Top="100"
-                    MouseDown="TopLeft_MouseDown"
                     Tag="1" />
                 <Ellipse
                     x:Name="BottomRight"
                     Canvas.Left="700"
                     Canvas.Top="525"
-                    MouseDown="TopLeft_MouseDown"
                     Tag="2" />
                 <Ellipse
                     x:Name="BottomLeft"
                     Canvas.Left="100"
                     Canvas.Top="525"
-                    MouseDown="TopLeft_MouseDown"
                     Tag="3" />
 
                 <local:ResizableRectangle x:Name="CroppingRectangle" Visibility="Collapsed" />

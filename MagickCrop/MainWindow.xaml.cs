@@ -34,7 +34,7 @@ public partial class MainWindow : FluentWindow
     private string? savedPath;
 
     private double scaleFactor = 1;
-    private DraggingMode draggingMode = DraggingMode.None;
+    private DraggingMode draggingMode { get; set; } = DraggingMode.None;
 
     private string openedFileName = string.Empty;
     private readonly List<UIElement> _polygonElements;
@@ -54,7 +54,7 @@ public partial class MainWindow : FluentWindow
     private Rect? detectedRectangle; // Store the detected rectangle
 
     // Store detected OpenCV points for snapping
-    private List<Point> _opencvDetectedPoints = new();
+    private List<Point> _opencvDetectedPoints = [];
 
     public MainWindow()
     {
@@ -67,7 +67,6 @@ public partial class MainWindow : FluentWindow
         InitializeComponent();
         DrawPolyLine();
         _polygonElements = [lines, TopLeft, TopRight, BottomRight, BottomLeft];
-        ShapeCanvas.RenderTransform = new MatrixTransform();
 
         foreach (UIElement element in _polygonElements)
             element.Visibility = Visibility.Collapsed;
@@ -170,6 +169,7 @@ public partial class MainWindow : FluentWindow
     {
         if (Mouse.MiddleButton == MouseButtonState.Released && Mouse.LeftButton == MouseButtonState.Released)
         {
+            Debug.WriteLine($"MouseMove: resetting, {draggingMode}");
             if (draggingMode == DraggingMode.Panning)
                 Mouse.SetCursor(null);
 
@@ -186,22 +186,22 @@ public partial class MainWindow : FluentWindow
             }
 
             clickedElement = null;
-            ReleaseMouseCapture();
+            ShapeCanvas.ReleaseMouseCapture();
             draggingMode = DraggingMode.None;
-            _canvasOffsetX = 0.0;
-            _canvasOffsetY = 0.0;
 
             return;
         }
 
         if (draggingMode == DraggingMode.Panning)
         {
+            Debug.WriteLine("MouseMove: Panning");
             PanCanvas(e);
             return;
         }
 
         if (draggingMode == DraggingMode.Resizing)
         {
+            Debug.WriteLine("MouseMove: Resizing");
             ResizeImage(e);
             return;
         }
@@ -211,6 +211,7 @@ public partial class MainWindow : FluentWindow
         // --- SNAP TO OPENCV POINTS IF ENABLED ---
         if (draggingMode == DraggingMode.MoveElement && clickedElement is not null)
         {
+            Debug.WriteLine($"MouseMove: MoveElement {clickedElement.Tag}");
             // Only snap if ShowContours is checked and we have detected points
             if (ShowContours.IsChecked == true && _opencvDetectedPoints.Count > 0)
             {
@@ -236,6 +237,7 @@ public partial class MainWindow : FluentWindow
 
         if (draggingMode == DraggingMode.MeasureDistance && activeMeasureControl is not null)
         {
+            Debug.WriteLine("MouseMove: MeasureDistance");
             int pointIndex = activeMeasureControl.GetActivePointIndex();
             if (pointIndex >= 0)
             {
@@ -247,6 +249,8 @@ public partial class MainWindow : FluentWindow
 
         if (draggingMode == DraggingMode.MeasureAngle && activeAngleMeasureControl is not null)
         {
+            Debug.WriteLine("MouseMove: MeasureAngle");
+
             int pointIndex = activeAngleMeasureControl.GetActivePointIndex();
             if (pointIndex >= 0)
             {
@@ -257,8 +261,12 @@ public partial class MainWindow : FluentWindow
         }
 
         if (draggingMode != DraggingMode.MoveElement || clickedElement is null)
+        {
+            Debug.WriteLine($"MouseMove: not moving? {draggingMode}");
             return;
+        }
 
+        Debug.WriteLine($"MouseMove: MoveElement {clickedElement.Tag}");
         Canvas.SetTop(clickedElement, movingPoint.Y - (clickedElement.Height / 2));
         Canvas.SetLeft(clickedElement, movingPoint.X - (clickedElement.Width / 2));
 
@@ -749,60 +757,67 @@ public partial class MainWindow : FluentWindow
         return pi.GetValue(obj, null);
     }
 
-    private double _canvasScale = 1.0;
-    private double _canvasOffsetX = 0.0;
-    private double _canvasOffsetY = 0.0;
+    private const double ZoomFactor = 0.1;
+    private const double MinZoom = 0.1;
+    private const double MaxZoom = 10.0;
 
     private void ShapeCanvas_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        double zoomFactor = e.Delta > 0 ? 1.1 : 1.0 / 1.1;
-        Point pos = e.GetPosition(ShapeCanvas);
+        // Get the current mouse position relative to the canvas
+        Point mousePosition = e.GetPosition(ShapeCanvas);
 
-        // Adjust translation so the mouse stays in place after zooming:
-        _canvasOffsetX = pos.X - (zoomFactor * (pos.X - _canvasOffsetX));
-        _canvasOffsetY = pos.Y - (zoomFactor * (pos.Y - _canvasOffsetY));
+        // Calculate new scale based on wheel delta
+        double zoomChange = e.Delta > 0 ? ZoomFactor : -ZoomFactor;
+        double newScaleX = canvasScale.ScaleX + (canvasScale.ScaleX * zoomChange);
+        double newScaleY = canvasScale.ScaleY + (canvasScale.ScaleY * zoomChange);
 
-        // Accumulate overall scale:
-        _canvasScale *= zoomFactor;
+        // Limit zoom to min/max values
+        newScaleX = Math.Clamp(newScaleX, MinZoom, MaxZoom);
+        newScaleY = Math.Clamp(newScaleY, MinZoom, MaxZoom);
 
-        UpdateCanvasTransform();
+        // Adjust the zoom center to the mouse position
+        Point relativePt = mousePosition;
+
+        // Calculate new transform origin
+        double absoluteX = (relativePt.X * canvasScale.ScaleX) + canvasTranslate.X;
+        double absoluteY = (relativePt.Y * canvasScale.ScaleY) + canvasTranslate.Y;
+
+        // Calculate the new translate values to maintain mouse position
+        canvasTranslate.X = absoluteX - (relativePt.X * newScaleX);
+        canvasTranslate.Y = absoluteY - (relativePt.Y * newScaleY);
+
+        // Apply new scale
+        canvasScale.ScaleX = newScaleX;
+        canvasScale.ScaleY = newScaleY;
+
         e.Handled = true;
-    }
-
-    private void UpdateCanvasTransform()
-    {
-        if (ShapeCanvas.RenderTransform is not MatrixTransform matTrans)
-        {
-            return;
-        }
-        Matrix mat = new();
-        mat.Scale(_canvasScale, _canvasScale);
-        mat.Translate(_canvasOffsetX, _canvasOffsetY);
-        matTrans.Matrix = mat;
     }
 
     private void PanCanvas(MouseEventArgs e)
     {
-        Mouse.SetCursor(Cursors.SizeAll);
-        Point currentPoint = e.GetPosition(ImageGrid);
+        Point currentPosition = e.GetPosition(this);
+        Vector delta = currentPosition - clickedPoint;
 
-        double maxPanSize = Math.Max(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight) / 4;
-        double deltaX = Math.Clamp(currentPoint.X - clickedPoint.X, -maxPanSize, maxPanSize);
-        double deltaY = Math.Clamp(currentPoint.Y - clickedPoint.Y, -maxPanSize, maxPanSize);
+        Debug.WriteLine($"Delta: {delta}");
 
-        _canvasOffsetX += deltaX;
-        _canvasOffsetY += deltaY;
+        // Update the translation
+        canvasTranslate.X += delta.X;
+        canvasTranslate.Y += delta.Y;
 
-        UpdateCanvasTransform();
-        e.Handled = true;
+        clickedPoint = currentPosition;
     }
 
     private void ShapeCanvas_MouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (Mouse.MiddleButton == MouseButtonState.Pressed || Mouse.LeftButton == MouseButtonState.Pressed)
+        Debug.WriteLine($"MouseDown: Beginning {draggingMode}");
+
+        if (e.ChangedButton == MouseButton.Left)
         {
-            clickedPoint = e.GetPosition(ShapeCanvas);
             draggingMode = DraggingMode.Panning;
+            clickedPoint = e.GetPosition(this);
+            ShapeCanvas.CaptureMouse();
+            e.Handled = true;
+            Debug.WriteLine($"MouseDown: End {draggingMode}");
         }
     }
 
@@ -883,7 +898,11 @@ public partial class MainWindow : FluentWindow
         if (ShapeCanvas.RenderTransform is not MatrixTransform matTrans)
             return;
 
-        matTrans.Matrix = new Matrix();
+        canvasTranslate.X = 0.0;
+        canvasTranslate.Y = 0.0;
+
+        canvasScale.ScaleX = 1.0;
+        canvasScale.ScaleY = 1.0;
     }
 
     private async void AutoContrastMenuItem_Click(object sender, RoutedEventArgs e)
@@ -1480,7 +1499,7 @@ public partial class MainWindow : FluentWindow
 
         angleMeasurementTools.Clear();
 
-        draggingMode = DraggingMode.None;
+        //draggingMode = DraggingMode.None;
     }
 
     private void MeasurementPoint_MouseDown(object sender, MouseButtonEventArgs e)
@@ -1798,11 +1817,6 @@ public partial class MainWindow : FluentWindow
         await LoadMeasurementPackageAsync(filePath);
     }
 
-    private void LoadMeasurementsMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        LoadMeasurementsPackageFromFile();
-    }
-
     private void SavePackageButton_Click(object sender, RoutedEventArgs e)
     {
         SaveMeasurementsPackageToFile();
@@ -1816,7 +1830,7 @@ public partial class MainWindow : FluentWindow
         autoSaveTimer = new System.Timers.Timer(AutoSaveIntervalMs);
         autoSaveTimer.Elapsed += AutoSaveTimer_Elapsed;
         autoSaveTimer.AutoReset = true;
-        autoSaveTimer.Start();
+        //autoSaveTimer.Start();
 
         // Create a new project ID
         currentProjectId = Guid.NewGuid().ToString();
@@ -1837,6 +1851,8 @@ public partial class MainWindow : FluentWindow
 
     private async Task AutosaveCurrentState()
     {
+        return;
+
         if (recentProjectsManager == null || MainImage.Source == null || string.IsNullOrEmpty(imagePath))
             return;
 
@@ -1883,5 +1899,15 @@ public partial class MainWindow : FluentWindow
         _ = AutosaveCurrentState();
 
         base.OnClosing(e);
+    }
+
+    private void FluentWindow_MouseUp(object sender, MouseButtonEventArgs e)
+    {
+        //if (e.ChangedButton == MouseButton.Left && draggingMode == DraggingMode.Panning)
+        //{
+        //    draggingMode = DraggingMode.None;
+        //    ShapeCanvas.ReleaseMouseCapture();
+        //    e.Handled = true;
+        //}
     }
 }
