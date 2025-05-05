@@ -79,7 +79,10 @@
             PreviewMouseWheel="ShapeCanvas_PreviewMouseWheel">
             <Canvas x:Name="ShapeCanvas" Margin="50,50,0,0">
                 <Canvas.RenderTransform>
-                    <MatrixTransform />
+                    <TransformGroup>
+                        <ScaleTransform x:Name="canvasScale" ScaleX="1" ScaleY="1" />
+                        <TranslateTransform x:Name="canvasTranslate" X="0" Y="0" />
+                    </TransformGroup>
                 </Canvas.RenderTransform>
                 <Grid x:Name="ImageGrid">
                     <Grid.ColumnDefinitions>
@@ -379,7 +382,7 @@
                                             <ToggleButton
                                                 x:Name="MeasureDistanceToggle"
                                                 Width="150"
-                                                Margin="0,4"
+                                                Margin="0,4" Click="ToolSelector_Clicked"
                                                 Checked="ToolSelector_Checked">
                                                 <ToggleButton.Content>
                                                     <StackPanel Orientation="Horizontal">

@@ -74,7 +74,6 @@ public partial class MainWindow : FluentWindow
     private bool isDrawingMode = false;
     private Dictionary<Stroke, StrokeInfo> strokeMeasurements = [];
 
-    private Point measurementStartPoint;
     private bool isCreatingMeasurement = false;
 
     public MainWindow()
@@ -244,17 +243,14 @@ public partial class MainWindow : FluentWindow
     private void PanCanvas(MouseEventArgs e)
     {
         Mouse.SetCursor(Cursors.SizeAll);
-        Point currentPoint = e.GetPosition(ShapeCanvas);
-        double deltaX = currentPoint.X - clickedPoint.X;
-        double deltaY = currentPoint.Y - clickedPoint.Y;
+        Point currentPosition = e.GetPosition(this);
+        Vector delta = currentPosition - clickedPoint;
 
-        if (ShapeCanvas.RenderTransform is not MatrixTransform matTrans)
-            return;
+        // Update the translation
+        canvasTranslate.X += delta.X;
+        canvasTranslate.Y += delta.Y;
 
-        Matrix mat = matTrans.Matrix;
-        mat.Translate(deltaX / scaleFactor, deltaY / scaleFactor);
-        matTrans.Matrix = mat;
-        e.Handled = true;
+        clickedPoint = currentPosition;
     }
 
     private void MovePolyline(Point newPoint)
@@ -737,38 +733,57 @@ public partial class MainWindow : FluentWindow
         return pi.GetValue(obj, null);
     }
 
+    private const double ZoomFactor = 0.1;
+    private const double MinZoom = 0.1;
+    private const double MaxZoom = 10.0;
+
     private void ShapeCanvas_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        if (ShapeCanvas.RenderTransform is not MatrixTransform matTrans)
-            return;
+        // Get the current mouse position relative to the canvas
+        Point mousePosition = e.GetPosition(ShapeCanvas);
 
-        Point pos1 = e.GetPosition(ShapeCanvas);
+        // Calculate new scale based on wheel delta
+        double zoomChange = e.Delta > 0 ? ZoomFactor : -ZoomFactor;
+        double newScaleX = canvasScale.ScaleX + (canvasScale.ScaleX * zoomChange);
+        double newScaleY = canvasScale.ScaleY + (canvasScale.ScaleY * zoomChange);
 
-        scaleFactor = e.Delta > 0 ? 1.1 : 1 / 1.1;
+        // Limit zoom to min/max values
+        newScaleX = Math.Clamp(newScaleX, MinZoom, MaxZoom);
+        newScaleY = Math.Clamp(newScaleY, MinZoom, MaxZoom);
 
-        Matrix mat = matTrans.Matrix;
-        mat.ScaleAt(scaleFactor, scaleFactor, pos1.X, pos1.Y);
-        matTrans.Matrix = mat;
+        // Adjust the zoom center to the mouse position
+        Point relativePt = mousePosition;
+
+        // Calculate new transform origin
+        double absoluteX = (relativePt.X * canvasScale.ScaleX) + canvasTranslate.X;
+        double absoluteY = (relativePt.Y * canvasScale.ScaleY) + canvasTranslate.Y;
+
+        // Calculate the new translate values to maintain mouse position
+        canvasTranslate.X = absoluteX - (relativePt.X * newScaleX);
+        canvasTranslate.Y = absoluteY - (relativePt.Y * newScaleY);
+
+        // Apply new scale
+        canvasScale.ScaleX = newScaleX;
+        canvasScale.ScaleY = newScaleY;
+
         e.Handled = true;
     }
 
     private void ShapeCanvas_MouseDown(object sender, MouseButtonEventArgs e)
     {
-        clickedPoint = e.GetPosition(ShapeCanvas);
-
-        if (Mouse.MiddleButton == MouseButtonState.Pressed
-            || (Mouse.LeftButton == MouseButtonState.Pressed && !isCreatingMeasurement)
-            || !IsAnyToolSelected())
+        if ((Mouse.MiddleButton == MouseButtonState.Pressed || Mouse.LeftButton == MouseButtonState.Pressed && !isCreatingMeasurement)
+            && !IsAnyToolSelected())
         {
-            clickedPoint = e.GetPosition(ShapeCanvas);
+            clickedPoint = e.GetPosition(this);
             draggingMode = DraggingMode.Panning;
+            return;
         }
 
         // Check if we're in the measure tab and starting a measurement
         if (Mouse.LeftButton != MouseButtonState.Pressed)
             return;
 
-        measurementStartPoint = clickedPoint;
+        clickedPoint =  e.GetPosition(ShapeCanvas);
         isCreatingMeasurement = true;
 
         if (MeasureDistanceToggle.IsChecked is true)
@@ -792,7 +807,6 @@ public partial class MainWindow : FluentWindow
         else if (MeasureAngleToggle.IsChecked is true
         || DrawingLinesToggle.IsChecked is true)
         {
-            measurementStartPoint = clickedPoint;
             isCreatingMeasurement = true;
             draggingMode = DraggingMode.CreatingMeasurement;
 
@@ -816,10 +830,10 @@ public partial class MainWindow : FluentWindow
             Point endPoint = e.GetPosition(ShapeCanvas);
 
             // Only create a measurement if there was some actual dragging (to avoid accidental clicks)
-            if (Math.Abs(endPoint.X - measurementStartPoint.X) > 5 ||
-                Math.Abs(endPoint.Y - measurementStartPoint.Y) > 5)
+            if (Math.Abs(endPoint.X - clickedPoint.X) > 5 ||
+                Math.Abs(endPoint.Y - clickedPoint.Y) > 5)
             {
-                CreateMeasurementFromDrag(measurementStartPoint, endPoint);
+                CreateMeasurementFromDrag(clickedPoint, endPoint);
             }
 
             // Reset state
@@ -904,10 +918,7 @@ public partial class MainWindow : FluentWindow
 
     private void ResetMenuItem_Click(object sender, RoutedEventArgs e)
     {
-        if (ShapeCanvas.RenderTransform is not MatrixTransform matTrans)
-            return;
-
-        matTrans.Matrix = new Matrix();
+        
     }
 
     private async void AutoContrastMenuItem_Click(object sender, RoutedEventArgs e)
@@ -2290,6 +2301,7 @@ public partial class MainWindow : FluentWindow
             return;
 
         UncheckAllBut(toggleButton);
+        MainGrid.Cursor = Cursors.Cross;
     }
 
     private bool IsAnyToolSelected()
@@ -2303,14 +2315,31 @@ public partial class MainWindow : FluentWindow
         return false;
     }
 
-    private void UncheckAllBut(ToggleButton toggleButton)
+    private void UncheckAllBut(ToggleButton? toggleButton = null)
     {
         List<ToggleButton> toolToggleButtons = [.. MeasureToolsPanel.Children.OfType<ToggleButton>()];
-
-        MainGrid.Cursor = Cursors.Cross;
 
         foreach (ToggleButton button in toolToggleButtons)
             if (button != toggleButton)
                 button.IsChecked = false;
+    }
+
+    private void MeasureDistanceToggle_Unchecked(object sender, RoutedEventArgs e)
+    {
+
+    }
+
+    private void ToolSelector_Clicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not ToggleButton toggle)
+            return;
+
+        if (toggle.IsChecked is true)
+            return;
+
+        MainGrid.Cursor = null;
+        isDrawingMode = false;
+        isCreatingMeasurement = false;
+        draggingMode = DraggingMode.None;
     }
 }
