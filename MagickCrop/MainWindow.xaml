@@ -12,11 +12,13 @@
     Width="1000"
     Height="800"
     AllowDrop="True"
-    Background="Gray"
+    AllowsTransparency="True"
     DataContext="{Binding RelativeSource={RelativeSource Self}}"
+    ExtendsContentIntoTitleBar="True"
     MouseMove="TopLeft_MouseMove"
     PreviewDragOver="FluentWindow_PreviewDragOver"
     PreviewDrop="FluentWindow_PreviewDrop"
+    WindowStyle="None"
     mc:Ignorable="d">
     <Window.Resources>
         <Style TargetType="Ellipse">
@@ -55,6 +57,7 @@
             Title="Magick Crop &amp; Measure by TheJoeFin"
             Grid.ColumnSpan="2"
             Height="32"
+            Background="{wpfui:ThemeResource ApplicationBackgroundBrush}"
             Foreground="{wpfui:ThemeResource TextFillColorPrimaryBrush}">
             <wpfui:TitleBar.Resources>
                 <Style BasedOn="{StaticResource {x:Type wpfui:TitleBarButton}}" TargetType="wpfui:TitleBarButton">
@@ -68,6 +71,7 @@
         </wpfui:TitleBar>
 
         <Grid
+            x:Name="MainGrid"
             Grid.Row="1"
             Grid.Column="0"
             Background="Gray"
@@ -75,9 +79,12 @@
             PreviewMouseWheel="ShapeCanvas_PreviewMouseWheel">
             <Canvas x:Name="ShapeCanvas" Margin="50,50,0,0">
                 <Canvas.RenderTransform>
-                    <MatrixTransform />
+                    <TransformGroup>
+                        <ScaleTransform x:Name="canvasScale" ScaleX="1" ScaleY="1" />
+                        <TranslateTransform x:Name="canvasTranslate" X="0" Y="0" />
+                    </TransformGroup>
                 </Canvas.RenderTransform>
-                <Grid x:Name="ImageGrid" Width="700">
+                <Grid x:Name="ImageGrid">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="auto" />
@@ -91,13 +98,19 @@
                         x:Name="MainImage"
                         MouseDown="ShapeCanvas_MouseDown"
                         Stretch="Uniform" />
+                    <InkCanvas
+                        x:Name="DrawingCanvas"
+                        Background="Transparent"
+                        IsEnabled="False"
+                        IsHitTestVisible="False"
+                        StrokeCollected="DrawingCanvas_StrokeCollected" />
                     <ResizeGrip
                         x:Name="ImageResizeGrip"
                         Grid.Row="1"
                         Grid.Column="1"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Bottom"
-                        Background="Blue"
+                        Background="#0066FF"
                         Cursor="SizeAll"
                         IsManipulationEnabled="True"
                         MouseDown="ImageResizeGrip_MouseDown"
@@ -137,6 +150,8 @@
         <c:WelcomeMessage
             x:Name="WelcomeMessageModal"
             Grid.Row="1"
+            OverlayButtonEvent="OverlayButton_Click"
+            PasteButtonEvent="PasteButton_Click"
             PrimaryButtonEvent="OpenFileButton_Click" />
 
         <Border
@@ -163,6 +178,7 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <wpfui:SymbolIcon
+                                x:Name="ImageIconOpenedName"
                                 Grid.Column="0"
                                 Margin="0,0,5,0"
                                 Symbol="Image24" />
@@ -181,7 +197,10 @@
                                 ToolTip="Click to close and show the welcome screen"
                                 Visibility="Collapsed" />
                         </Grid>
-                        <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                        <StackPanel
+                            x:Name="UndoRedoPanel"
+                            HorizontalAlignment="Center"
+                            Orientation="Horizontal">
                             <MenuItem
                                 x:Name="UndoMenuItem"
                                 Click="UndoMenuItem_Click"
@@ -209,7 +228,7 @@
                         </StackPanel>
                         <TextBlock Text="Tools" />
                         <TabControl ItemContainerStyle="{StaticResource NarrowTabHeaderStyle}">
-                            <TabItem>
+                            <TabItem x:Name="TransformTabItem">
                                 <TabItem.Header>
                                     <wpfui:SymbolIcon Symbol="Crop24" ToolTip="Crop and transform" />
                                 </TabItem.Header>
@@ -281,7 +300,7 @@
                                     </MenuItem>
                                 </StackPanel>
                             </TabItem>
-                            <TabItem>
+                            <TabItem x:Name="EditImageTabItem">
                                 <TabItem.Header>
                                     <wpfui:SymbolIcon Symbol="ImageEdit24" ToolTip="Adjust image appearance" />
                                 </TabItem.Header>
@@ -351,29 +370,106 @@
                                             <wpfui:SymbolIcon Symbol="AddSubtractCircle24" />
                                         </MenuItem.Icon>
                                     </MenuItem>
+                                    <Separator />
+                                    <MenuItem
+                                        Name="BlurMenuItem"
+                                        Click="BlurMenuItem_Click"
+                                        Header="Gaussian Blur">
+                                        <MenuItem.Icon>
+                                            <wpfui:SymbolIcon Symbol="Blur24" />
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem
+                                        Name="FindEdgesMenuItem"
+                                        Click="FindEdgesMenuItem_Click"
+                                        Header="Find Edges">
+                                        <MenuItem.Icon>
+                                            <wpfui:SymbolIcon Symbol="Triangle24" />
+                                        </MenuItem.Icon>
+                                    </MenuItem>
                                 </StackPanel>
                             </TabItem>
-                            <TabItem>
+                            <TabItem x:Name="MeasureTabItem">
                                 <TabItem.Header>
                                     <wpfui:SymbolIcon Symbol="Ruler24" ToolTip="Measure distance and angle" />
                                 </TabItem.Header>
                                 <StackPanel Orientation="Vertical">
-                                    <MenuItem
-                                        Name="MeasureDistanceMenuItem"
-                                        Click="MeasureDistanceMenuItem_Click"
-                                        Header="Add Distance Measure">
-                                        <MenuItem.Icon>
-                                            <wpfui:SymbolIcon Symbol="Ruler24" />
-                                        </MenuItem.Icon>
-                                    </MenuItem>
-                                    <MenuItem
-                                        Name="MeasureAngleMenuItem"
-                                        Click="MeasureAngleMenuItem_Click"
-                                        Header="Add Angle Measure">
-                                        <MenuItem.Icon>
-                                            <wpfui:SymbolIcon Symbol="DataPie24" />
-                                        </MenuItem.Icon>
-                                    </MenuItem>
+                                    <GroupBox Padding="0,12" Header="Measurement Tools">
+                                        <StackPanel x:Name="MeasureToolsPanel" HorizontalAlignment="Center">
+                                            <ToggleButton
+                                                x:Name="MeasureDistanceToggle"
+                                                Width="150"
+                                                Margin="0,4"
+                                                Checked="ToolSelector_Checked"
+                                                Click="ToolSelector_Clicked">
+                                                <ToggleButton.Content>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="Ruler24" />
+                                                        <TextBlock VerticalAlignment="Center" Text="Add Distance" />
+                                                    </StackPanel>
+                                                </ToggleButton.Content>
+                                            </ToggleButton>
+                                            <ToggleButton
+                                                x:Name="MeasureAngleToggle"
+                                                Width="150"
+                                                Margin="0,4"
+                                                Checked="ToolSelector_Checked"
+                                                Click="ToolSelector_Clicked">
+                                                <ToggleButton.Content>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="DataPie24" />
+                                                        <TextBlock VerticalAlignment="Center" Text="Add Angle" />
+                                                    </StackPanel>
+                                                </ToggleButton.Content>
+                                            </ToggleButton>
+                                            <ToggleButton
+                                                x:Name="HorizontalLineRadio"
+                                                Width="150"
+                                                Margin="0,4"
+                                                Checked="ToolSelector_Checked"
+                                                Click="ToolSelector_Clicked">
+                                                <ToggleButton.Content>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="SplitHorizontal24" />
+                                                        <TextBlock VerticalAlignment="Center" Text="Horizontal Line" />
+                                                    </StackPanel>
+                                                </ToggleButton.Content>
+                                            </ToggleButton>
+                                            <ToggleButton
+                                                x:Name="VerticalLineToggle"
+                                                Width="150"
+                                                Margin="0,4"
+                                                Checked="ToolSelector_Checked"
+                                                Click="ToolSelector_Clicked">
+                                                <ToggleButton.Content>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="SplitVertical24" />
+                                                        <TextBlock VerticalAlignment="Center" Text="Vertical Line" />
+                                                    </StackPanel>
+                                                </ToggleButton.Content>
+                                            </ToggleButton>
+                                            <ToggleButton
+                                                x:Name="DrawingLinesToggle"
+                                                Width="150"
+                                                Margin="0,4"
+                                                Checked="DrawingLinesRadio_Checked"
+                                                Click="ToolSelector_Clicked"
+                                                Unchecked="DrawingLinesRadio_Unchecked">
+                                                <ToggleButton.Content>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <wpfui:SymbolIcon Margin="0,0,8,0" Symbol="Pen24" />
+                                                        <TextBlock VerticalAlignment="Center" Text="Draw a Line" />
+                                                    </StackPanel>
+                                                </ToggleButton.Content>
+                                            </ToggleButton>
+                                        </StackPanel>
+                                    </GroupBox>
+
+                                    <TextBlock
+                                        Margin="0,8"
+                                        FontStyle="Italic"
+                                        Text="Click and drag on the image to create measurements"
+                                        TextWrapping="Wrap" />
 
                                     <StackPanel
                                         x:Name="MeasurementButtonPanel"
@@ -397,6 +493,17 @@
                                             AcceptsTab="False"
                                             Text="Pixels"
                                             TextChanged="MeasurementUnits_TextChanged" />
+
+                                        <StackPanel x:Name="DrawingOptionsPanel" Visibility="Collapsed">
+                                            <Label Margin="0,8,0,0" Content="Stroke Thickness:" />
+                                            <Slider
+                                                x:Name="StrokeThicknessSlider"
+                                                Width="150"
+                                                Maximum="10"
+                                                Minimum="1"
+                                                ValueChanged="StrokeThicknessSlider_ValueChanged"
+                                                Value="2" />
+                                        </StackPanel>
 
                                         <wpfui:HyperlinkButton
                                             x:Name="CloseMeasurementButton"

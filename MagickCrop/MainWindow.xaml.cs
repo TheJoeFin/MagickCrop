@@ -6,17 +6,22 @@ using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Ink;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.Windows.Shell;
 using Windows.ApplicationModel;
 using Wpf.Ui;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
+using Wpf.Ui.Interop;
 
 namespace MagickCrop;
 
@@ -30,6 +35,7 @@ public partial class MainWindow : FluentWindow
     private Polygon? lines;
     private string? imagePath;
     private string? savedPath;
+    private readonly int ImageWidthConst = 700;
 
     private double scaleFactor = 1;
     private DraggingMode draggingMode = DraggingMode.None;
@@ -45,6 +51,9 @@ public partial class MainWindow : FluentWindow
     private readonly ObservableCollection<AngleMeasurementControl> angleMeasurementTools = [];
     private AngleMeasurementControl? activeAngleMeasureControl;
 
+    private readonly ObservableCollection<VerticalLineControl> verticalLineControls = [];
+    private readonly ObservableCollection<HorizontalLineControl> horizontalLineControls = [];
+
     private Services.RecentProjectsManager? recentProjectsManager;
     private string? currentProjectId;
     private System.Timers.Timer? autoSaveTimer;
@@ -59,6 +68,14 @@ public partial class MainWindow : FluentWindow
         new FormatItem { Name = "WebP Image", Format = MagickFormat.WebP, Extension = ".webp", SupportsQuality = true },
         // new FormatItem { Name = "HEIC Image", Format = MagickFormat.Heic, Extension = ".heic", SupportsQuality = true }
     ];
+
+    private readonly ObservableCollection<Line> verticalLines = [];
+    private readonly ObservableCollection<Line> horizontalLines = [];
+
+    private bool isDrawingMode = false;
+    private Dictionary<Stroke, StrokeInfo> strokeMeasurements = [];
+
+    private bool isCreatingMeasurement = false;
 
     public MainWindow()
     {
@@ -92,6 +109,8 @@ public partial class MainWindow : FluentWindow
 
         InitializeProjectManager();
         UpdateOpenedFileNameText();
+
+        ShapeCanvas.MouseUp += ShapeCanvas_MouseUp;
     }
 
     private void DrawPolyLine()
@@ -201,6 +220,11 @@ public partial class MainWindow : FluentWindow
         Canvas.SetLeft(clickedElement, movingPoint.X - (clickedElement.Width / 2));
 
         MovePolyline(movingPoint);
+
+        if (draggingMode == DraggingMode.CreatingMeasurement && isCreatingMeasurement)
+        {
+            e.Handled = true;
+        }
     }
 
     private void ResizeImage(MouseEventArgs e)
@@ -220,17 +244,14 @@ public partial class MainWindow : FluentWindow
     private void PanCanvas(MouseEventArgs e)
     {
         Mouse.SetCursor(Cursors.SizeAll);
-        Point currentPoint = e.GetPosition(ShapeCanvas);
-        double deltaX = currentPoint.X - clickedPoint.X;
-        double deltaY = currentPoint.Y - clickedPoint.Y;
+        Point currentPosition = e.GetPosition(this);
+        Vector delta = currentPosition - clickedPoint;
 
-        if (ShapeCanvas.RenderTransform is not MatrixTransform matTrans)
-            return;
+        // Update the translation
+        canvasTranslate.X += delta.X;
+        canvasTranslate.Y += delta.Y;
 
-        Matrix mat = matTrans.Matrix;
-        mat.Translate(deltaX / scaleFactor, deltaY / scaleFactor);
-        matTrans.Matrix = mat;
-        e.Handled = true;
+        clickedPoint = currentPosition;
     }
 
     private void MovePolyline(Point newPoint)
@@ -549,10 +570,123 @@ public partial class MainWindow : FluentWindow
         await OpenImagePath(openFileDialog.FileName);
     }
 
+    private async void PasteButton_Click(object sender, RoutedEventArgs e)
+    {
+        // Check if clipboard contains image data
+        if (!Clipboard.ContainsImage())
+        {
+            Wpf.Ui.Controls.MessageBox uiMessageBox = new()
+            {
+                Title = "Paste Error",
+                Content = "No image found in clipboard. Copy an image first.",
+            };
+            await uiMessageBox.ShowDialogAsync();
+            SetUiForCompletedTask();
+            WelcomeMessageModal.Visibility = Visibility.Visible;
+            return;
+        }
+
+        SetUiForLongTask();
+        try
+        {
+            WelcomeMessageModal.Visibility = Visibility.Collapsed;
+            BitmapSource clipboardImage = Clipboard.GetImage();
+
+            if (clipboardImage is null)
+            {
+                Wpf.Ui.Controls.MessageBox uiMessageBox = new()
+                {
+                    Title = "Paste Error",
+                    Content = "Could not retrieve a valid image from the clipboard.",
+                };
+                await uiMessageBox.ShowDialogAsync();
+                return;
+            }
+
+            // Create a temporary file for the image
+            string tempFileName = System.IO.Path.GetTempFileName();
+            tempFileName = System.IO.Path.ChangeExtension(tempFileName, ".jpg");
+
+            // Save the clipboard image to the temporary file
+            using FileStream stream = new(tempFileName, FileMode.Create);
+
+            JpegBitmapEncoder encoder = new();
+            encoder.Frames.Add(BitmapFrame.Create(clipboardImage));
+            encoder.Save(stream);
+
+            // Reset any current measurements
+            RemoveMeasurementControls();
+            openedFileName = "Pasted_Image_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
+
+            // Open the image in the application
+            await OpenImagePath(tempFileName);
+
+            // Update UI
+            BottomBorder.Visibility = Visibility.Visible;
+        }
+        catch (Exception ex)
+        {
+            Wpf.Ui.Controls.MessageBox uiMessageBox = new()
+            {
+                Title = "Error",
+                Content = $"Error pasting image: {ex.Message}",
+            };
+            await uiMessageBox.ShowDialogAsync();
+        }
+        finally
+        {
+            SetUiForCompletedTask();
+        }
+    }
+
+    private void OverlayButton_Click(object sender, RoutedEventArgs e)
+    {
+        WelcomeMessageModal.Visibility = Visibility.Collapsed;
+        BottomBorder.Visibility = Visibility.Visible;
+        MainGrid.Background = new SolidColorBrush(Colors.Transparent);
+        Background = new SolidColorBrush(Colors.Transparent);
+        ShapeCanvas.Background = new SolidColorBrush(Color.FromArgb(10, 255, 255, 255));
+        Topmost = true;
+
+        MeasureTabItem.IsSelected = true;
+        TransformTabItem.IsEnabled = false;
+        EditImageTabItem.IsEnabled = false;
+
+        CropButtonPanel.Visibility = Visibility.Collapsed;
+        TransformButtonPanel.Visibility = Visibility.Collapsed;
+        ResizeButtonsPanel.Visibility = Visibility.Collapsed;
+        SaveAndOpenDestFolderPanel.Visibility = Visibility.Collapsed;
+        UndoRedoPanel.Visibility = Visibility.Collapsed;
+
+        autoSaveTimer?.Stop();
+
+        ImageIconOpenedName.Symbol = SymbolRegular.Ruler24;
+        ReOpenFileText.Text = "Overlay Mode";
+    }
+
+    protected override void OnExtendsContentIntoTitleBarChanged(bool oldValue, bool newValue)
+    {
+        SetCurrentValue(WindowStyleProperty, WindowStyle); // CHANGE THIS
+
+        WindowChrome.SetWindowChrome(
+            this,
+            new WindowChrome
+            {
+                CaptionHeight = 0,
+                CornerRadius = default,
+                GlassFrameThickness = new Thickness(-1),
+                ResizeBorderThickness = ResizeMode == ResizeMode.NoResize ? default : new Thickness(4),
+                UseAeroCaptionButtons = false,
+            }
+        );
+
+        _ = UnsafeNativeMethods.RemoveWindowTitlebarContents(this);
+    }
+
     private async Task OpenImagePath(string imageFilePath)
     {
         Save.IsEnabled = true;
-        ImageGrid.Width = 700;
+        ImageGrid.Width = ImageWidthConst;
         MainImage.Stretch = Stretch.Uniform;
 
         WelcomeMessageModal.Visibility = Visibility.Collapsed;
@@ -601,27 +735,114 @@ public partial class MainWindow : FluentWindow
         return pi.GetValue(obj, null);
     }
 
+    private const double ZoomFactor = 0.1;
+    private const double MinZoom = 0.1;
+    private const double MaxZoom = 10.0;
+
     private void ShapeCanvas_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        if (ShapeCanvas.RenderTransform is not MatrixTransform matTrans)
-            return;
+        // Get the current mouse position relative to the canvas
+        Point mousePosition = e.GetPosition(ShapeCanvas);
 
-        Point pos1 = e.GetPosition(ShapeCanvas);
+        // Calculate new scale based on wheel delta
+        double zoomChange = e.Delta > 0 ? ZoomFactor : -ZoomFactor;
+        double newScaleX = canvasScale.ScaleX + (canvasScale.ScaleX * zoomChange);
+        double newScaleY = canvasScale.ScaleY + (canvasScale.ScaleY * zoomChange);
 
-        scaleFactor = e.Delta > 0 ? 1.1 : 1 / 1.1;
+        // Limit zoom to min/max values
+        newScaleX = Math.Clamp(newScaleX, MinZoom, MaxZoom);
+        newScaleY = Math.Clamp(newScaleY, MinZoom, MaxZoom);
 
-        Matrix mat = matTrans.Matrix;
-        mat.ScaleAt(scaleFactor, scaleFactor, pos1.X, pos1.Y);
-        matTrans.Matrix = mat;
+        // Adjust the zoom center to the mouse position
+        Point relativePt = mousePosition;
+
+        // Calculate new transform origin
+        double absoluteX = (relativePt.X * canvasScale.ScaleX) + canvasTranslate.X;
+        double absoluteY = (relativePt.Y * canvasScale.ScaleY) + canvasTranslate.Y;
+
+        // Calculate the new translate values to maintain mouse position
+        canvasTranslate.X = absoluteX - (relativePt.X * newScaleX);
+        canvasTranslate.Y = absoluteY - (relativePt.Y * newScaleY);
+
+        // Apply new scale
+        canvasScale.ScaleX = newScaleX;
+        canvasScale.ScaleY = newScaleY;
+
         e.Handled = true;
     }
 
     private void ShapeCanvas_MouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (Mouse.MiddleButton == MouseButtonState.Pressed || Mouse.LeftButton == MouseButtonState.Pressed)
+        if ((Mouse.MiddleButton == MouseButtonState.Pressed || Mouse.LeftButton == MouseButtonState.Pressed && !isCreatingMeasurement)
+            && !IsAnyToolSelected())
         {
-            clickedPoint = e.GetPosition(ShapeCanvas);
+            clickedPoint = e.GetPosition(this);
             draggingMode = DraggingMode.Panning;
+            return;
+        }
+
+        // Check if we're in the measure tab and starting a measurement
+        if (Mouse.LeftButton != MouseButtonState.Pressed)
+            return;
+
+        clickedPoint =  e.GetPosition(ShapeCanvas);
+        isCreatingMeasurement = true;
+
+        if (MeasureDistanceToggle.IsChecked is true)
+        {
+            double scale = ScaleInput.Value ?? 1.0;
+            DistanceMeasurementControl measurementControl = new()
+            {
+                ScaleFactor = scale,
+                Units = MeasurementUnits.Text
+            };
+            measurementControl.MeasurementPointMouseDown += MeasurementPoint_MouseDown;
+            measurementControl.SetRealWorldLengthRequested += MeasurementControl_SetRealWorldLengthRequested;
+            measurementControl.RemoveControlRequested += DistanceMeasurementControl_RemoveControlRequested;
+            measurementTools.Add(measurementControl);
+            ShapeCanvas.Children.Add(measurementControl);
+
+            // Set the start and end positions of the measurement
+            measurementControl.MovePoint(0, clickedPoint);
+            measurementControl.StartDraggingPoint(1);
+        }
+        else if (MeasureAngleToggle.IsChecked is true
+        || DrawingLinesToggle.IsChecked is true)
+        {
+            isCreatingMeasurement = true;
+            draggingMode = DraggingMode.CreatingMeasurement;
+
+            ShapeCanvas.CaptureMouse();
+            e.Handled = true;
+        }
+        else if (HorizontalLineRadio.IsChecked is true)
+        {
+            AddHorizontalLineAtPosition(clickedPoint.Y);
+        }
+        else if (VerticalLineToggle.IsChecked is true)
+        {
+            AddVerticalLineAtPosition(clickedPoint.X);
+        }
+    }
+
+    private void ShapeCanvas_MouseUp(object sender, MouseButtonEventArgs e)
+    {
+        if (isCreatingMeasurement && draggingMode == DraggingMode.CreatingMeasurement)
+        {
+            Point endPoint = e.GetPosition(ShapeCanvas);
+
+            // Only create a measurement if there was some actual dragging (to avoid accidental clicks)
+            if (Math.Abs(endPoint.X - clickedPoint.X) > 5 ||
+                Math.Abs(endPoint.Y - clickedPoint.Y) > 5)
+            {
+                CreateMeasurementFromDrag(clickedPoint, endPoint);
+            }
+
+            // Reset state
+            isCreatingMeasurement = false;
+            draggingMode = DraggingMode.None;
+            ShapeCanvas.ReleaseMouseCapture();
+            e.Handled = true;
         }
     }
 
@@ -699,10 +920,14 @@ public partial class MainWindow : FluentWindow
 
     private void ResetMenuItem_Click(object sender, RoutedEventArgs e)
     {
-        if (ShapeCanvas.RenderTransform is not MatrixTransform matTrans)
-            return;
+        canvasScale.ScaleX = 1;
+        canvasScale.ScaleY = 1;
 
-        matTrans.Matrix = new Matrix();
+        canvasScale.CenterX = 0;
+        canvasScale.CenterY = 0;
+
+        canvasTranslate.X = 0;
+        canvasTranslate.Y = 0;
     }
 
     private async void AutoContrastMenuItem_Click(object sender, RoutedEventArgs e)
@@ -875,6 +1100,52 @@ public partial class MainWindow : FluentWindow
 
         MagickImage magickImage = new(imagePath);
         await Task.Run(() => magickImage.AutoGamma());
+
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await magickImage.WriteAsync(tempFileName);
+
+        MagickImageUndoRedoItem undoRedoItem = new(MainImage, imagePath, tempFileName);
+        undoRedo.AddUndo(undoRedoItem);
+
+        imagePath = tempFileName;
+
+        MainImage.Source = magickImage.ToBitmapSource();
+
+        SetUiForCompletedTask();
+    }
+
+    private async void BlurMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+            return;
+
+        SetUiForLongTask();
+
+        MagickImage magickImage = new(imagePath);
+        await Task.Run(() => magickImage.Blur(20, 10));
+
+        string tempFileName = System.IO.Path.GetTempFileName();
+        await magickImage.WriteAsync(tempFileName);
+
+        MagickImageUndoRedoItem undoRedoItem = new(MainImage, imagePath, tempFileName);
+        undoRedo.AddUndo(undoRedoItem);
+
+        imagePath = tempFileName;
+
+        MainImage.Source = magickImage.ToBitmapSource();
+
+        SetUiForCompletedTask();
+    }
+
+    private async void FindEdgesMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+            return;
+
+        SetUiForLongTask();
+
+        MagickImage magickImage = new(imagePath);
+        await Task.Run(() => magickImage.CannyEdge());
 
         string tempFileName = System.IO.Path.GetTempFileName();
         await magickImage.WriteAsync(tempFileName);
@@ -1277,10 +1548,27 @@ public partial class MainWindow : FluentWindow
 
         angleMeasurementTools.Clear();
 
+        foreach (VerticalLineControl lineControl in verticalLineControls)
+        {
+            lineControl.RemoveControlRequested -= VerticalLineControl_RemoveControlRequested;
+            ShapeCanvas.Children.Remove(lineControl);
+        }
+
+        verticalLineControls.Clear();
+
+        foreach (HorizontalLineControl lineControl in horizontalLineControls)
+        {
+            lineControl.RemoveControlRequested -= HorizontalLineControl_RemoveControlRequested;
+            ShapeCanvas.Children.Remove(lineControl);
+        }
+
+        horizontalLineControls.Clear();
+
+        ClearAllStrokesAndLengths();
         draggingMode = DraggingMode.None;
     }
 
-    private void MeasurementPoint_MouseDown(object sender, MouseButtonEventArgs e)
+    private void MeasurementPoint_MouseDown(object sender, MouseButtonEventArgs? e)
     {
         if (sender is Ellipse senderEllipse
             && senderEllipse.Parent is Canvas measureCanvas
@@ -1290,7 +1578,8 @@ public partial class MainWindow : FluentWindow
             activeMeasureControl = measureControl;
 
             draggingMode = DraggingMode.MeasureDistance;
-            clickedPoint = e.GetPosition(ShapeCanvas);
+            if (e is not null)
+                clickedPoint = e.GetPosition(ShapeCanvas);
             CaptureMouse();
         }
     }
@@ -1315,6 +1604,9 @@ public partial class MainWindow : FluentWindow
         double newScale = ScaleInput.Value ?? 1.0;
         foreach (DistanceMeasurementControl tool in measurementTools)
             tool.ScaleFactor = newScale;
+
+        // Update stroke measurements
+        UpdateStrokeMeasurements();
     }
 
     private void MeasurementUnits_TextChanged(object sender, TextChangedEventArgs e)
@@ -1324,14 +1616,46 @@ public partial class MainWindow : FluentWindow
 
         foreach (DistanceMeasurementControl tool in measurementTools)
             tool.Units = textBox.Text;
+
+        // Update stroke measurements
+        UpdateStrokeMeasurements();
+    }
+
+    private void UpdateStrokeMeasurements()
+    {
+        if (MeasurementUnits is null) return;
+
+        double scaleFactor = ScaleInput.Value ?? 1.0;
+        string units = MeasurementUnits.Text;
+
+        Dictionary<Stroke, StrokeInfo> updatedMeasurements = [];
+
+        foreach (KeyValuePair<Stroke, StrokeInfo> entry in strokeMeasurements)
+        {
+            Stroke stroke = entry.Key;
+            StrokeInfo info = entry.Value;
+
+            // Update the scaled length with new scale factor
+            info.ScaledLength = info.PixelLength * scaleFactor;
+            info.Units = units;
+
+            updatedMeasurements[stroke] = info;
+        }
+
+        strokeMeasurements = updatedMeasurements;
     }
 
     private void CloseMeasurementButton_Click(object sender, RoutedEventArgs e)
     {
         RemoveMeasurementControls();
+        ClearAllStrokesAndLengths();
+        isDrawingMode = false;
+        DrawingCanvas.IsEnabled = false;
+        DrawingOptionsPanel.Visibility = Visibility.Collapsed;
+        MainGrid.Cursor = null;
     }
 
-    private async void SaveMeasurementsPackageToFile()
+    private void SaveMeasurementsPackageToFile()
     {
         if (string.IsNullOrWhiteSpace(imagePath))
         {
@@ -1340,7 +1664,7 @@ public partial class MainWindow : FluentWindow
                 Title = "Error",
                 Content = "No image loaded. Please open an image first.",
             };
-            await uiMessageBox.ShowDialogAsync();
+            uiMessageBox.ShowDialogAsync();
             return;
         }
 
@@ -1370,6 +1694,39 @@ public partial class MainWindow : FluentWindow
             package.Measurements.AngleMeasurements.Add(control.ToDto());
         }
 
+        foreach (VerticalLineControl control in verticalLineControls)
+        {
+            package.Measurements.VerticalLines.Add(control.ToDto());
+        }
+
+        foreach (HorizontalLineControl control in horizontalLineControls)
+        {
+            package.Measurements.HorizontalLines.Add(control.ToDto());
+        }
+
+        // Save ink strokes and their stroke length displays
+        foreach (KeyValuePair<Stroke, StrokeInfo> entry in strokeMeasurements)
+        {
+            Stroke stroke = entry.Key;
+            StrokeInfo info = entry.Value;
+
+            // Find the corresponding display control
+            StrokeLengthDisplay? display = ShapeCanvas.Children.OfType<StrokeLengthDisplay>()
+                .FirstOrDefault(d => d.GetStroke() == stroke);
+
+            double displayX = 0;
+            double displayY = 0;
+
+            if (display is not null)
+            {
+                displayX = Canvas.GetLeft(display);
+                displayY = Canvas.GetTop(display);
+            }
+
+            package.Measurements.InkStrokes.Add(StrokeDto.ConvertStrokeToDto(stroke));
+            package.Measurements.StrokeInfos.Add(StrokeInfoDto.FromStrokeInfo(info, displayX, displayY));
+        }
+
         // Show save file dialog
         SaveFileDialog saveFileDialog = new()
         {
@@ -1395,7 +1752,7 @@ public partial class MainWindow : FluentWindow
                     Title = "Error",
                     Content = "Failed to save the measurement package.",
                 };
-                await uiMessageBox.ShowDialogAsync();
+                uiMessageBox.ShowDialogAsync();
             }
         }
         finally
@@ -1490,11 +1847,63 @@ public partial class MainWindow : FluentWindow
             ShapeCanvas.Children.Add(control);
         }
 
+        MagickImage image = new(package.ImagePath);
+        double aspectRatio = (double)image.Width / image.Height;
+        double imageHeight = ImageWidthConst / aspectRatio;
+
+        // Add vertical line controls
+        foreach (VerticalLineControlDto dto in package.Measurements.VerticalLines)
+        {
+            VerticalLineControl control = new();
+            control.FromDto(dto);
+            control.RemoveControlRequested += VerticalLineControl_RemoveControlRequested;
+            verticalLineControls.Add(control);
+            ShapeCanvas.Children.Add(control);
+
+            // Make sure the line spans the full height of the canvas
+            control.Resize(imageHeight);
+        }
+
+        // Add horizontal line controls
+        foreach (HorizontalLineControlDto dto in package.Measurements.HorizontalLines)
+        {
+            HorizontalLineControl control = new();
+            control.FromDto(dto);
+            control.RemoveControlRequested += HorizontalLineControl_RemoveControlRequested;
+            horizontalLineControls.Add(control);
+            ShapeCanvas.Children.Add(control);
+
+            // Make sure the line spans the full width of the canvas
+            control.Resize(ImageWidthConst);
+        }
+
+        ClearAllStrokesAndLengths();
+
+        for (int i = 0; i < package.Measurements.InkStrokes.Count; i++)
+        {
+            if (i >= package.Measurements.StrokeInfos.Count) break;
+
+            StrokeDto strokeDto = package.Measurements.InkStrokes[i];
+            StrokeInfoDto infoDto = package.Measurements.StrokeInfos[i];
+
+            Stroke stroke = StrokeDto.ConvertDtoToStroke(strokeDto);
+            DrawingCanvas.Strokes.Add(stroke);
+
+            StrokeLengthDisplay lengthDisplay = new(infoDto.ToStrokeInfo(), stroke, DrawingCanvas, ShapeCanvas);
+            lengthDisplay.RemoveControlRequested += LengthDisplay_RemoveControlRequested;
+            Canvas.SetTop(lengthDisplay, infoDto.DisplayPositionY);
+            Canvas.SetLeft(lengthDisplay, infoDto.DisplayPositionX);
+            ShapeCanvas.Children.Add(lengthDisplay);
+
+            strokeMeasurements.Add(stroke, infoDto.ToStrokeInfo());
+        }
+
         if (package?.Metadata?.ProjectId is not null)
             currentProjectId = package.Metadata.ProjectId;
         else
             currentProjectId = Guid.NewGuid().ToString();
-        
+
+        MeasureTabItem.IsSelected = true;
         UpdateOpenedFileNameText();
     }
 
@@ -1578,6 +1987,35 @@ public partial class MainWindow : FluentWindow
             foreach (AngleMeasurementControl control in angleMeasurementTools)
                 package.Measurements.AngleMeasurements.Add(control.ToDto());
 
+            foreach (VerticalLineControl control in verticalLineControls)
+                package.Measurements.VerticalLines.Add(control.ToDto());
+
+            foreach (HorizontalLineControl control in horizontalLineControls)
+                package.Measurements.HorizontalLines.Add(control.ToDto());
+
+            // Save ink strokes and their stroke length displays
+            foreach (KeyValuePair<Stroke, StrokeInfo> entry in strokeMeasurements)
+            {
+                Stroke stroke = entry.Key;
+                StrokeInfo info = entry.Value;
+
+                // Find the corresponding display control
+                StrokeLengthDisplay? display = ShapeCanvas.Children.OfType<StrokeLengthDisplay>()
+                    .FirstOrDefault(d => d.GetStroke() == stroke);
+
+                double displayX = 0;
+                double displayY = 0;
+
+                if (display is not null)
+                {
+                    displayX = Canvas.GetLeft(display);
+                    displayY = Canvas.GetTop(display);
+                }
+
+                package.Measurements.InkStrokes.Add(StrokeDto.ConvertStrokeToDto(stroke));
+                package.Measurements.StrokeInfos.Add(StrokeInfoDto.FromStrokeInfo(info, displayX, displayY));
+            }
+
             recentProjectsManager.AutosaveProject(package, MainImage.Source as BitmapSource);
         }
         catch (Exception ex)
@@ -1633,10 +2071,10 @@ public partial class MainWindow : FluentWindow
         openedFileName = string.Empty;
         openedPackage = null;
         savedPath = null;
-        
+
         // Reset the title
         wpfuiTitleBar.Title = "Magick Crop & Measure by TheJoeFin";
-        
+
         // Reset UI elements
         RemoveMeasurementControls();
         HideTransformControls();
@@ -1646,20 +2084,316 @@ public partial class MainWindow : FluentWindow
         WelcomeMessageModal.Visibility = Visibility.Visible;
         OpenFolderButton.IsEnabled = false;
         Save.IsEnabled = false;
-        
+
         // Reset the canvas transform
         if (ShapeCanvas.RenderTransform is MatrixTransform matTrans)
         {
             matTrans.Matrix = new Matrix();
         }
-        
+
         // Reset undo/redo
         undoRedo.Clear();
-        
+
         // Create a new project ID
         currentProjectId = Guid.NewGuid().ToString();
-        
+
         // Update the button state
         UpdateOpenedFileNameText();
+    }
+
+    private void AddVerticalLine()
+    {
+        VerticalLineControl lineControl = new();
+        lineControl.RemoveControlRequested += VerticalLineControl_RemoveControlRequested;
+        verticalLineControls.Add(lineControl);
+        ShapeCanvas.Children.Add(lineControl);
+
+        // Initialize with reasonable positions based on the canvas size
+        lineControl.Initialize(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight);
+    }
+
+    private void VerticalLineControl_RemoveControlRequested(object sender, EventArgs e)
+    {
+        if (sender is VerticalLineControl control)
+        {
+            ShapeCanvas.Children.Remove(control);
+            verticalLineControls.Remove(control);
+        }
+    }
+
+    private void AddHorizontalLine()
+    {
+        HorizontalLineControl lineControl = new();
+        lineControl.RemoveControlRequested += HorizontalLineControl_RemoveControlRequested;
+        horizontalLineControls.Add(lineControl);
+        ShapeCanvas.Children.Add(lineControl);
+
+        // Initialize with reasonable positions based on the canvas size
+        lineControl.Initialize(ShapeCanvas.ActualWidth, ShapeCanvas.ActualHeight);
+    }
+
+    private void HorizontalLineControl_RemoveControlRequested(object sender, EventArgs e)
+    {
+        if (sender is HorizontalLineControl control)
+        {
+            ShapeCanvas.Children.Remove(control);
+            horizontalLineControls.Remove(control);
+        }
+    }
+
+    private void ShapeCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        foreach (VerticalLineControl control in verticalLineControls)
+        {
+            control.Resize(e.NewSize.Height);
+        }
+
+        foreach (HorizontalLineControl control in horizontalLineControls)
+        {
+            control.Resize(e.NewSize.Width);
+        }
+    }
+
+    private void HorizontalLineMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        AddHorizontalLine();
+    }
+
+    private void VerticalLineMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        AddVerticalLine();
+    }
+
+    private void DrawingCanvas_StrokeCollected(object sender, InkCanvasStrokeCollectedEventArgs e)
+    {
+        Stroke stroke = e.Stroke;
+
+        double pixelLength = CalculateStrokeLength(stroke);
+
+        // Calculate scaled length based on current scale factor and units
+        double scaleFactor = ScaleInput.Value ?? 1.0;
+        double scaledLength = pixelLength * scaleFactor;
+        string units = MeasurementUnits.Text;
+
+        StrokeInfo strokeInfo = new()
+        {
+            PixelLength = pixelLength,
+            ScaledLength = scaledLength,
+            Units = units
+        };
+
+        strokeMeasurements[stroke] = strokeInfo;
+        DrawingCanvas.Strokes.Remove(stroke);
+        DrawingCanvas.Strokes.Add(stroke);
+
+        ShowStrokeMeasurement(stroke, strokeInfo);
+    }
+
+    private void ShowStrokeMeasurement(Stroke stroke, StrokeInfo strokeInfo)
+    {
+        StrokeLengthDisplay lengthDisplay = new(strokeInfo, stroke, DrawingCanvas, ShapeCanvas);
+        lengthDisplay.SetRealWorldLengthRequested += MeasurementControl_SetRealWorldLengthRequested;
+        lengthDisplay.RemoveControlRequested += LengthDisplay_RemoveControlRequested;
+
+        Point endPoint = stroke.StylusPoints.Last().ToPoint();
+        Canvas.SetLeft(lengthDisplay, endPoint.X + 10);
+        Canvas.SetTop(lengthDisplay, endPoint.Y - 30);
+        ShapeCanvas.Children.Add(lengthDisplay);
+    }
+
+    private void LengthDisplay_RemoveControlRequested(object sender, EventArgs e)
+    {
+        if (sender is StrokeLengthDisplay control)
+        {
+            ShapeCanvas.Children.Remove(control);
+            strokeMeasurements.Remove(control.GetStroke());
+        }
+    }
+
+    private static double CalculateStrokeLength(Stroke stroke)
+    {
+        double length = 0;
+        StylusPointCollection points = stroke.StylusPoints;
+
+        for (int i = 1; i < points.Count; i++)
+        {
+            Point p1 = points[i - 1].ToPoint();
+            Point p2 = points[i].ToPoint();
+
+            // Calculate distance between consecutive points
+            double segmentLength = Math.Sqrt(
+                Math.Pow(p2.X - p1.X, 2) +
+                Math.Pow(p2.Y - p1.Y, 2));
+
+            length += segmentLength;
+        }
+
+        return length;
+    }
+
+    private void StrokeThicknessSlider_ValueChanged(object sender, RoutedEventArgs e)
+    {
+        if (DrawingCanvas == null) return;
+
+        DrawingAttributes drawingAttributes = DrawingCanvas.DefaultDrawingAttributes;
+        drawingAttributes.Width = StrokeThicknessSlider.Value;
+        drawingAttributes.Height = StrokeThicknessSlider.Value;
+        drawingAttributes.Color = Color.FromArgb(255, 0, 102, 255);
+        DrawingCanvas.DefaultDrawingAttributes = drawingAttributes;
+    }
+
+    private void ClearDrawingsButton_Click(object sender, RoutedEventArgs e)
+    {
+        ClearAllStrokesAndLengths();
+    }
+
+    private void ClearAllStrokesAndLengths()
+    {
+        DrawingCanvas.Strokes.Clear();
+        strokeMeasurements.Clear();
+
+        List<StrokeLengthDisplay> strokeLengthDisplays = ShapeCanvas.Children.OfType<StrokeLengthDisplay>().ToList();
+        foreach (StrokeLengthDisplay? display in strokeLengthDisplays)
+            ShapeCanvas.Children.Remove(display);
+    }
+
+    private void CreateMeasurementFromDrag(Point startPoint, Point endPoint)
+    {
+        if (MeasureDistanceToggle.IsChecked == true)
+        {
+            CreateDistanceMeasurement(startPoint, endPoint);
+        }
+        else if (MeasureAngleToggle.IsChecked == true)
+        {
+            // For angle measurement, we need three points
+            // We'll create a right angle with the drag defining two points
+            Point midPoint = new(
+                startPoint.X,
+                endPoint.Y
+            );
+            CreateAngleMeasurement(startPoint, midPoint, endPoint);
+        }
+    }
+
+    private void CreateDistanceMeasurement(Point startPoint, Point endPoint)
+    {
+        double scale = ScaleInput.Value ?? 1.0;
+        DistanceMeasurementControl measurementControl = new()
+        {
+            ScaleFactor = scale,
+            Units = MeasurementUnits.Text
+        };
+        measurementControl.MeasurementPointMouseDown += MeasurementPoint_MouseDown;
+        measurementControl.SetRealWorldLengthRequested += MeasurementControl_SetRealWorldLengthRequested;
+        measurementControl.RemoveControlRequested += DistanceMeasurementControl_RemoveControlRequested;
+        measurementTools.Add(measurementControl);
+        ShapeCanvas.Children.Add(measurementControl);
+
+        // Set the start and end positions of the measurement
+        measurementControl.MovePoint(0, startPoint);
+        measurementControl.MovePoint(1, endPoint);
+    }
+
+    private void CreateAngleMeasurement(Point point1, Point vertex, Point point3)
+    {
+        AngleMeasurementControl measurementControl = new();
+        measurementControl.MeasurementPointMouseDown += AngleMeasurementPoint_MouseDown;
+        measurementControl.RemoveControlRequested += AngleMeasurementControl_RemoveControlRequested;
+        angleMeasurementTools.Add(measurementControl);
+        ShapeCanvas.Children.Add(measurementControl);
+
+        // Set the three points of the angle
+        measurementControl.MovePoint(0, point1);
+        measurementControl.MovePoint(1, vertex);
+        measurementControl.MovePoint(2, point3);
+    }
+
+    private void AddVerticalLineAtPosition(double xPosition)
+    {
+        VerticalLineControl lineControl = new();
+        lineControl.RemoveControlRequested += VerticalLineControl_RemoveControlRequested;
+        verticalLineControls.Add(lineControl);
+        ShapeCanvas.Children.Add(lineControl);
+
+        // Initialize at the specific X position
+        lineControl.Initialize(MainImage.ActualHeight, MainImage.ActualHeight, xPosition);
+    }
+
+    private void AddHorizontalLineAtPosition(double yPosition)
+    {
+        HorizontalLineControl lineControl = new();
+        lineControl.RemoveControlRequested += HorizontalLineControl_RemoveControlRequested;
+        horizontalLineControls.Add(lineControl);
+        ShapeCanvas.Children.Add(lineControl);
+
+        // Initialize at the specific Y position
+        lineControl.Initialize(MainImage.ActualWidth, MainImage.ActualWidth, yPosition);
+    }
+
+    private void DrawingLinesRadio_Checked(object sender, RoutedEventArgs e)
+    {
+        isDrawingMode = true;
+        DrawingCanvas.IsEnabled = isDrawingMode;
+
+        DrawingOptionsPanel.Visibility = Visibility.Visible;
+        DrawingCanvas.IsHitTestVisible = true;
+
+        if (sender is ToggleButton toggleButton)
+            UncheckAllBut(toggleButton);
+
+        MainGrid.Cursor = Cursors.Pen;
+    }
+
+    private void DrawingLinesRadio_Unchecked(object sender, RoutedEventArgs e)
+    {
+        isDrawingMode = true;
+        DrawingCanvas.IsEnabled = isDrawingMode;
+
+        DrawingOptionsPanel.Visibility = Visibility.Collapsed;
+        DrawingCanvas.IsHitTestVisible = false;
+        MainGrid.Cursor = null;
+    }
+
+    private void ToolSelector_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not ToggleButton toggleButton)
+            return;
+
+        UncheckAllBut(toggleButton);
+        MainGrid.Cursor = Cursors.Cross;
+    }
+
+    private bool IsAnyToolSelected()
+    {
+        List<ToggleButton> toolToggleButtons = [.. MeasureToolsPanel.Children.OfType<ToggleButton>()];
+
+        foreach (ToggleButton button in toolToggleButtons)
+            if (button.IsChecked == true)
+                return true;
+
+        return false;
+    }
+
+    private void UncheckAllBut(ToggleButton? toggleButton = null)
+    {
+        List<ToggleButton> toolToggleButtons = [.. MeasureToolsPanel.Children.OfType<ToggleButton>()];
+
+        foreach (ToggleButton button in toolToggleButtons)
+            if (button != toggleButton)
+                button.IsChecked = false;
+    }
+
+    private void ToolSelector_Clicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not ToggleButton toggle)
+            return;
+
+        if (toggle.IsChecked is true)
+            return;
+
+        MainGrid.Cursor = null;
+        isDrawingMode = false;
+        isCreatingMeasurement = false;
+        draggingMode = DraggingMode.None;
     }
 }

@@ -19,7 +19,25 @@ public partial class WelcomeMessage : UserControl
     }
 
     public static readonly DependencyProperty PrimaryButtonEventProperty =
-        DependencyProperty.Register("PrimaryButtonEvent", typeof(RoutedEventHandler), typeof(WelcomeMessage), new PropertyMetadata(null));
+        DependencyProperty.Register(nameof(PrimaryButtonEvent), typeof(RoutedEventHandler), typeof(WelcomeMessage), new PropertyMetadata(null));
+
+    public RoutedEventHandler PasteButtonEvent
+    {
+        get { return (RoutedEventHandler)GetValue(PasteButtonEventProperty); }
+        set { SetValue(PasteButtonEventProperty, value); }
+    }
+
+    public static readonly DependencyProperty PasteButtonEventProperty =
+        DependencyProperty.Register(nameof(PasteButtonEvent), typeof(RoutedEventHandler), typeof(WelcomeMessage), new PropertyMetadata(null));
+
+    public RoutedEventHandler OverlayButtonEvent
+    {
+        get { return (RoutedEventHandler)GetValue(OverlayButtonEventProperty); }
+        set { SetValue(OverlayButtonEventProperty, value); }
+    }
+
+    public static readonly DependencyProperty OverlayButtonEventProperty =
+        DependencyProperty.Register(nameof(OverlayButtonEvent), typeof(RoutedEventHandler), typeof(WelcomeMessage), new PropertyMetadata(null));
 
     public WelcomeMessage()
     {
@@ -35,6 +53,9 @@ public partial class WelcomeMessage : UserControl
 
         if (_recentProjectsManager.RecentProjects.Count > 0)
             RecentTab.IsSelected = true;
+
+        if (!Clipboard.ContainsImage())
+            PasteButton.Visibility = Visibility.Collapsed;
     }
 
     private void UpdateRecentProjectsList(ICommand projectClickCommand, ICommand projectDeleteCommand)
@@ -138,5 +159,15 @@ public partial class WelcomeMessage : UserControl
 
         if (!opened)
             Visibility = Visibility.Visible;
+    }
+
+    private void OverlayModeButton_Click(object sender, RoutedEventArgs e)
+    {
+        OverlayButtonEvent?.Invoke(sender, e);
+    }
+
+    private void PasteButton_Click(object sender, RoutedEventArgs e)
+    {
+        PasteButtonEvent?.Invoke(sender, e);
     }
 }
